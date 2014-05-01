@@ -48,6 +48,8 @@ class HTTPRequest extends HTTPHeaders
 	
 	protected $data;
 	
+	protected $requestTime;
+	
 	/**
 	 * @var array $allParams Contains an assiciative array of all
 	 * arguments matched in all calls to {@link RequestHandler->handleRequest()}.
@@ -70,6 +72,8 @@ class HTTPRequest extends HTTPHeaders
 	
 	
 	public function __construct($httpMethod, $url, $get = null, $post = null, $data = null) {
+		$this->requestTime = time();
+	
 		$this->httpMethod = $httpMethod;
 		$this->setUrl($url);
 		
@@ -257,6 +261,10 @@ class HTTPRequest extends HTTPHeaders
 		
 		if($arguments === array()) $arguments['_matched'] = true;
 		return $arguments;
+	}
+	
+	public function time(){
+		return $this->requestTime;
 	}
 	
 	//Variable Info
