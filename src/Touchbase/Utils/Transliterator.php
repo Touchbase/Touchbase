@@ -31,26 +31,26 @@ namespace Touchbase\Utils;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Transliterator extends \Touchbase\Core\Object {
+class Transliterator extends \Touchbase\Core\Object
+{
 
-
-	protected $useIconv = false;
+	protected static $useIconv = false;
 		
 	/**
 	 * Convert the given utf8 string to a safe ASCII source
 	 */
-	function toASCII($source) {
-		if(function_exists('iconv') && $this->useIconv){
-			return $this->useIconv($source);
+	public static function toASCII($source) {
+		if(function_exists('iconv') && self::$useIconv){
+			return iconv("utf-8", "us-ascii//IGNORE//TRANSLIT", $source);
 		}
 		
-		return $this->useStrTr($source);
+		return self::useStrTr($source);
 	}
 
 	/**
 	 * Transliteration using strtr() and a lookup table
 	 */
-	protected function useStrTr($source) {
+	protected static function useStrTr($source) {
 		$table = array(
 			'Š'=>'S', 'š'=>'s', 'Đ'=>'Dj', 'đ'=>'dj', 'Ž'=>'Z', 'ž'=>'z', 'Č'=>'C', 'č'=>'c', 'Ć'=>'C', 'ć'=>'c',
 			'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'Ae', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
@@ -66,13 +66,6 @@ class Transliterator extends \Touchbase\Core\Object {
 		);
 
 		return strtr($source, $table);
-	}
-	
-	/**
-	 * Transliteration using iconv()
-	 */
-	protected function useIconv($source) {
- 		return iconv("utf-8", "us-ascii//IGNORE//TRANSLIT", $source);
 	}
 }
 ?>

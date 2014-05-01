@@ -216,7 +216,7 @@ class Assets extends \Touchbase\Core\Object
 		
 		foreach($this->documentJs[($head?'head':'body')] as $js){
 			if(!$this->isSnipit('js', $js)){
-				$js = HtmlBuilder::make('script')->attr('type', 'text/javascript')->attr('src', $this->absoluteURL($js))->output();
+				$js = HtmlBuilder::make('script')->attr('type', 'text/javascript')->attr('src', Router::absoluteURL($js))->output();
 			}
 			
 			$return[] = $js;

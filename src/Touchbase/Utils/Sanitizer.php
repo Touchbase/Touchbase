@@ -29,22 +29,19 @@
  
 namespace Touchbase\Utils;
 
-class Sanitizer extends \Touchbase\Utils\Object {
+use Touchbase\Control\Router;
+
+class Sanitizer extends \Touchbase\Core\Object
+{
 	
 	//Transliterator converts non-standard chars into ASCII
-	protected $useTransliterator = true;
-	protected $transliterator;
+	protected static $transliterator;
 	
-	public function string($str, $allowed = null) {
+	public static function string($str, $allowed = null) {
 		$allow = null;
 		if (!empty($allowed)) {
-			if(is_array($allowed)){
-				foreach ($allowed as $value) {
-					$allow .= "\\$value";
-				}
-			} else {
-				$allow .= "\\$allowed";
-			}
+			$allow = (is_array($allowed))?implode("", $allowed):"$allowed";
+			$allow = preg_quote($allow);
 		}
 		
 		if(is_array($str)){
@@ -52,17 +49,17 @@ class Sanitizer extends \Touchbase\Utils\Object {
 				$str[$key] = $this->string($val, $allowed);
 			}
 		} else {
-			$transliterator = $this->getTransliterator();
+			$transliterator = self::getTransliterator();
 			if($transliterator){
-				$str = $transliterator->toASCII($str);
+				$str = $transliterator::toASCII($str);
 			}
 		
-			$str = preg_replace("/[^{$allow}a-zA-Z0-9]/", '', $str);
+			$str = preg_replace("|[^{$allow}a-zA-Z0-9]|", '', $str);
 		}
-		return $str;
+		return self::trimWhitespace($str);
 	}
 	
-	public function html($str, $options = array()) {
+	public static function html($str, $options = array()) {
 
 		if(!is_array($options)){
 			//Array merge needs $options to be an array | Lets ignore this users input.
@@ -83,12 +80,12 @@ class Sanitizer extends \Touchbase\Utils\Object {
 		return htmlentities($str, $options['quotes'], $options['charset'], $options['double']);
 	}
 		
-	public function trimWhitespace($str) {
+	public static function trimWhitespace($str) {
 		$r = preg_replace('/[\n\r\t]+/', '', $str);
 		return preg_replace('/\s{2,}/u', ' ', $r);
 	}
 	
-	public function stripSpecificTags($str) {
+	public static function stripSpecificTags($str) {
 		$params = func_get_args();
 
 		for ($i = 1, $count = count($params); $i < $count; $i++) {
@@ -98,48 +95,78 @@ class Sanitizer extends \Touchbase\Utils\Object {
 		return $str;
 	}	
 	
-	function stripAllTags($str){
-	    $str = preg_replace(
-	        array(
-	          // Remove invisible content
-	            '@<head[^>]*?>.*?</head>@siu',
-	            '@<style[^>]*?>.*?</style>@siu',
-	            '@<script[^>]*?.*?</script>@siu',
-	            '@<object[^>]*?.*?</object>@siu',
-	            '@<embed[^>]*?.*?</embed>@siu',
-	            '@<applet[^>]*?.*?</applet>@siu',
-	            '@<noframes[^>]*?.*?</noframes>@siu',
-	            '@<noscript[^>]*?.*?</noscript>@siu',
-	            '@<noembed[^>]*?.*?</noembed>@siu',
-	          // Add line breaks before and after blocks
-	            '@</?((address)|(blockquote)|(center)|(del))@iu',
-	            '@</?((div)|(h[1-9])|(ins)|(isindex)|(p)|(pre))@iu',
-	            '@</?((dir)|(dl)|(dt)|(dd)|(li)|(menu)|(ol)|(ul))@iu',
-	            '@</?((table)|(th)|(td)|(caption))@iu',
-	            '@</?((form)|(button)|(fieldset)|(legend)|(input))@iu',
-	            '@</?((label)|(select)|(optgroup)|(option)|(textarea))@iu',
-	            '@</?((frameset)|(frame)|(iframe))@iu',
-	        ),
-	        array(
-	            ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-	            "\n\$0", "\n\$0", "\n\$0", "\n\$0", "\n\$0", "\n\$0",
-	            "\n\$0", "\n\$0",
-	        ),
-	        $str);
-	    return strip_tags($str);
+	public static function stripAllTags($str){
+		$str = preg_replace(
+			array(
+				// Remove invisible content
+				'@<head[^>]*?>.*?</head>@siu',
+				'@<style[^>]*?>.*?</style>@siu',
+				'@<script[^>]*?.*?</script>@siu',
+				'@<object[^>]*?.*?</object>@siu',
+				'@<embed[^>]*?.*?</embed>@siu',
+				'@<applet[^>]*?.*?</applet>@siu',
+				'@<noframes[^>]*?.*?</noframes>@siu',
+				'@<noscript[^>]*?.*?</noscript>@siu',
+				'@<noembed[^>]*?.*?</noembed>@siu',
+				// Add line breaks before and after blocks
+				'@</?((address)|(blockquote)|(center)|(del))@iu',
+				'@</?((div)|(h[1-9])|(ins)|(isindex)|(p)|(pre))@iu',
+				'@</?((dir)|(dl)|(dt)|(dd)|(li)|(menu)|(ol)|(ul))@iu',
+				'@</?((table)|(th)|(td)|(caption))@iu',
+				'@</?((form)|(button)|(fieldset)|(legend)|(input))@iu',
+				'@</?((label)|(select)|(optgroup)|(option)|(textarea))@iu',
+				'@</?((frameset)|(frame)|(iframe))@iu'
+			),
+			array(
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				"\n\$0", "\n\$0", "\n\$0", "\n\$0", "\n\$0", "\n\$0",
+				"\n\$0", "\n\$0"
+			),
+			$str);
+		return strip_tags($str);
 	}
 	
+	public static function url($url){
+		return strtolower(self::string($url, "-._~:/?#[]@!$&'()*+,;="));
+	}
+	
+	public static function stripUrlParameters($url, $excludedParams = array()){
+		$parsedUrl = @parse_url($url);
+		if(!empty($parsedUrl)){
+			if(!empty($parsedUrl['host'])){
+				$parsedUrl['host'] = mb_strtolower($parsedUrl['host'], 'UTF-8');
+			}
+			
+			if(!empty($parsedUrl['fragment'])){
+				$fragment = &$parsedUrl['fragment'];
+				if (substr($fragment, -1) == '#') {
+					$fragment = substr($fragment, 0, strlen($fragment) - 1);
+				}
+			}
+			
+			if(!empty($parsedUrl['query'])){
+				if(count($excludedParams)){
+					parse_str($parsedUrl['query'], $params);
+					$parsedUrl['query'] = http_build_query(array_diff_key($params, array_flip($excludedParams)));
+				} else {
+					unset($parsedUrl['query']);
+				}
+			}
+		}
+		
+		return Router::buildUrl($parsedUrl);
+	}
 	
 	//TRANSLITERATOR SETTINGS	
-	private function getTransliterator() {
-		if($this->transliterator === null && $this->useTransliterator) {
-			$this->transliterator = load()->getInstance('Utils\Transliterator');
+	private static function getTransliterator(){
+		if(self::$transliterator === null){
+			self::$transliterator = Transliterator::create();
 		} 
-		return $this->transliterator;
+		return self::$transliterator;
 	}
 	
 	public function setTransliterator($t) {
-		$this->transliterator = $t;
+		self::$transliterator = $t;
 	}
 }
 ?>
