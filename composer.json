@@ -1,23 +1,21 @@
 {
-  "name":              "touchbase/touchbase",
-  "description":       "Toucbase Framework",
-  "version":           "0.0.1-dev",
-  "keywords":          ["framework", "touchbase"],
-  "homepage":          "http://touchbase.io",
-  "license":           "MIT",
-  "authors": [
-    {
-      "name":     "William George",
-      "email":    "code@williamgeorge.co.uk",
-      "homepage": "http://williamgeorge.co.uk"
-    }
-  ],
-  "require":           {
-    "php":          ">=5.4.0",
-    "psr/log": "~1.0"
-  },
-  "autoload":          {
-    "psr-0":  { "Touchbase\\": "src/" }
-  },
-  "minimum-stability": "dev"
+	"name": "touchbase/touchbase",
+	"description": "Toucbase Framework",
+	"version": "0.0.1-dev",
+	"keywords": ["framework", "touchbase"],
+	"homepage": "http://touchbase.io",
+	"license": "MIT",
+	"authors": [{
+		"name": "William George",
+		"email": "code@williamgeorge.co.uk",
+		"homepage": "http://williamgeorge.co.uk"
+	}],
+	"require": {
+		"php": ">=5.4.0",
+		"psr/log": "~1.0"
+	},
+	"autoload": {
+		"psr-0": { "Touchbase\\": "src/" }
+	},
+	"minimum-stability": "dev"
 }
