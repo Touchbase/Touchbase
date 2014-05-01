@@ -308,6 +308,19 @@ class Router extends \Touchbase\Core\Object
 		}
 	}
 	
+	public static function buildUrl($parsedUrl){
+		$scheme = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] . ':' . (!strcasecmp($parsedUrl['scheme'], 'mailto') ? '' : '//') : ''; 
+		$host = isset($parsedUrl['host']) ? $parsedUrl['host'] : ''; 
+		$port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : ''; 
+		$user = isset($parsedUrl['user']) ? $parsedUrl['user'] : ''; 
+		$pass = isset($parsedUrl['pass']) ? ':' . $parsedUrl['pass']  : ''; 
+		$pass = ($user || $pass) ? "$pass@" : ''; 
+		$path = isset($parsedUrl['path']) ? $parsedUrl['path'] : ''; 
+		$query = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : ''; 
+		$fragment = isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : ''; 
+		return "$scheme$user$pass$host$port$path$query$fragment"; 
+	}
+	
 //Enviroment Settings	
 	
 	public static function isLive() {
