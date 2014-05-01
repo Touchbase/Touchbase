@@ -53,7 +53,7 @@ class Application extends Controller
 		\touchbase_run_time($this->_applicationNamespace);
 		
 		//Applications - NAMESPACE\Applications\APP
-		$firstUrlSegment = $request->urlSegment(0);
+		$firstUrlSegment = ucfirst(strtolower($request->urlSegment(0)));
 		$applicationClass = $this->_applicationNamespace.'\Applications\\'.$firstUrlSegment.'\\'.$firstUrlSegment."App";
 		if($firstUrlSegment && class_exists($applicationClass) && is_subclass_of($applicationClass, '\Touchbase\Control\Application')){
 			$request->shift(1); //TODO: Hate this function.
@@ -76,7 +76,9 @@ class Application extends Controller
 			do {
 				$shiftCount = count($urlSegments);
 				if($shiftCount > 0){
-					if($controller = $this->getApplicationController(implode('\\', $urlSegments))){
+					if($controller = $this->getApplicationController(implode('\\', array_map(function($item){
+						return ucfirst(strtolower($item));
+					}, $urlSegments)))){
 						$request->shift($shiftCount); //TODO: Hate this function.
 						break;
 					}
