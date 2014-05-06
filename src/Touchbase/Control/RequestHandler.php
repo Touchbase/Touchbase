@@ -54,10 +54,7 @@ class RequestHandler extends \Touchbase\Core\Object
 	
 	//Called on Each controller until request is handled
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){
-		//Set Request Into Var
-		$this->request = $request;
-		$this->response = $response;
-		
+
 		$handlerClass = "$this";
 		while($handlerClass != __CLASS__){
 			$getClassUrlHandler = get_class_vars($handlerClass);

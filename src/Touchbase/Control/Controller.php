@@ -56,15 +56,19 @@ class Controller extends RequestHandler
 	//Calls this controll and returns a HTTPResponse Object
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
 	
-		//If we had a redirection, cancel.
-		if($response->hasFinished()){
-			return $response;
-		}
-		
+		//Set Request/Response Into Var
+		$this->request = &$request;
+		$this->response = &$response;
+	
 		//Init Controllers
 		$this->init();
 		if(!$this->baseInitCalled){
 			user_error("init() method on class '$this' doesn't call Controller::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
+		}
+	
+		//If we had a redirection, cancel.
+		if($response->hasFinished()){
+			return $response;
 		}
 		
 		//Pass through to RequestHandler
