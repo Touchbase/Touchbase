@@ -106,6 +106,10 @@ class HTTPRequest extends HTTPHeaders
 		return $this;
 	}
 	
+	public function url(){
+		return $this->url;
+	}
+	
 	function match($pattern){
 		$params = array();
 		$shiftCount = 0;
