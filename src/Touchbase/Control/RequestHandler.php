@@ -191,8 +191,8 @@ class RequestHandler extends \Touchbase\Core\Object
 		$allowedActions = $this->getAllowedActions();
 		
 		if(is_array($allowedActions)){
-			$isKey = !is_numeric($action) && array_key_exists($action,	$allowedActions);
-			$isValue = in_array($action, $allowedActions);
+			$isKey = !is_numeric($action) && array_key_exists($action, $allowedActions);
+			$isValue = in_array($action, array_map('strtolower', $allowedActions));
 			
 			if($isKey || $isValue){
 				return true;

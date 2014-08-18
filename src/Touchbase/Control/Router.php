@@ -321,6 +321,15 @@ class Router extends \Touchbase\Core\Object
 		return "$scheme$user$pass$host$port$path$query$fragment"; 
 	}
 	
+	/**
+	 *	Build Folder Path
+	 *	@return (string) - /example/file/path/
+	 */
+	public static function buildUrlPath(){
+		$folders = func_get_args();
+		return str_replace(($DS = '/').$DS, $DS, implode($DS, $folders).$DS);
+	}
+	
 //Enviroment Settings	
 	
 	public static function isLive() {
