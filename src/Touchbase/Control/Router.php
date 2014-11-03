@@ -75,7 +75,9 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		// Pass back to the webserver for files that exist
-		if(php_sapi_name() == 'cli-server' && file_exists(BASE_PATH.'public_html/'.$url) && is_file(BASE_PATH.'public_html/'.$url)){
+		if(php_sapi_name() == 'cli-server' && file_exists(BASE_PATH.'public_html'.$url) && is_file(BASE_PATH.'public_html'.$url)){
+			//return false not working (PHP5.5.14), read file instead.
+			readfile(BASE_PATH.'public_html'.$url);
 			return false;
 		}
 		

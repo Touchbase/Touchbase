@@ -109,8 +109,8 @@ class Controller extends RequestHandler
 	 *	Helper function
 	 *	@return (\Touchbase\View\Template)
 	 */
-	public function template(/*[, array $tempateVars, ...]*/){
-		return \Touchbase\View\Template::create(func_get_arg(0));
+	public function template(array $templateArgs = NULL){
+		return \Touchbase\View\Template::create($templateArgs);
 	}
 }
 

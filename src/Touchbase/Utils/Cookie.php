@@ -41,9 +41,9 @@ class Cookie extends \Touchbase\Core\Object {
 	const LIFETIME = 1893456000; // 2030-01-01 00:00:00
 
 	public static function set($name, $value, $expiry = self::ONE_YEAR, $path = '/', $domain = null, $httponly = false){
-		if(headers_sent()) return;
+		if(headers_sent()) return false;
 	
-		if(empty($name)) return;
+		if(empty($name)) return false;
 		
 		if(empty($value)){
 			$expiry = -1;
@@ -55,7 +55,7 @@ class Cookie extends \Touchbase\Core\Object {
 			}
 		}
 		
-		if(empty($domain)){
+		if(empty($domain) && strtolower($_SERVER['SERVER_NAME']) != 'localhost'){
 			$domain = '.' . preg_replace('#^www\.#', '', strtolower($_SERVER['SERVER_NAME']));
 		}
 		

@@ -96,7 +96,7 @@ abstract class BaseProvider implements AuthInterface
 	 *	@return AuthedUserInterface
 	 */
 	public function retrieveUserFromCookie(){
-		if(!Cookie::exists(self::LOGIN_COOKIE_KEY)) return null;
+		if(!Cookie::exists(self::LOGIN_COOKIE_KEY)) return NULL;
 		
 		try{
 			list($username, $data) = explode('|', Encryption::decrypt(base64_decode(Cookie::get(self::LOGIN_COOKIE_KEY))), 2);
@@ -106,10 +106,10 @@ abstract class BaseProvider implements AuthInterface
 			$user = new StdAuthedUser($id, $username, $userInfo);
 			
 			if($security !== $this->cookieHash($user)){
-				$user = null;
+				$user = NULL;
 			}
 		} catch(\Exception $e){
-			$user = null;
+			$user = NULL;
 		}
 		
 		return $user;

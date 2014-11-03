@@ -31,6 +31,7 @@ namespace Touchbase\Security\Auth\Provider;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Utils\Cookie;
 use Touchbase\Security\AuthInterface;
 use Touchbase\Security\Auth\AuthedUserInterface;
 use Touchbase\Control\Session\Session;
@@ -59,7 +60,9 @@ class CookieProvider extends BaseProvider
 	 *	@return BOOL
 	 */
 	public function logout(){
-		
+		if(!Cookie::delete(self::LOGIN_COOKIE_KEY)){
+			\pre_r("Failed to delete cookie");
+		}
 	}
 	
 	/**

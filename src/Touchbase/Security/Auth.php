@@ -80,6 +80,7 @@ class Auth
 		if(!$currentUser){
 			$currentUser = self::shared()->retrieveUserFromCookie();
 		}
+		
 		return $currentUser;
 	}
 
@@ -97,10 +98,12 @@ class Auth
 			Session::set(self::AUTH_SESSION_KEY, $user);
 			return true;
 		}
+		
 		return false;
 	}
 	
 	public static function logout(){
+		Session::delete(self::AUTH_SESSION_KEY);
 		return self::shared()->logout();
 	}
 }
