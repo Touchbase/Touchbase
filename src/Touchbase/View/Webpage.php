@@ -30,6 +30,7 @@
 namespace Touchbase\View;
 
 use Touchbase\Utils\SystemDetection;
+use Touchbase\Filesystem\File;
 
 class Webpage extends \Touchbase\Core\Object
 {
@@ -45,16 +46,29 @@ class Webpage extends \Touchbase\Core\Object
 	public function __construct(){
 		//Add Requirments
 		$this->assets = new Assets($this);
+		$this->setLayout($this->layout);
 	}
 	
 	public function setBody($body){
 		$this->body = Template::create(array(
 			"BODY" => $body
-		))->renderWith(APPLICATION_PATH."Templates/".$this->layout);
+		))->renderWith($this->layout);
 	}
 	
 	public function setLayout($layout){
-		$this->layout = $layout;
+		$ext = pathinfo($layout)['extension'];
+		$filename = $layout.(empty($ext)?".tpl.php":"");
+		
+		$layoutFile = File::create(APPLICATION_TEMPLATES.$filename);
+		if(!$layoutFile->exists()){
+			$layoutFile = File::create(BASE_TEMPLATES.$filename);
+			
+			if(!$layoutFile->exists()){
+				throw new \Exception("Layout Template Doesn't Exist.");
+			}
+		}
+		
+		$this->layout = $layoutFile->path;
 	}
 	
 	/**

@@ -148,7 +148,8 @@ class Router extends \Touchbase\Core\Object
 				"gif" => "image/gif",
 				"svg" => "image/svg+xml",
 				"apk" => "application/vnd.android.package-archive",
-				"ipa" => "application/octet-stream"
+				"ipa" => "application/octet-stream",
+				"htc" => "text/x-component"
 			];
 			
 			
