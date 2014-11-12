@@ -147,8 +147,8 @@ class Filesystem extends \Touchbase\Core\Object {
 	 *	Build Folder Path
 	 *	@return (string) - /example/file/path/
 	 */
-	public function buildFolderPath(){
+	public static function buildFolderPath(){
 		$folders = func_get_args();
-		return str_replace(($DS = DIRECTORY_SEPARATOR).$DS, $DS, implode($DS, $folders)).$DS;
+		return str_replace(($DS = DIRECTORY_SEPARATOR).$DS, $DS, implode($DS, $folders).$DS);
 	}
 }

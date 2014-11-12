@@ -131,7 +131,7 @@ class HtmlBuilder extends \Touchbase\Core\Object
 	}
 	
 	public static function make_r(){
-		return self::make(func_get_args())->output();
+		return call_user_func_array('SELF::make', func_get_args())->output();
 	}
 	
 	public function output($escape = false){
