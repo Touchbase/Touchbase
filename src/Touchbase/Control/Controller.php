@@ -35,17 +35,18 @@ class Controller extends RequestHandler
 	
 	protected $controllerStack = array();
 	
-	protected $urlHandlers = array(
-		'$Action//$ID/$OtherId'
-	);	
+	protected $urlHandlers = [
+		'$Action/$ID/$OtherId'
+	];
 	
 	//Default Action
 	protected $defaultAction = 'handleAction';
 	
 	//Allowed Actions
-	protected $allowedActions = array(
-		'handleAction'
-	);
+	protected $allowedActions = [
+		'handleAction',
+		'index'
+	];
 	
 	//A Helper function to check if all Inits are called on child classes.
 	protected $baseInitCalled = false;
@@ -85,11 +86,10 @@ class Controller extends RequestHandler
 	
 	//Proesses $Action and call the corosponding method if exists.
 	protected function handleAction(HTTPRequest $request){
-		$action = str_replace("-", "_", $this->Action);
+		$action = !empty($this->Action)?str_replace("-", "_", $this->Action):'index';
 		
-		if(empty($action)){
-			$action = 'index';
-		} else if(!$this->hasAction($action)){
+		//Check the action Exists
+		if(!$this->hasAction($action)){
 			$this->throwHTTPError(404, "The action '".$action."' does not exist in class $this");
 		}
 		
@@ -97,11 +97,8 @@ class Controller extends RequestHandler
 		if(!$this->checkAccessAction($action) || in_array(strtolower($action), array('run','init'))){
 			$this->throwHTTPError(403, "The action '".$action."' isn't allowed on class $this");
 		}
-		
-		//If Method Exists, Call It.
-		if($this->hasMethod($action)){
-			return $this->{$action}($request);
-		}
+
+		return $this->{$action}($request);
 	}
 	
 	/**

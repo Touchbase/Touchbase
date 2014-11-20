@@ -28,8 +28,10 @@
  */
 namespace {
 	function pre_r(){
+		$traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[0];
+		$caller = basename($traces['file']).':'.$traces['line'];
 		foreach(func_get_args() as $print){
-			print "<pre>".print_r($print, true)."</pre>";
+			print "<pre>[$caller] ".htmlentities(print_r($print, true))."</pre>";
 		}
 	}
 	

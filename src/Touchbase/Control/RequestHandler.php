@@ -195,7 +195,7 @@ class RequestHandler extends \Touchbase\Core\Object
 			$isValue = in_array($action, array_map('strtolower', $allowedActions));
 			
 			if($isKey || $isValue){
-				return true;
+				return $this->hasMethod($action);
 			}
 		} else {
 			debug()->setColor("red")->write($action." led here");
