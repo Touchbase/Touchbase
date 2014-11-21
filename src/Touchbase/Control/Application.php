@@ -43,6 +43,12 @@ class Application extends Controller
 	 *	@return self
 	 */
 	public function init(){
+		parent::init();
+		
+		$reflector = new \ReflectionClass($this);
+		$this->_applicationNamespace = $reflector->getNamespaceName();
+		\touchbase_run_time($this->_applicationNamespace);
+		
 		return $this;
 	}
 	
@@ -50,57 +56,19 @@ class Application extends Controller
 		//Set Request/Response Into Var
 		$this->request = &$request;
 		
-		$application = $controller = NULL;
-		
-		$reflector = new \ReflectionClass($this);
-		$this->_applicationNamespace = $reflector->getNamespaceName();
-		
-		\touchbase_run_time($this->_applicationNamespace);
-		
-		//Applications - NAMESPACE\Applications\APP
-		$firstUrlSegment = ucfirst(strtolower($request->urlSegment(0)));
-		$applicationClass = $this->_applicationNamespace.'\Applications\\'.$firstUrlSegment.'\\'.$firstUrlSegment."App";
-		if($firstUrlSegment && class_exists($applicationClass) && is_subclass_of($applicationClass, '\Touchbase\Control\Application')){
-			$request->shift(1); //TODO: Hate this function.
-			$application = $applicationClass::create();
-		} else {
-			$application = $this->defaultApplication();
+		if(!$this->baseInitCalled){
+			user_error("init() method on class '$this' doesn't call Application::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
 		}
-
-		if($application){
+					
+		if($application = $this->handleApplication()){
 			
 			$application ->setConfig($this->config())
 						 ->init()
 						 ->handleRequest($request, $response);
-						 
-			//\pre_r("Application:", $response);
+			
 		} else {
-			
-			//Controllers - APPLICATION\Controllers\PathTo\Controller
-			$shiftCount = 0;
-			$urlSegments = $request->urlSegments();
-			do {
-				$shiftCount = count($urlSegments);
-				if($shiftCount > 0){
-					if($controller = $this->getApplicationController(implode('\\', array_map(function($item){
-						return ucfirst(strtolower($item));
-					}, $urlSegments)))){
-						$request->shift($shiftCount); //TODO: Hate this function.
-						break;
-					}
-				}
-			} while(array_pop($urlSegments));
-			
-			if(!$controller && !$controller = $this->defaultController()){
-				//No Default Controller, try AppnameController
-				
-				//TODO: Whats Quicker?
-				//\pre_r(basename(dirname($reflector->getFileName())));
-				//\pre_r(basename(str_replace("\\",DIRECTORY_SEPARATOR, $this->_applicationNamespace)));
-				$controller = $this->getApplicationController(basename(str_replace("\\", DIRECTORY_SEPARATOR, $this->_applicationNamespace)));
-			}
-						
-			if($controller){
+									
+			if($controller = $this->handleController()){
 				define("APPLICATION_PATH", PROJECT_PATH.str_replace("\\", DIRECTORY_SEPARATOR, $this->_applicationNamespace).DIRECTORY_SEPARATOR);
 					
 				$assetConfig = $this->config()->get("assets");
@@ -114,7 +82,7 @@ class Application extends Controller
 				define("BASE_IMAGES", SITE_ROOT.Router::buildUrlPath($assetPath, $assetImageDir));
 				define("BASE_STYLES", SITE_ROOT.Router::buildUrlPath($assetPath, $assetStyleheetDir));
 				define("BASE_SCRIPTS", SITE_ROOT.Router::buildUrlPath($assetPath, $assetJavascriptDir));
-				define("BASE_TEMPLATES", Folder::buildFolderPath(PROJECT_PATH, $this->config()->get("project")->get("namespace", ""), $assetTemplatesDir));
+				if(!defined("BASE_TEMPLATES")) define("BASE_TEMPLATES", Folder::buildFolderPath(PROJECT_PATH, $this->config()->get("project")->get("namespace", ""), $assetTemplatesDir));
 						
 				$assetPath = substr(md5(str_replace("\\", "/", $this->_applicationNamespace)."/".$assetPath), 0, 6)."/";
 				define("APPLICATION_ASSETS", SITE_ROOT.Router::buildUrlPath($assetPath));
@@ -126,12 +94,70 @@ class Application extends Controller
 				$controller	->setConfig($this->config())
 							->handleRequest($request, $response);
 			}
-			//\pre_r("Controller:",$response);
 		}
-		
-		//return parent::handleRequest($request, $response);
 	}
 	
+	/**
+	 *	Handle Application
+	 *	Determines the application that should be loaded if available.
+	 *	@return \Touchbase\Control\Application
+	 */
+	protected function handleApplication(){
+		$application = NULL;
+		
+		//Applications - NAMESPACE\Applications\APP
+		$firstUrlSegment = ucfirst(strtolower($this->request->urlSegment(0)));
+		$applicationClass = $this->_applicationNamespace.'\Applications\\'.$firstUrlSegment.'\\'.$firstUrlSegment."App";
+		if($firstUrlSegment && class_exists($applicationClass) && is_subclass_of($applicationClass, '\Touchbase\Control\Application')){
+			$this->request->shift(1); //TODO: Hate this function.
+			$application = $applicationClass::create();
+		} else {
+			$application = $this->defaultApplication();
+		}
+		
+		return $application;
+	}
+	
+	/**
+	 *	Handle Controller
+	 *	Determines the controller that should be loaded
+	 *	@retunrn \Touchbase\Control\Controller
+	 */
+	protected function handleController(){
+		$controller = NULL;
+		
+		//Controllers - APPLICATION\Controllers\PathTo\Controller
+		$shiftCount = 0;
+		$urlSegments = $this->request->urlSegments();
+		do {
+			$shiftCount = count($urlSegments);
+			if($shiftCount > 0){
+				if($controller = $this->getApplicationController(implode('\\', array_map(function($item){
+					return ucfirst(strtolower($item));
+				}, $urlSegments)))){
+					$request->shift($shiftCount); //TODO: Hate this function.
+					break;
+				}
+			}
+		} while(array_pop($urlSegments));
+		
+		if(!$controller && !$controller = $this->defaultController()){
+			//No Default Controller, try AppnameController
+			
+			//TODO: Whats Quicker?
+			//\pre_r(basename(dirname($reflector->getFileName())));
+			//\pre_r(basename(str_replace("\\",DIRECTORY_SEPARATOR, $this->_applicationNamespace)));
+			$controller = $this->getApplicationController(basename(str_replace("\\", DIRECTORY_SEPARATOR, $this->_applicationNamespace)));
+		}
+		
+		return $controller;
+	}
+	
+	/**
+	 *	Get Application Controller
+	 *	This function will attempt to load a controller with the same name as the application.
+	 *	@return \Touchbase\Control\Controller
+	 */
 	private function getApplicationController($controllerName){
 		$controllerClass = $this->_applicationNamespace.'\Controllers\\'.$controllerName."Controller";
 		if(class_exists($controllerClass) && is_subclass_of($controllerClass, '\Touchbase\Control\Controller')){
@@ -139,10 +165,22 @@ class Application extends Controller
 		}
 	}
 	
+	/**
+	 *	Default Application
+	 *	If no application is defined in the URL - This application will load
+	 *	NB. this should be overridden in the parent class
+	 *	@return \Touchbase\Control\Application 
+	 */
 	public function defaultApplication(){
 		return NULL;
 	}
 	
+	/**
+	 *	Default Controller
+	 *	If no controller is defined in the URL - This application will load
+	 *	NB. this should be overridden in the parent class
+	 *	@return \Touchbase\Control\Controller 
+	 */
 	public function defaultController(){
 		return NULL;
 	}
