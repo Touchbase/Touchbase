@@ -55,7 +55,7 @@ class Assets extends \Touchbase\Core\Object
 		$this->includeMeta('HandheldFriendly', 'true');
 		$this->includeMeta('MobileOptimized', '320');
 		$this->includeMeta(HtmlBuilder::make('meta')->attr('http-equiv', 'cleartype')->attr('content', 'on')->output());
-		$this->includeMeta('viewport', 'user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimal-ui');
+		$this->includeMeta('viewport', 'user-scalable=no, initial-scale=1.0, maximum-scale=1.0');
 		$this->includeMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
 		$this->includeMeta('apple-mobile-web-app-capable', 'yes');
 		
@@ -143,7 +143,7 @@ class Assets extends \Touchbase\Core\Object
 	public function includeStyle($file, $media = null){
 		if(is_string($file)){
 			if(!$this->isSnipit('css', $file)){
-				$file = Router::relativeUrl($file);
+				//$file = Router::relativeUrl($file);
 			}
 			
 			if(!empty($media)){
@@ -193,7 +193,7 @@ class Assets extends \Touchbase\Core\Object
 	public function includeJs($file, $head = false){
 		if(is_string($file)){
 			if(!$this->isSnipit('js', $file)){
-				$file = Router::isRelativeUrl($file);
+				//$file = Router::absoluteUrl($file);
 			}
 
 			if($head){
