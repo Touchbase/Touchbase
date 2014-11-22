@@ -40,7 +40,12 @@ class HTTPHeaders extends \Touchbase\Core\Object
 	
 	//Header Actions	
 	public function getAllHeaders() {
-		return $this->manipulateHeaders();
+		$headers = [];
+		foreach($this->manipulateHeaders() as $header => $value) {
+			$headers[] = $header.": ".$value;
+		}
+		
+		return $headers;
 	}
 	
 	public function getHeader($header) {

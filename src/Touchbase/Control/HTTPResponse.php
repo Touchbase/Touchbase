@@ -141,9 +141,8 @@ class HTTPResponse extends HTTPHeaders
 
 			if(!headers_sent()){
 				header($_SERVER['SERVER_PROTOCOL']." ".$this->statusCode." ".$this->sanitize($this->statusDescription));
-				foreach($this->headers as $header => $value) {
-					//debug()->write($header, $value);
-					header($header.": ".$value, true, $this->statusCode);
+				foreach($this->getAllHeaders() as $header) {
+					header($header, true, $this->statusCode);
 				}
 			}
 						

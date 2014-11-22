@@ -103,7 +103,7 @@ class Auth
 	}
 	
 	public static function logout(){
-		Session::delete(self::AUTH_SESSION_KEY);
+		Session::destroy();
 		return self::shared()->logout();
 	}
 }

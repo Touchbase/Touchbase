@@ -75,7 +75,7 @@ abstract class BaseProvider implements AuthInterface
 		$encryptedData = Encryption::encrypt(implode("|",[
 			$user->ID(),
 			$this->cookieHash($user),
-			json_encode($user->userInfo($user))
+			json_encode($user->userInfo())
 		]));
 		
 		$cookieData = base64_encode(Encryption::encrypt(implode("|",[
