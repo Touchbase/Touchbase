@@ -64,7 +64,7 @@ class Application extends Controller
 			
 			$application ->setConfig($this->config())
 						 ->init()
-						 ->handleRequest($request, $response);
+						 ->handleRequest($this->request, $response);
 			
 		} else {
 									
@@ -92,7 +92,7 @@ class Application extends Controller
 				define("APPLICATION_TEMPLATES", Folder::buildFolderPath(APPLICATION_PATH, $assetTemplatesDir));
 				
 				$controller	->setConfig($this->config())
-							->handleRequest($request, $response);
+							->handleRequest($this->request, $response);
 			}
 		}
 	}
@@ -135,7 +135,7 @@ class Application extends Controller
 				if($controller = $this->getApplicationController(implode('\\', array_map(function($item){
 					return ucfirst(strtolower($item));
 				}, $urlSegments)))){
-					$request->shift($shiftCount); //TODO: Hate this function.
+					$this->request->shift($shiftCount); //TODO: Hate this function.
 					break;
 				}
 			}
