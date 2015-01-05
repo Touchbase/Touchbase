@@ -34,10 +34,23 @@ class IniConfigProvider extends \Touchbase\Core\Object
 
 	protected $_iniFileData = array();
 	
+	/**
+	 * Get Configuration
+	 * 
+	 * @access public
+	 * @return void
+	 */
 	public function getConfiguration(){
 		return \Touchbase\Data\Store::create()->fromArray($this->_iniFileData);
 	}
 	
+	/**
+	 * Parse Ini File
+	 * 
+	 * @access public
+	 * @param \Touchbase\Filesystem\File $file
+	 * @return void
+	 */
 	public function parseIniFile(\Touchbase\Filesystem\File $file){
 		if(!$file->exists()){
 			throw new \Exception("Config file '$file->path' could not be found");

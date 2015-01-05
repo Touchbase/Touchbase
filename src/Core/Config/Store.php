@@ -33,11 +33,26 @@ class Store extends \Touchbase\Data\Store
 {
 	const CONFIG_KEY = 'touchbase.key.config';
 	
+	/**
+	 * Add Config
+	 * 
+	 * @access public
+	 * @param \Touchbase\Data\Store $configData
+	 * @return VOID
+	 */
 	public function addConfig(\Touchbase\Data\Store $configData){
 		$this->_merge($configData);
 		return $this;
 	}
 	 
+	/**
+	 * _Merge
+	 * 
+	 * @access public
+	 * @param \Touchbase\Data\Store $replacements
+	 * @param bool $recursive (default: true)
+	 * @return void
+	 */
 	public function _merge(\Touchbase\Data\Store $replacements, $recursive = true){
 		foreach($replacements as $group => $data){
 			if(!$this->exists($group)){

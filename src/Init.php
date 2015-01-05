@@ -88,7 +88,7 @@ class Init
 		
 		//Work out touchbase path
 		if($this->_autoLoader instanceof \Composer\Autoload\ClassLoader){
-			$prefixes = $this->_autoLoader->getPrefixes();
+			$prefixes = $this->_autoLoader->getPrefixesPsr4();
 			foreach($prefixes as $prefix => $path){
 				if(rtrim($prefix, "\\") == __NAMESPACE__){
 					$nsBasePath = realpath($path[0]) . DIRECTORY_SEPARATOR;

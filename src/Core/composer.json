@@ -1,8 +1,8 @@
 {
-	"name": "touchbase/touchbase",
-	"description": "Toucbase Framework",
+	"name": "touchbase/touchbase-core",
+	"description": "Touchbase Core",
 	"version": "0.0.1-dev",
-	"keywords": ["framework", "touchbase"],
+	"keywords": ["component", "core"],
 	"homepage": "http://touchbase.io",
 	"license": "MIT",
 	"authors": [{
@@ -12,10 +12,10 @@
 	}],
 	"require": {
 		"php": ">=5.4.0",
-		"psr/log": "~1.0"
+		"touchbase/data": "*"
 	},
 	"autoload": {
-		"psr-4": { "Touchbase\\": "src/" }
+		"psr-4": { "Touchbase\\Core\\": "" }
 	},
 	"minimum-stability": "dev"
 }

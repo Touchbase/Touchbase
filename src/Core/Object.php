@@ -69,6 +69,10 @@ abstract class Object
 		return get_parent_class($this);
 	}
 	
+	/**
+	 *	Get Subclasses
+	 *	@return (Array) - Returns a list of inherited classes
+	 */
 	function getSubclasses(){
 	    $classes = array();
 	    foreach(get_declared_classes() as $className){
@@ -80,6 +84,10 @@ abstract class Object
 	    return $classes;
 	}
 	
+	/**
+	 *	Get Caller Method
+	 *	@return (string) - Name of the function calling this method
+	 */
 	function getCallerMethod(){ 
 	    $traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS); 
 	
@@ -90,19 +98,35 @@ abstract class Object
 	    return null; 
 	}
 	
+	/**
+	 *	Is A
+	 *	@return BOOL
+	 */
 	public function is_a($class){
 		return $this instanceof $class;
 	}
 	
+	/**
+	 *	Has Method
+	 *	@return BOOL
+	 */
 	public function hasMethod($method){
 		return method_exists($this, $method);
 	}
 	
+	/**
+	 *	Has Property
+	 *	@return BOOL
+	 */
 	public function hasProperty($property){
 		return property_exists($this, $property);
 	}
 	
-	protected function _stop($status = 0){
+	/**
+	 *	Halt
+	 *	@return VOID
+	 */
+	protected function halt($status = 0){
 		exit($status);
 	}
 
