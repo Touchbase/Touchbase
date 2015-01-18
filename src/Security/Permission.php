@@ -24,7 +24,7 @@
  *  @author William George
  *  @package Touchbase
  *  @category Security
- *  @date 12/03/2014
+ *  @date 07/01/2015
  */
  
 namespace Touchbase\Security;
@@ -32,22 +32,19 @@ namespace Touchbase\Security;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Data\StaticStore;
-use Touchbase\Security\AuthInterface;
-use Touchbase\Security\Auth\AuthedUserInterface;
-use Touchbase\Control\Session;
+use Touchbase\Security\PermissionInterface;
 use Touchbase\Core\Config\Store as ConfigStore;
 
-class Auth 
+class Permission
 {
-	const AUTH_KEY = 'touchbase.key.auth';
-	const AUTH_SESSION_KEY = 'touchbase.key.auth.session';
+	const PERMISSION_KEY = 'touchbase.key.encryption';
 	
 	/** 
 	 *	Shared
-	 *	@return \Touchbase\Security\Auth
+	 *	@return \Touchbase\Security\Permission
 	 */
 	public static function shared(){
-		$instance = StaticStore::shared()->get(self::AUTH_KEY, false);
+		$instance = StaticStore::shared()->get(self::PERMISSION_KEY, false);
 		if(!$instance || is_null($instance)){
 			$config = StaticStore::shared()->get(ConfigStore::CONFIG_KEY, false);
 			
@@ -57,53 +54,21 @@ class Auth
 			}
 			
 			
-			$instanceName = $config->get("auth")->get("provider", "\Touchbase\Security\Auth\Provider\CookieProvider");
+			$instanceName = $config->get("permission")->get("provider", "\Touchbase\Security\Permission\Provider\AccessAllAreasProvider");
 			$instance = new $instanceName;
 			
 			//Validation 
-			if(!$instance instanceof AuthInterface){
-				throw new \InvalidArgumentException("Auth provider must be an instance of \Touchbase\Security\AuthInterface");
+			if(!$instance instanceof PermissionInterface){
+				throw new \InvalidArgumentException("Permission provider must be an instance of \Touchbase\Security\PermissionInterface");
 			}
 			
 			//Configure
 			$instance->configure($config);
 			
 			//Save
-			StaticStore::shared()->set(self::AUTH_KEY, $instance);
+			StaticStore::shared()->set(self::PERMISSION_KEY, $instance);
 		}
 		
 		return $instance;
-	}
-	
-	public static function currentUser(){
-		$currentUser = Session::get(self::AUTH_SESSION_KEY);
-		if(!$currentUser){
-			$currentUser = self::shared()->retrieveUserFromCookie();
-		}
-		
-		return $currentUser;
-	}
-
-	public static function isAuthenticated(){
-		$user = self::currentUser();
-		if($user !== null){
-			return true;
-		}
-	
-		return false;
-	}
-	
-	public static function authenticateUser(AuthedUserInterface $user){
-		if(self::shared()->storeUser($user)){
-			Session::set(self::AUTH_SESSION_KEY, $user);
-			return true;
-		}
-		
-		return false;
-	}
-	
-	public static function logout(){
-		Session::destroy();
-		return self::shared()->logout();
 	}
 }
