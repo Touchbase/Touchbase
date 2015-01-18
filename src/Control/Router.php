@@ -31,12 +31,20 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Filesystem\File;
 use Touchbase\Core\Config\ConfigTrait;
+
+use Touchbase\Security\Auth;
+use Touchbase\Security\Permission;
+use Touchbase\Control\Session;
+use Touchbase\Control\HTTPRequest;
 use Touchbase\Control\Exception\HTTPResponseException;
 
 class Router extends \Touchbase\Core\Object
 {
-	use ConfigTrait;
+	use ConfigTrait {
+		setConfig as traitSetConfig;
+	}
 
 	private $urlRules = array(10 => array(
 		'Security//$Action/$ID/$OtherID' => 'Security',
@@ -45,14 +53,9 @@ class Router extends \Touchbase\Core\Object
 		'admin//$action/$ID/$OtherID' => '->admin/security'
 	));
 	
-	private $urlParams = array();
-	private $testingServers = array();
-	private $developmentServers = array();
-	protected $enviromentMode; 
-	
-	public function __construct($enviromentMode = 'live'){
-		$this->enviromentMode = $enviromentMode;
-	}
+	private $urlParams =[];
+	private static $developmentServers = [];
+	private static $testingServers = [];
 	
 	public function addRules($priority, $rules) {
 		$this->urlRules[$priority] = isset($this->urlRules[$priority]) ? array_merge($rules, (array)$this->urlRules[$priority]) : $rules;
@@ -86,7 +89,7 @@ class Router extends \Touchbase\Core\Object
 			$url = substr($url, strlen(BASE_PATH));
 		}
 		
-		$request = \Touchbase\Control\HTTPRequest::create($requestMethod, $url, $_GET);
+		$request = HTTPRequest::create($requestMethod, $url, $_GET);
 		
 		if(!$this->handleRequest($request, $response)){
 			//Get Dispatchable
@@ -134,12 +137,20 @@ class Router extends \Touchbase\Core\Object
 		krsort($this->urlRules);
 		
 		//2) Does the real path exist?
-		define("SITE_THEME_IMAGES", SITE_ROOT.$this->config()->get("assets")->get("assets","assets/").$this->config()->get("assets")->get("images","images/"));
+		define("SITE_THEME_IMAGES", Router::buildUrlPath(
+			SITE_ROOT,
+			$this->config()->get("assets")->get("assets","assets/"),
+			$this->config()->get("assets")->get("images","images/")
+		));
 		
 		//3) Have we mapped a path?
 		$assetFilePath = $this->config()->get("assets")->get("asset_map")->get($request->urlSegment(), "");
 		if($assetFilePath){
-			$assetFile = \Touchbase\Filesystem\File::create(PROJECT_PATH.$assetFilePath.implode("/", $request->urlSegments(1)).'.'.$request->extension());
+			$assetFile = File::create([
+				PROJECT_PATH,
+				$assetFilePath,
+				implode("/", $request->urlSegments(1)).'.'.$request->extension()
+			]);
 			$supportedAssets = [
 				"css" => "text/css; charset=utf-8",
 				"js" => "text/javascript; charset=utf-8",
@@ -229,6 +240,17 @@ class Router extends \Touchbase\Core\Object
 		}
 	}
 
+//CONFIG OVERLOAD
+
+	public function setConfig(\Touchbase\Core\Config\Store $config){
+	
+		$servers = $config->get("servers");
+		static::$developmentServers = $servers->get("development", []);
+		static::$developmentServers = $servers->get("testing", []);
+		
+		return $this->traitSetConfig($config);
+	}
+
 //URL SETTINGS
 	
 	public static function absoluteURL($url, $relativeToSiteBase = false) {
@@ -311,6 +333,10 @@ class Router extends \Touchbase\Core\Object
 		}
 	}
 	
+	/**
+	 *	Build Url
+	 *	@return (string)
+	 */
 	public static function buildUrl($parsedUrl){
 		$scheme = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] . ':' . (!strcasecmp($parsedUrl['scheme'], 'mailto') ? '' : '//') : ''; 
 		$host = isset($parsedUrl['host']) ? $parsedUrl['host'] : ''; 
@@ -329,79 +355,41 @@ class Router extends \Touchbase\Core\Object
 	 *	@return (string) - /example/file/path/
 	 */
 	public static function buildUrlPath(){
-		$folders = func_get_args();
-		return str_replace(($DS = '/').$DS, $DS, implode($DS, $folders).$DS);
+		$folders = func_get_args();		
+		return implode(($DS = '/'), array_map(function($component){
+			return trim($component, " \t\n\r\0\x0B/");
+		}, $folders)).$DS;
 	}
 	
 //Enviroment Settings	
 	
 	public static function isLive() {
-		return true;
-		return !($this->isDev() || $this->isTest());
+		return !(static::isDev() || static::isTest());
 	}
 	public static function isDev(){
-		return $this->checkDevEnviroment();
+		
+		if(!Auth::isAuthenticated() || !Auth::currentUser()->can("runDiagnosticTools")){
+			return false;
+		}
+		
+		if(isset($_GET['isDev'])){
+			SESSION::set("isDevelopment", $_GET['isDev']);
+		}
+		
+		return SESSION::get("isDevelopment") 
+			|| TOUCHBASE_ENV == 'dev'
+			|| in_array(@$_SERVER['HTTP_HOST'], static::$developmentServers);
 	}
 	public static function isTest(){
-		return $this->checkTestEnviroment();
-	}
-
-	private function isDevEnviroment($dontTouchDB = false) {
-		// This variable is used to supress repetitions of the isDev security message below.
-		static $firstTimeCheckingGetVar = true;
-
-		$result = false;
-
-		if(isset($_SESSION['isDev']) && $_SESSION['isDev']) $result = true;
-		if(isset($this->enviromentMode) && $this->enviromentMode == 'dev') $result = true;
-
-		// Use ?isDev=1 to get development access on the live server
-		if(!$dontTouchDB && !$result && isset($_GET['isDev'])) {
-			if(Security::database_is_ready()) {
-				if($firstTimeCheckingGetVar && !Permission::check('ADMIN')){
-					BasicAuth::requireLogin("Touchbase developer access. Use your CMS login", "ADMIN");
-				}
-				$_SESSION['isDev'] = $_GET['isDev'];
-				$firstTimeCheckingGetVar = false;
-				$result = $_GET['isDev'];
-			} else {
-				if($firstTimeCheckingGetVar && DB::connection_attempted()) {
-	 				echo "<p style=\"padding: 3px; margin: 3px; background-color: orange; 
-						color: white; font-weight: bold\">Sorry, you can't use ?isDev=1 until your
-						Member and Group tables database are available.  Perhaps your database
-						connection is failing?</p>";
-					$firstTimeCheckingGetVar = false;
-				}
-			}
-		}
-
-		return $result;
-	}
-	
-	private function isTestEnviroment() {
-		// Use ?isTest=1 to get test access on the live server, or explicitly set your environment
-		if(isset($_GET['isTest'])) {
-			if(Security::database_is_ready()) {
-				load()->getInstance('Security\BasicAuth')->requireLogin("Touchbase testing access. Use your CMS login", "ADMIN");
-				$_SESSION['isTest'] = $_GET['isTest'];
-			} else {
-				return true;
-			}
-		}
-		if($this->isDev()) return false;
 		
-		if(isset($this->enviromentMode)) {
-			return $this->enviromentMode == 'test';
+		if(isset($_GET['isTest'])){
+			SESSION::set("isTest", $_GET['isTest']);
 		}
-		
-		// Check if we are running on one of the test servers
-		if(isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], $this->testingServers))  {
-			return true;
-		}
-		
-		return false;
-	}
-	
-
-	
+				
+		return !static::isDev() && (
+			SESSION::get("isTest")
+			|| TOUCHBASE_ENV == 'test'
+			|| in_array(@$_SERVER['HTTP_HOST'], static::$testingServers)
+		);
+	}	
 }

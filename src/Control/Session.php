@@ -27,11 +27,12 @@
  *  @date 12/03/2014
  */
  
-namespace Touchbase\Control\Session;
+namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Data\StaticStore;
+use Touchbase\Control\Session\SessionInterface;
 use Touchbase\Core\Config\Store as ConfigStore;
 
 class Session 

@@ -49,30 +49,43 @@ class Webpage extends \Touchbase\Core\Object
 		$this->setLayout($this->layout);
 	}
 	
+	/**
+	 * 	Set Body
+	 * 
+	 * 	@access public
+	 *	@param string $body
+	 *	@return VOID
+	 */
 	public function setBody($body){
 		$this->body = Template::create(array(
 			"BODY" => $body
 		))->renderWith($this->layout);
 	}
 	
+	/**
+	 *	Set Layout
+	 * 
+	 *	@access public
+	 *	@param string $layout
+	 *	@return VOID
+	 */
 	public function setLayout($layout){
 		$ext = pathinfo($layout)['extension'];
 		$filename = $layout.(empty($ext)?".tpl.php":"");
-		
-		$layoutFile = File::create(APPLICATION_TEMPLATES.$filename);
-		if(!$layoutFile->exists()){
-			$layoutFile = File::create(BASE_TEMPLATES.$filename);
 			
-			if(!$layoutFile->exists()){
-				throw new \Exception("Layout Template Doesn't Exist.");
+		foreach([$filename, APPLICATION_TEMPLATES.$filename, BASE_TEMPLATES.$filename] as $path){
+			$layoutFile = File::create($path);
+			if($layoutFile->exists()){
+				$this->layout = $layoutFile->path;
+				return;
 			}
 		}
 		
-		$this->layout = $layoutFile->path;
+		throw new \Exception("Layout Template Doesn't Exist.");
 	}
 	
 	/**
-	 *	OutPut Function
+	 *	Output Function
 	 */
 	public function output(){
 		return $this->constructLayout();

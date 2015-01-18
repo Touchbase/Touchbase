@@ -34,7 +34,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 use Touchbase\Utils\Cookie;
 use Touchbase\Security\AuthInterface;
 use Touchbase\Security\Auth\AuthedUserInterface;
-use Touchbase\Control\Session\Session;
+use Touchbase\Control\Session;
 
 class CookieProvider extends BaseProvider 
 {

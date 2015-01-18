@@ -146,7 +146,7 @@ class HTTPResponse extends HTTPHeaders
 				}
 			}
 						
-			if(\Touchbase\Control\Router::isLive() && $this->isError() && !$this->body){
+			if(Router::isLive() && $this->isError() && !$this->body){
 				print "ERROR: ".$this->statusCode." -> ".$this->sanitize($this->statusDescription);
 			} else {
 				print $this->body;
@@ -183,6 +183,11 @@ class HTTPResponse extends HTTPHeaders
 	}
 	
 	public function redirect($destinationUrl, $statusCode = 302) {
+		
+		if(Router::isRelativeURL($destinationUrl)){
+			$destinationUrl = Router::buildUrlPath(SITE_ROOT, $destinationUrl);
+		}
+		
 		$statusCode = (in_array($statusCode, $this->redirectCodes)?$statusCode:302);
 		$this->setStatusCode($statusCode);
 		$this->addHeader('Location', $destinationUrl);

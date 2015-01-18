@@ -43,6 +43,10 @@ class File extends Filesystem {
 	
 	public function __construct($path, $create = null, $mode = null){
 		if(!empty($path)){
+			if(is_array($path)){
+				$path = call_user_func_array("static::buildFolderPath", $path);
+			}
+			
 			$this->folder = Folder::create(dirname($path), $create, $mode);
 			
 			if(!is_dir($path)){
