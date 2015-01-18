@@ -31,12 +31,12 @@ namespace {
 		$traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[0];
 		$caller = basename($traces['file']).':'.$traces['line'];
 		foreach(func_get_args() as $print){
-			print "<pre>[$caller] ".htmlentities(print_r($print, true))."</pre>";
+			print "<pre>[$caller] ".htmlentities(print_r($print, true))."</pre>\n";
 		}
 	}
 	
 	function touchbase_run_time($debug){
-		//pre_r("$debug: " . number_format(((microtime(true) - PHP_START)) * 1000, 1) . "ms");
+		pre_r("$debug: " . number_format(((microtime(true) - PHP_START)) * 1000, 1) . "ms");
 	}
 }
 
@@ -159,6 +159,9 @@ class Init
 	}
 	
 	private function _configure(ConfigStore $config){
+		
+		$ns = $src = "";
+		
 		try {
 			//Load Main Configuration File
 			$configurationData = IniConfigProvider::create()->parseIniFile(File::create(BASE_PATH.'config.ini'));
@@ -168,34 +171,44 @@ class Init
 			$src = $config->get("project")->get("source", "src");
 			
 			//Load Extra Configuration Files
-			$files = $config->get("config")->get("files", "");
-			if(!empty($files)){
-				foreach($files as $condition => $file){
-					$extraConfigFile = File::create(BASE_PATH.$file);
-					
-					if($extraConfigFile->exists()){
-						$configurationData = IniConfigProvider::create()->parseIniFile($extraConfigFile);
-						//Not a domain, path or environment - load always
-						if(is_numeric($condition)){
-							$config->addConfig($configurationData->getConfiguration());
+			$loadExtraConfig = function($files, $configFilePath = BASE_PATH) use (&$loadExtraConfig, &$config){
+				if(!empty($files)){
+					foreach($files as $condition => $file){
 						
-						//We want to match a certain condition
-						} else {
-							if( //Do we match the conditions?
-								strpos($_SERVER['HTTP_HOST'], $condition) === 0 || //Are we a different domain?
-								strpos($_SERVER["REQUEST_URI"], $condition) === 0 || //Are we a different working dir?
-								TOUCHBASE_ENV == $condition // Are we on a different environment (dev/live)
-							){
-								$config->addConfig($configurationData->getConfiguration());
+						$extraConfigFile = File::create($configFilePath.$file);
+						
+						if($extraConfigFile->exists()){
+							$configurationData = IniConfigProvider::create()->parseIniFile($extraConfigFile);
+							//Not a domain, path or environment - load always
+							if(is_numeric($condition)){
+								$config->addConfig($extraConfig = $configurationData->getConfiguration());
+								$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file)."/");
+							
+							//We want to match a certain condition
+							} else {
+								if( //Do we match the conditions?
+									strpos($_SERVER['HTTP_HOST'], $condition) === 0 || //Are we a different domain?
+									strpos($_SERVER["REQUEST_URI"], $condition) === 0 || //Are we a different working dir?
+									strpos($_SERVER["SERVER_NAME"], $condition) === 0 || //Are we on a different server?
+									(strtoupper(substr(php_uname('s'), 0, 3)) === 'WIN' && $condition == "windows") || //Are we on a differnet os?
+									TOUCHBASE_ENV == $condition // Are we on a different environment (dev/live)
+								){
+									$config->addConfig($extraConfig = $configurationData->getConfiguration());
+									$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file)."/");
+								}
 							}
 						}
 					}
 				}
-			}
+			};
+			$loadExtraConfig($config->get("config")->get("files", ""));			
+			
 		} catch(\Exception $e){}
-	
+		
 		if(!defined('PROJECT_PATH')){
-			define('PROJECT_PATH', realpath(BASE_PATH . DIRECTORY_SEPARATOR . $src). DIRECTORY_SEPARATOR);
+			$psr0 = realpath(BASE_PATH . DIRECTORY_SEPARATOR . $src . DIRECTORY_SEPARATOR . $ns);
+			$psr4 = realpath(BASE_PATH . DIRECTORY_SEPARATOR . $src);
+			define('PROJECT_PATH', ($psr0 ?: $psr4) . DIRECTORY_SEPARATOR);
 		}
 		
 		return $config;

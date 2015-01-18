@@ -30,6 +30,7 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Security\Auth;
 use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Control\Exception\HTTPResponseException;
 
@@ -66,12 +67,9 @@ class RequestHandler extends \Touchbase\Core\Object
 						$rule = $action;
 						$action = $this->defaultAction;
 					}
-					
-					//debug()->write("Testing '$rule' with '".$request->remaining()."' on '".$this->toString());
 					//\pre_r("Testing '$rule' with '".$request->remaining()."' on '$this'");
 					
 					if($params = $request->match($rule)){
-						//debug()->write("Rule '$rule' matched to action '$action' on ".$this->toString());
 						//\pre_r("Rule '$rule' matched to action '$action' on '$this'");
 						
 						if($action[0] == "$"){
@@ -147,10 +145,8 @@ class RequestHandler extends \Touchbase\Core\Object
 		if($action == 'index') return true;
 
 		//Save original action
-		//$actionOriginalCasting = $action; Maybe?
 		$action = strtolower($action);
 		$allowedActions = $this->getAllowedActions();
-		
 		if(!empty($allowedActions)){
 			//Normalise Array
 			$allowedActions = array_change_key_case($allowedActions, CASE_LOWER);
@@ -165,15 +161,15 @@ class RequestHandler extends \Touchbase\Core\Object
 				//Check if specific action is set:
 				if(isset($allowedActions[$actionOrAll])){
 					$test = $allowedActions[$actionOrAll];
-					debug()->setColor("red")->write($test);
-					if((bool) $test){
+					if($test === true){
 						//Case 1: TRUE should always allow access
 						return true;
 					} else if(substr($test, 0 , 2) == '->'){
-						//This is todo with custom methods -> MAY NOT NEED
-						//return $this->{substr($test, 2)}();
+						//This is todo with custom methods -> TODO: MAY NOT NEED
+						return $this->{substr($test, 2)}();
 					} else {
 						//Case 3: Check if user has permission
+						return Auth::isAuthenticated() && Auth::currentUser()->can($test);
 					}
 				} else if((($key = array_search($actionOrAll, $allowedActions, true)) !== false) && is_numeric($key)){
 					//Case 4: Allow numeric array notation (search for array value as action instead of key)
@@ -181,15 +177,13 @@ class RequestHandler extends \Touchbase\Core\Object
 				}
 			}
 		}
-				
-		debug()->setColor("red")->write(__METHOD__." got to end");
 	}
 	
 	//Checks whether the request handler has the specific action!
 	protected function hasAction($action){
 		$action = strtolower($action);
 		$allowedActions = $this->getAllowedActions();
-		
+
 		if(is_array($allowedActions)){
 			$isKey = !is_numeric($action) && array_key_exists($action, $allowedActions);
 			$isValue = in_array($action, array_map('strtolower', $allowedActions));
@@ -197,8 +191,6 @@ class RequestHandler extends \Touchbase\Core\Object
 			if($isKey || $isValue){
 				return $this->hasMethod($action);
 			}
-		} else {
-			debug()->setColor("red")->write($action." led here");
 		}
 		
 		return false; 

@@ -135,18 +135,7 @@ class HTTPRequest extends HTTPHeaders
 			}
 			
 			$this->urlParams = $params;
-		} else {		
-			//Controllers - NAMESPACE\Controllers\PathTo\Controller
-			$urlSegments = $this->urlSegments;
-			do {
-				$shiftCount = count($urlSegments);
-				$controller = 'UserInsight\Controllers\\'.implode('\\', $urlSegments)."Controller";
-				if(class_exists($controller) && is_subclass_of($controller, '\Touchbase\Control\Controller')){
-					$params['Controller'] = $controller;
-					break;
-				}
-			} while(array_pop($urlSegments));
-		}
+		} 
 		
 		$this->shift($shiftCount);
 		// We keep track of pattern parts that we looked at but didn't shift off.
@@ -349,6 +338,13 @@ class HTTPRequest extends HTTPHeaders
 		return $this->httpMethod == 'HEAD';
 	}
 	
+	
+	/**
+	 *	Is Ajax
+	 * 
+	 *	@access public
+	 *	@return BOOL
+	 */
 	public function isAjax(){
 		return $this->requestVAR('ajax') || ($this->getHeader('X-Requested-With') && $this->getHeader('X-Requested-With') == "XMLHttpRequest");
 	}

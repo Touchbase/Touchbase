@@ -55,11 +55,11 @@ class Cookie extends \Touchbase\Core\Object {
 			}
 		}
 		
-		if(empty($domain) && strtolower($_SERVER['SERVER_NAME']) != 'localhost'){
+		if(empty($domain) && isset($_SERVER['SERVER_NAME']) && strtolower($_SERVER['SERVER_NAME']) != 'localhost'){
 			$domain = '.' . preg_replace('#^www\.#', '', strtolower($_SERVER['SERVER_NAME']));
 		}
 		
-		$secure = SITE_PROTOCOL == 'https://';
+		$secure = defined("SITE_PROTOCOL") && SITE_PROTOCOL == 'https://';
 		
 		return setcookie($name, $value, $expiry, $path, $domain, $secure, $httponly);
 	}
