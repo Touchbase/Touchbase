@@ -37,7 +37,7 @@ use Touchbase\Core\Config\Store as ConfigStore;
 
 class Permission
 {
-	const PERMISSION_KEY = 'touchbase.key.encryption';
+	const PERMISSION_KEY = 'touchbase.key.permission';
 	
 	/** 
 	 *	Shared
