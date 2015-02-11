@@ -1,0 +1,23 @@
+{
+	"name": "touchbase/api",
+	"description": "Touchbase API Component",
+	"version": "0.0.1-dev",
+	"keywords": ["component", "api"],
+	"homepage": "http://touchbase.io",
+	"license": "MIT",
+	"authors": [{
+		"name": "William George",
+		"email": "code@williamgeorge.co.uk",
+		"homepage": "http://williamgeorge.co.uk"
+	}],
+	"require": {
+		"php": ">=5.4.0"
+	},
+	"suggest": {
+		"amphp/artax": "1.0.*: For improved RESTful web service consumption"
+	},
+	"autoload": {
+		"psr-0": { "Touchbase\\API\\": "" }
+	},
+	"minimum-stability": "dev"
+}
