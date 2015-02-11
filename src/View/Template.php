@@ -132,22 +132,32 @@ class Template extends \Touchbase\Core\Object
 		preg_match_all("/\\$([A-Za-z0-9\_\-\]\[\.]+)\\$/i", $contents, $templateVars);
 
 		if(!empty($templateVars[1])){
+			
+			$replaceVar = function($needle, $replacement, &$haystack){
+				//URL fix
+				if(substr($replacement, -1) === "/"){
+					$haystack = str_replace("$".$needle."$/", $replacement, $haystack);
+				}
+				
+				$haystack = str_replace("$".$needle."$", $replacement, $haystack);
+			};
+			
 			foreach($templateVars[1] as $k => $var) {
 				$typevar = $type = false;
 				
 				//Replace Vars with Actual Vars
 				if(array_key_exists($var, $this->vars)){
-					$contents = str_replace("$".$var."$", $this->vars[$var], $contents);
+					$replaceVar($var, $this->vars[$var], $contents);
 					unset($this->vars[$var]);
 					continue;
 				} else if(defined($var)){
-					$contents = str_replace("$".$var."$", constant($var), $contents);
+					$replaceVar($var, constant($var), $contents);
 					continue;
 				} else if(array_key_exists($var, $GLOBALS['TemplateVars'])){
-					$contents = str_replace("$".$var."$", $GLOBALS['TemplateVars'][$var], $contents);
+					$replaceVar($var, $GLOBALS['TemplateVars'][$var], $contents);
 					continue;
 				} else if(array_key_exists($var, $GLOBALS)){
-					$contents = str_replace("$".$var."$", $GLOBALS[$var], $contents);
+					$replaceVar($var, $GLOBALS[$var], $contents);
 					continue;
 				}
 				
@@ -165,7 +175,7 @@ class Template extends \Touchbase\Core\Object
 						}
 						//We were successfull in finding the var
 						if($i == count($varParts)){
-							$contents = str_replace("$".$var."$", $findVar, $contents);
+							$replaceVar($var, $findVar, $contents);
 						}
 					}
 				}
@@ -178,7 +188,7 @@ class Template extends \Touchbase\Core\Object
 				}
 				
 				//Replace Unfound Vars
-				$contents = str_replace("$".$var."$", "",$contents);
+				$replaceVar($var, "", $contents);
 			}
 		}
 		

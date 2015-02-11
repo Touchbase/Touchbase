@@ -271,6 +271,7 @@ class Router extends \Touchbase\Core\Object
 		
 		return $url;
 	}
+	
 	public static function relativeUrl($url) {
 		// Allow for the accidental inclusion of a // in the URL
 		$url = preg_replace('#([^:])//#', '\\1/', $url);
@@ -300,23 +301,22 @@ class Router extends \Touchbase\Core\Object
 	
 	public static function isAbsoluteUrl($url) {
 		$colonPosition = strpos($url, ':');
-	  return (
-	  	// Base check for existence of a host on a compliant URL
-	  	parse_url($url, PHP_URL_HOST)
-	  	// Check for more than one leading slash without a protocol.
-			// While not a RFC compliant absolute URL, it is completed to a valid URL by some browsers,
-			// and hence a potential security risk. Single leading slashes are not an issue though.
-	  	|| preg_match('/\s*[\/]{2,}/', $url)
-	  	|| (
-	  		// If a colon is found, check if it's part of a valid scheme definition
-		  	// (meaning its not preceded by a slash, hash or questionmark).
-		  	// URLs in query parameters are assumed to be correctly urlencoded based on RFC3986,
-		  	// in which case no colon should be present in the parameters.
-	  		$colonPosition !== FALSE 
-	  		&& !preg_match('![/?#]!', substr($url, 0, $colonPosition))
-	  	)
-	  	
-	  );
+		return (
+			// Base check for existence of a host on a compliant URL
+			parse_url($url, PHP_URL_HOST)
+			// Check for more than one leading slash without a protocol.
+				// While not a RFC compliant absolute URL, it is completed to a valid URL by some browsers,
+				// and hence a potential security risk. Single leading slashes are not an issue though.
+			|| preg_match('/\s*[\/]{2,}/', $url)
+			|| (
+				// If a colon is found, check if it's part of a valid scheme definition
+				// (meaning its not preceded by a slash, hash or questionmark).
+				// URLs in query parameters are assumed to be correctly urlencoded based on RFC3986,
+				// in which case no colon should be present in the parameters.
+				$colonPosition !== FALSE 
+				&& !preg_match('![/?#]!', substr($url, 0, $colonPosition))
+			)			
+		);
 	}
 
 	public static function isRelativeUrl($url) {
@@ -356,9 +356,9 @@ class Router extends \Touchbase\Core\Object
 	 */
 	public static function buildUrlPath(){
 		$folders = func_get_args();		
-		return implode(($DS = '/'), array_map(function($component){
+		return implode(($DS = '/'), array_filter(array_map(function($component){
 			return trim($component, " \t\n\r\0\x0B/");
-		}, $folders)).$DS;
+		}, $folders))).$DS;
 	}
 	
 //Enviroment Settings	
@@ -368,9 +368,11 @@ class Router extends \Touchbase\Core\Object
 	}
 	public static function isDev(){
 		
+/*
 		if(!Auth::isAuthenticated() || !Auth::currentUser()->can("runDiagnosticTools")){
 			return false;
 		}
+*/
 		
 		if(isset($_GET['isDev'])){
 			SESSION::set("isDevelopment", $_GET['isDev']);

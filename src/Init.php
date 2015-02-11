@@ -67,7 +67,6 @@ class Init
 		defined('TOUCHBASE') or define('TOUCHBASE', true);
 		
 		if(!defined('TOUCHBASE_ENV')){
-			//TODO: Implement this:
 			define("TOUCHBASE_ENV", "production", true);
 		}
 		
@@ -201,7 +200,7 @@ class Init
 					}
 				}
 			};
-			$loadExtraConfig($config->get("config")->get("files", ""));			
+			$loadExtraConfig($config->get("config")->get("files", ""));
 			
 		} catch(\Exception $e){}
 		

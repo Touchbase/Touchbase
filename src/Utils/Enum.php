@@ -29,7 +29,7 @@
 
 namespace Touchbase\Utils;
 
-abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
+abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate, \JsonSerializable
 {
 	protected $enum;
 	
@@ -38,16 +38,28 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	public function __construct($enum = null, $strict = false){
 		
 		if(!in_array($enum, $this->getConstantsList())) {
-			throw IllegalArgumentException();
+			throw \IllegalArgumentException();
 		}
 		
-		$this->enum = $enum?:static::__defualt;
+		if(is_null($enum) && !defined('static::__default')){
+			throw \IllegalArgumentException(sprintf("No argument was passed, %s does not contain a default value `static::__default`", __CLASS__));
+		}
+		
+		$this->enum = $enum?:static::__default;
 	}
 	
 	public function __toString(){
 		return (string)$this->enum;
 	}
 	
+	/**
+	 *	Is
+	 *	Helper method to compare a value against a string self
+	 *	@return BOOL || $return
+	 */
+	public function is($compare, $return = true){
+		return $compare == (string)$this?$return:false;
+	}
 
 	/**
 	 *	__callStatic function.
@@ -85,6 +97,11 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	/* IteratorAggregate */
 	public function getIterator(){
 		return new \ArrayIterator($this->getConstantsList());
+	}
+	
+	/* JSON */
+	public function jsonSerialize(){
+		return (int)$this->__toString();
 	}
 	
 	/* NoOp */

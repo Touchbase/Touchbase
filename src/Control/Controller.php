@@ -36,7 +36,7 @@ class Controller extends RequestHandler
 	protected $controllerStack = array();
 	
 	protected $urlHandlers = [
-		'$Action/$ID/$OtherId'
+		'$Action/$ID/$OtherID'
 	];
 	
 	//Default Action

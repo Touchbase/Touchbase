@@ -80,7 +80,7 @@ class HTTPHeaders extends \Touchbase\Core\Object
 			} else {
 				$this->headers[$name] = $set;
 			}
-			return true;	
+			return $this;
 		} else if(!empty($name)){
 			//Get one
 			return (isset($this->headers[$name])) ? $this->headers[$name] : false;

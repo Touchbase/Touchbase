@@ -119,7 +119,56 @@ abstract class Object
 	 *	@return BOOL
 	 */
 	public function hasProperty($property){
-		return property_exists($this, $property);
+		return property_exists($this, $property) || $this->hasMethod($property);
+	}
+	
+	/**
+	 *	__isset
+	 *	Magic method to
+	 *	@return BOOL
+	 */
+	public function __isset($property){
+		return $this->hasProperty($property);
+	}
+
+	/**
+	 *	__set
+	 *	Magic method to run $this->property = "newValue" through a setter if exists
+	 *	@return VOID
+	 */
+	public function __set($property, $value){
+		if($this->hasMethod($method = "set$property")) {
+			$this->$property = $this->$method($value);
+		} else {
+			$this->$property = $value;
+		}
+	}
+	
+	/**
+	 *	__get
+	 *	Magic method to get a value from a getter if exists
+	 *	@return mixed
+	 */
+	public function __get($property){
+		if($this->hasMethod($method = "$property")) {
+			return $this->$method();
+		} else {
+			return $this->$property;
+		}
+	}
+	
+	/**
+	 *	__call
+	 *	Magic method to get or set a property
+	 *	@return mixed
+	 */
+	public function __call($method, array $arguments){
+		if($this->hasProperty($property = "$method")) {
+			return $this->$property;
+		} else if(substr($method, 0, 3) === "set" && !empty($arguments)){
+			$property = substr($method, 4);
+			return $this->$property = $arguments[0];
+		}
 	}
 	
 	/**
