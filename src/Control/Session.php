@@ -50,7 +50,7 @@ class Session
 			
 			//Validation 
 			if(!$config instanceof ConfigStore){
-				throw new \RuntimeException("No configuration settings found.");
+				$config = ConfigStore::create();
 			}
 			
 			$instanceName = $config->get("session")->get("provider", "\Touchbase\Control\Session\Provider\PHPSessionProvider");

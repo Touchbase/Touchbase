@@ -50,7 +50,7 @@ class Permission
 			
 			//Validation 
 			if(!$config instanceof ConfigStore){
-				throw new \RuntimeException("No configuration settings found.");
+				$config = ConfigStore::create();
 			}
 			
 			

@@ -363,16 +363,24 @@ class Router extends \Touchbase\Core\Object
 	
 //Enviroment Settings	
 	
+	/**
+	 *	Is Live
+	 *	@return BOOL
+	 */
 	public static function isLive() {
 		return !(static::isDev() || static::isTest());
 	}
+	
+	/**
+	 *	Is Dev
+	 *	If you are running on a development server / environment, this will return true
+	 *	@return BOOL
+	 */
 	public static function isDev(){
 		
-/*
 		if(!Auth::isAuthenticated() || !Auth::currentUser()->can("runDiagnosticTools")){
 			return false;
 		}
-*/
 		
 		if(isset($_GET['isDev'])){
 			SESSION::set("isDevelopment", $_GET['isDev']);
@@ -380,8 +388,14 @@ class Router extends \Touchbase\Core\Object
 		
 		return SESSION::get("isDevelopment") 
 			|| TOUCHBASE_ENV == 'dev'
-			|| in_array(@$_SERVER['HTTP_HOST'], static::$developmentServers);
+			|| in_array(@$_SERVER['HTTP_HOST'], self::$developmentServers);
 	}
+	
+	/**
+	 *	Is Test
+	 *	Whilst running unit tests, this will be true.
+	 *	@return BOOL
+	 */
 	public static function isTest(){
 		
 		if(isset($_GET['isTest'])){
@@ -391,7 +405,7 @@ class Router extends \Touchbase\Core\Object
 		return !static::isDev() && (
 			SESSION::get("isTest")
 			|| TOUCHBASE_ENV == 'test'
-			|| in_array(@$_SERVER['HTTP_HOST'], static::$testingServers)
+			|| in_array(@$_SERVER['HTTP_HOST'], self::$testingServers)
 		);
 	}	
 }
