@@ -185,7 +185,7 @@ class HTTPResponse extends HTTPHeaders
 	public function redirect($destinationUrl, $statusCode = 302) {
 		
 		if(Router::isRelativeURL($destinationUrl)){
-			$destinationUrl = Router::buildUrlPath(SITE_ROOT, $destinationUrl);
+			$destinationUrl = Router::buildPath(SITE_URL, $destinationUrl);
 		}
 		
 		$statusCode = (in_array($statusCode, $this->redirectCodes)?$statusCode:302);

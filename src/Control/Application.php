@@ -31,7 +31,8 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\Filesystem\Folder;
+use Touchbase\View\Assets;
+use Touchbase\Filesystem\Filesystem;
 
 class Application extends Controller
 {
@@ -48,6 +49,15 @@ class Application extends Controller
 		$reflector = new \ReflectionClass($this);
 		$this->_applicationNamespace = $reflector->getNamespaceName();
 		
+		//Define BASE Asset paths
+		$assetConfig = $this->config()->get("assets");
+		$assetPath = $assetConfig->get("assets","assets/");
+		if(!defined("BASE_ASSETS")) define("BASE_ASSETS", Router::buildPath(SITE_URL, $assetPath));
+		if(!defined("BASE_IMAGES")) define("BASE_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images/")));
+		if(!defined("BASE_STYLES")) define("BASE_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css/")));
+		if(!defined("BASE_SCRIPTS")) define("BASE_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js/")));
+		if(!defined("BASE_TEMPLATES")) define("BASE_TEMPLATES", Filesystem::buildPath(PROJECT_PATH, $assetConfig->get("templates","Templates/")));
+			
 		return $this;
 	}
 	
@@ -66,31 +76,22 @@ class Application extends Controller
 						 ->handleRequest($this->request, $response);
 			
 		} else {
-									
+			
 			if($controller = $this->handleController()){
+				
+				//Define Application Assets Path
 				$applicationNamespace = ltrim(strstr($this->_applicationNamespace, $needle = "\\") ?: $this->_applicationNamespace, $needle);
 				define("APPLICATION_PATH", PROJECT_PATH.str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace).DIRECTORY_SEPARATOR);
 					
 				$assetConfig = $this->config()->get("assets");
-				$assetPath = $assetConfig->get("assets","assets/");
-				$assetImageDir = $assetConfig->get("images","images/");
-				$assetJavascriptDir = $assetConfig->get("js","js/");
-				$assetStyleheetDir = $assetConfig->get("css","css/");
-				$assetTemplatesDir = $assetConfig->get("templates","Templates/");
+				$assetPath = substr(md5(str_replace("\\", "/", $this->_applicationNamespace)."/".$assetConfig->get("assets","assets/")), 0, 6)."/";
 				
-				define("BASE_ASSETS", Router::buildUrlPath(SITE_ROOT, $assetPath));
-				define("BASE_IMAGES", Router::buildUrlPath(SITE_ROOT, $assetPath, $assetImageDir));
-				define("BASE_STYLES", Router::buildUrlPath(SITE_ROOT, $assetPath, $assetStyleheetDir));
-				define("BASE_SCRIPTS", Router::buildUrlPath(SITE_ROOT, $assetPath, $assetJavascriptDir));
-				if(!defined("BASE_TEMPLATES")) define("BASE_TEMPLATES", Folder::buildFolderPath(PROJECT_PATH, $assetTemplatesDir));
-						
-				$assetPath = substr(md5(str_replace("\\", "/", $this->_applicationNamespace)."/".$assetPath), 0, 6)."/";
-				define("APPLICATION_ASSETS", Router::buildUrlPath(SITE_ROOT, $assetPath));
-				define("APPLICATION_IMAGES", Router::buildUrlPath(SITE_ROOT, $assetPath, $assetImageDir));
-				define("APPLICATION_STYLES", Router::buildUrlPath(SITE_ROOT, $assetPath, $assetStyleheetDir));
-				define("APPLICATION_SCRIPTS", Router::buildUrlPath(SITE_ROOT, $assetPath, $assetJavascriptDir));
-				define("APPLICATION_TEMPLATES", Folder::buildFolderPath(APPLICATION_PATH, $assetTemplatesDir));
-				
+				define("APPLICATION_ASSETS", Router::buildPath(SITE_URL, $assetPath));
+				define("APPLICATION_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images/")));
+				define("APPLICATION_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css/")));
+				define("APPLICATION_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js/")));
+				define("APPLICATION_TEMPLATES", Filesystem::buildPath(APPLICATION_PATH, $assetConfig->get("templates","Templates/")));
+
 				$controller	->setConfig($this->config())
 							->handleRequest($this->request, $response);
 			}
@@ -109,10 +110,16 @@ class Application extends Controller
 		$firstUrlSegment = ucfirst(strtolower($this->request->urlSegment(0)));
 		$applicationClass = $this->_applicationNamespace.'\Applications\\'.$firstUrlSegment.'\\'.$firstUrlSegment."App";
 		if($firstUrlSegment && class_exists($applicationClass) && is_subclass_of($applicationClass, '\Touchbase\Control\Application')){
-			$this->request->shift(1); //TODO: Hate this function.
 			$application = $applicationClass::create();
 		} else {
 			$application = $this->defaultApplication();
+		}
+		
+		//Remove Application Name From FirstSegment 
+		// - This fixes an issue whereby you can't access any controllers when one exists with the same name as the application
+		$applicationName = ltrim(strrchr($this->_applicationNamespace, $needle = "\\") ?: $this->_applicationNamespace, $needle);
+		if(strcasecmp($applicationName, $firstUrlSegment) === 0){
+			$this->request->shift(1); //TODO: Hate this function.
 		}
 		
 		return $application;
@@ -129,15 +136,6 @@ class Application extends Controller
 		//Controllers - APPLICATION\Controllers\PathTo\Controller
 		$shiftCount = 0;
 		$urlSegments = $this->request->urlSegments();
-		
-		//Remove Application Name From FirstSegment 
-		// - This fixes an issue whereby you can't access any controllers when one exists with the same name as the application
-		if(!empty($urlSegments)){
-			$applicationName = ltrim(strrchr($this->_applicationNamespace, $needle = "\\") ?: $this->_applicationNamespace, $needle);
-			if(strcasecmp($applicationName, $urlSegments[0]) === 0){
-				unset($urlSegments[0]);
-			}
-		}
 		
 		do {
 			$shiftCount = count($urlSegments);

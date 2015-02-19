@@ -31,6 +31,8 @@ namespace Touchbase\Data;
 
 class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorAggregate, \ArrayAccess, \JsonSerializable
 {
+	const CHAIN = "touchbase.key.chain.store";
+	
 	/**
 	 *	In Memory Store
 	 */
@@ -46,10 +48,8 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 	/**
 	 *	Getter/Setter Methods
 	 */
-	public function get($name, $default = null){
-		if(is_null($default)){
-			$default = new Store(); //For Chaining.
-		}
+	public function get($name, $default = self::CHAIN){
+		$default = ($default == self::CHAIN)?new Store():$default;
 		return $this->exists($name)?$this->_data[$name]:$default;
 	}
 	

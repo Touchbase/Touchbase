@@ -31,7 +31,7 @@ namespace Touchbase\Filesystem;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Filesystem extends \Touchbase\Core\Object {
+abstract class Filesystem extends \Touchbase\Core\Object {
 
 	public $fileChmod = 02775;
 	
@@ -144,11 +144,23 @@ class Filesystem extends \Touchbase\Core\Object {
 	}
 	
 	/**
-	 *	Build Folder Path
+	 *	Build Path
 	 *	@return (string) - /example/file/path/
 	 */
 	public static function buildFolderPath(){
-		$folders = func_get_args();
-		return str_replace(($DS = DIRECTORY_SEPARATOR).$DS, $DS, implode($DS, $folders).$DS);
+		$backTrace = debug_backtrace();
+		$caller = current($backTrace);
+		
+		trigger_error(sprintf("%s, use `buildPath` instead. Called: %s:%d", __METHOD__, $caller['file'], $caller['line']), E_USER_DEPRECATED);
+		return call_user_func_array("self::buildPath", func_get_args());
+	}
+	public static function buildPath(){
+		$paths = func_get_args();
+		
+		$count = $totalArgs = func_num_args();
+		return implode(DIRECTORY_SEPARATOR, array_filter(array_map(function($component) use (&$count, $totalArgs){
+			$func = ($count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
+			return $func($component, " \t\n\r\0\x0B/");
+		}, $paths)));
 	}
 }

@@ -45,22 +45,18 @@ class Router extends \Touchbase\Core\Object
 	use ConfigTrait {
 		setConfig as traitSetConfig;
 	}
-
-	private $urlRules = array(10 => array(
-		'Security//$Action/$ID/$OtherID' => 'Security',
-		'$Controller//$Action/$ID/$OtherID' => '*',
-	), 20 => array(
-		'admin//$action/$ID/$OtherID' => '->admin/security'
-	));
 	
 	private $urlParams =[];
 	private static $developmentServers = [];
 	private static $testingServers = [];
 	
-	public function addRules($priority, $rules) {
-		$this->urlRules[$priority] = isset($this->urlRules[$priority]) ? array_merge($rules, (array)$this->urlRules[$priority]) : $rules;
-	}
-	
+	/**
+	 *	Route
+	 *	
+	 *	@param HTTPRequest $request
+	 *	@param HTTPResponse $response
+	 *	@return VOID
+	 */
 	public function route(/*HTTPRequest*/ &$request, HTTPResponse &$response){
 		//GET / POST etc.
 		$requestMethod = (isset($_SERVER['X-HTTP-Method-Override'])) ? $_SERVER['X-HTTP-Method-Override'] : $_SERVER['REQUEST_METHOD'];
@@ -70,7 +66,7 @@ class Router extends \Touchbase\Core\Object
 			$_SERVER['REQUEST_URI'] = $_SERVER['HTTP_X_ORIGINAL_URL'];
 		}
 		
-		$url = preg_replace("/^\/".str_replace("/", "\/", WORKING_DIR)."/", '', $_SERVER["REQUEST_URI"]);
+		$url = preg_replace("/^\/".str_replace("/", "\/?", WORKING_DIR)."/", '', $_SERVER["REQUEST_URI"]);
 		if(strpos($url,'?') !== false) {
 			list($url, $query) = explode('?', $url, 2);
 			parse_str($query, $_GET);
@@ -83,7 +79,7 @@ class Router extends \Touchbase\Core\Object
 			readfile(BASE_PATH.'public_html'.$url);
 			return false;
 		}
-		
+				
 		//Remove base folders from the URL if webroot is hosted in a subfolder
 		if(substr(strtolower($url), 0, strlen(BASE_PATH)) == strtolower(BASE_PATH)){
 			$url = substr($url, strlen(BASE_PATH));
@@ -108,42 +104,16 @@ class Router extends \Touchbase\Core\Object
 				\pre_r("Could Not Load Project");
 			}
 		}
-/*		
-	
-		//Send Request
-		$result = $this->handleRequest($request, $response);
-		
-		//Handle Redirect
-		if(is_string($result) && substr($result,0,9) == 'redirect:') {
-			$response = load()->newInstance('Control\HTTPResponse');
-			$response->redirect(substr($result, 9));
-			$response->output();
-		// Handle a controller
-		} else if($result){
-			if(is_object($result) && $result->is_a("HTTPResponse")){
-				$response = $result;
-			} else {
-				$response = load()->newInstance('Control\HTTPResponse');
-				$response->setBody($result);
-			}
-			$response->output();
-		}
-		
-*/
 	}
 	
+	/**
+	 *	Handle Request
+	 *	This method will attempt to load a real resource located on the server if one exists.
+	 *	@return mixed
+	 */
 	private function handleRequest(HTTPRequest $request, HTTPResponse &$response){
-		//Order Rules to obtain priority 
-		krsort($this->urlRules);
-		
-		//2) Does the real path exist?
-		define("SITE_THEME_IMAGES", Router::buildUrlPath(
-			SITE_ROOT,
-			$this->config()->get("assets")->get("assets","assets/"),
-			$this->config()->get("assets")->get("images","images/")
-		));
-		
-		//3) Have we mapped a path?
+						
+		//Have we mapped a path?
 		$assetFilePath = $this->config()->get("assets")->get("asset_map")->get($request->urlSegment(), "");
 		if($assetFilePath){
 			$assetFile = File::create([
@@ -151,6 +121,7 @@ class Router extends \Touchbase\Core\Object
 				$assetFilePath,
 				implode("/", $request->urlSegments(1)).'.'.$request->extension()
 			]);
+			
 			$supportedAssets = [
 				"css" => "text/css; charset=utf-8",
 				"js" => "text/javascript; charset=utf-8",
@@ -163,7 +134,6 @@ class Router extends \Touchbase\Core\Object
 				"htc" => "text/x-component"
 			];
 			
-			
 			$contentType = @$supportedAssets[$request->extension()];
 			if(isset($contentType) && $assetFile->exists()){
 				$response->addHeader("Content-Type", $contentType);
@@ -173,75 +143,14 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		return (isset($result))?$result:false;
-		exit;
-		
-		//1) Does Controller Exist? 
-		if($params = $request->match($pattern = "")){
-			try {
-				$controllerObj = new $params['Controller']();
-				
-				$result = $controllerObj->setConfig($this->config())
-										->handleRequest($request, $response);
-			} catch(HTTPResponseException $responseException) {
-				$result = $responseException->getResponse();
-			}	
-		}
-				
-		foreach($this->urlRules as $priority => $rules) {
-			foreach($rules as $pattern => $controller){
-				//Does Our Pattern Match The Request??
-				if(is_string($controller)) {
-					if(substr($controller,0,2) == '->') $controller = array('Redirect' => substr($controller,2));
-					else $controller = array('Controller' => $controller, 'Controller_Name' => false);
-				} else if(is_array($controller)){
-					if(count($controller) == 1 && !in_array(key($controller), array('Controller','Redirect'))){
-						//Associative Array -> Filepath => ControllerName
-						$controller = array('Controller' => key($controller), 'Controller_Name' => current($controller));
-					} else if(count($controller) == 2 && isset($controller[0]) && isset($controller[1])){
-						//Non Associative Array -> 0: Filepath, 1: ControllerName
-						$controller = array('Controller' => $controller[0], 'Controller_Name' => $controller[1]);
-					}
-				}
-			
-				if(($arguments = $request->match($pattern, true)) !== false) {
-				// controllerOptions provide some default arguments
-					$arguments = array_merge($controller, $arguments);
-					//debug()->write($arguments);
-					
-					// Find the controller
-					$controller = (isset($arguments['Controller']))?$arguments['Controller']:false;
-					$controllerName = (isset($arguments['Controller_Name']))?$arguments['Controller_Name']:false;
-					
-					// Pop additional tokens from the tokeniser if necessary
-					if(isset($controller['_PopTokeniser'])) {
-						$request->shift($controller['_PopTokeniser']);
-					}
-
-					// Handle redirections
-					if(isset($arguments['Redirect'])) {
-						return "redirect:" . $this->absoluteURL($arguments['Redirect'], true);
-					} else {
-						$this->urlParams = $arguments;
-						$controllerObj = load()->newInstance($controller, false, $controllerName);
-						//$controllerObj->setSession($session);
-
-						try {
-							$result = $controllerObj->handleRequest($request, $model);
-						} catch(HTTPResponse_Exception $responseException) {
-							$result = $responseException->getResponse();
-						}
-						if(!is_object($result) || $result instanceof HTTPResponse) return $result;
-						
-						user_error("Bad result from url ".$request->getURL()." handled by ".
-								$controllerObj->toString()." controller: ".$result-toString(), E_USER_WARNING);						
-					}
-				}
-			}
-		}
 	}
 
 //CONFIG OVERLOAD
 
+	/**
+	 *	Set Config
+	 *	@return \Touchbase\Control\Router
+	 */
 	public function setConfig(\Touchbase\Core\Config\Store $config){
 	
 		$servers = $config->get("servers");
@@ -253,6 +162,11 @@ class Router extends \Touchbase\Core\Object
 
 //URL SETTINGS
 	
+	/**
+	 *	Absolute URL
+	 *	Given a relative URL this method will convert it to an absolute URL based on the current host
+	 *	@return string
+	 */
 	public static function absoluteURL($url, $relativeToSiteBase = false) {
 		if(!isset($_SERVER['REQUEST_URI'])) return false;
 		
@@ -262,16 +176,21 @@ class Router extends \Touchbase\Core\Object
 
 	 	if(substr($url,0,4) != "http"){
 	 		if($url[0] != "/"){
-	 			$url = SITE_ROOT.$url;
+	 			$url = SITE_URL.$url;
 	 		} else if(strpos($url, BASE_PATH) === 0){
-	 			//Remove BASE_PATH and add SITE_ROOT
-	 			$url = SITE_ROOT.substr($url, strlen(BASE_PATH));
+	 			//Remove BASE_PATH and add SITE_URL
+	 			$url = SITE_URL.substr($url, strlen(BASE_PATH));
 	 		}
 		}
 		
 		return $url;
 	}
 	
+	/**
+	 *	Relative URL
+	 *	This method will take an absolute URL and return a relative one. (ie. strip the host)
+	 *	@return string
+	 */
 	public static function relativeUrl($url) {
 		// Allow for the accidental inclusion of a // in the URL
 		$url = preg_replace('#([^:])//#', '\\1/', $url);
@@ -279,7 +198,7 @@ class Router extends \Touchbase\Core\Object
 
 		// Only bother comparing the URL to the absolute version if $url looks like a URL.
 		if(preg_match('/^https?[^:]*:\/\//i',$url)) {
-			$base1 = strtolower(SITE_ROOT);
+			$base1 = strtolower(SITE_URL);
 			// If we are already looking at baseURL, return '' (substr will return false)
 			if(strtolower($url) == $base1) return '';
 			else if(strtolower(substr($url,0,strlen($base1))) == $base1) return substr($url,strlen($base1));
@@ -299,6 +218,11 @@ class Router extends \Touchbase\Core\Object
 		return $url;
 	}
 	
+	/**
+	 *	Is Absolute URL
+	 *	This method will determine whether the passed url is absolute (eg. https://foo.com/bar/baz)
+	 *	@return BOOL
+	 */
 	public static function isAbsoluteUrl($url) {
 		$colonPosition = strpos($url, ':');
 		return (
@@ -315,17 +239,27 @@ class Router extends \Touchbase\Core\Object
 				// in which case no colon should be present in the parameters.
 				$colonPosition !== FALSE 
 				&& !preg_match('![/?#]!', substr($url, 0, $colonPosition))
-			)			
+			)
 		);
 	}
 
+	/**
+	 *	Is Relative URL
+	 *	This method will determine whether the passed url is relative (eg. /foo/bar/baz)
+	 *	@return BOOL
+	 */
 	public static function isRelativeUrl($url) {
 		return (!self::isAbsoluteUrl($url));
 	}
 	
+	/**
+	 *	Is Site URL
+	 *	This method will determine whether the passed url belongs to the current site
+	 *	@return BOOL
+	 */
 	public static function isSiteUrl($url) {
 		$urlHost = parse_url($url, PHP_URL_HOST);
-		$actualHost = parse_url(SITE_ROOT, PHP_URL_HOST);
+		$actualHost = parse_url(SITE_URL, PHP_URL_HOST);
 		if($urlHost && $actualHost && strtolower($urlHost) == strtolower($actualHost)){
 			return true;
 		} else {
@@ -351,14 +285,24 @@ class Router extends \Touchbase\Core\Object
 	}
 	
 	/**
-	 *	Build Folder Path
-	 *	@return (string) - /example/file/path/
+	 *	Build URL Path
+	 *	@return (string) - /example/file/path
 	 */
 	public static function buildUrlPath(){
-		$folders = func_get_args();		
-		return implode(($DS = '/'), array_filter(array_map(function($component){
-			return trim($component, " \t\n\r\0\x0B/");
-		}, $folders))).$DS;
+		$backTrace = debug_backtrace();
+		$caller = current($backTrace);
+		
+		trigger_error(sprintf("%s, use `buildPath` instead. Called: %s:%d", __METHOD__, $caller['file'], $caller['line']), E_USER_DEPRECATED);
+		return call_user_func_array("self::buildPath", func_get_args());
+	}
+	public static function buildPath(){
+		$paths = func_get_args();
+		
+		$count = $totalArgs = func_num_args();
+		return implode("/", array_filter(array_map(function($component) use (&$count, $totalArgs){
+			$func = ($count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
+			return $func($component, " \t\n\r\0\x0B/");
+		}, $paths)));
 	}
 	
 //Enviroment Settings	

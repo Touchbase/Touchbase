@@ -29,9 +29,6 @@
  
 namespace Touchbase\Core\Config;
 
-use Touchbase\Data\StaticStore;
-use Touchbase\Core\Config\Store as ConfigStore;
-
 trait ConfigTrait
 {
 	protected $_config;
@@ -41,10 +38,9 @@ trait ConfigTrait
 	 *	@param \Touchbase\Core\Config\Store - Config
 	 *	@return Object
 	 */
-	public function setConfig(Store $config){
+	public function setConfig(Store $config = null){
 		if($config){
-			$this->_config = $config;	
-			StaticStore::shared()->set(ConfigStore::CONFIG_KEY, $config);
+			$this->_config = $config;
 		}
 		
 		return $this;

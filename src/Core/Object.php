@@ -73,29 +73,29 @@ abstract class Object
 	 *	Get Subclasses
 	 *	@return (Array) - Returns a list of inherited classes
 	 */
-	function getSubclasses(){
-	    $classes = array();
-	    foreach(get_declared_classes() as $className){
-	    	if(is_subclass_of($className, /* $this->toString() */ __CLASS__)){
-	    		$classes[] = $className;
-	    	}
-	    }
-	
-	    return $classes;
+	public function getSubclasses(){
+		$classes = array();
+		foreach(get_declared_classes() as $className){
+			if(is_subclass_of($className, /* $this->toString() */ __CLASS__)){
+				$classes[] = $className;
+			}
+	 	}
+
+	 	return $classes;
 	}
-	
+
 	/**
 	 *	Get Caller Method
 	 *	@return (string) - Name of the function calling this method
 	 */
-	function getCallerMethod(){ 
-	    $traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS); 
-	
-	    if (isset($traces[2])){ 
-	        return $traces[2]['function']; 
-	    } 
-	
-	    return null; 
+	public function getCallerMethod(){
+		$traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+		if (isset($traces[2])){
+			return $traces[2]['function'];
+		}
+
+		return null; 
 	}
 	
 	/**

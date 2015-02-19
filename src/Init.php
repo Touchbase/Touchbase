@@ -45,6 +45,7 @@ namespace Touchbase {;
 error_reporting(E_ALL | E_STRICT);
 
 use Touchbase\Filesystem\File;
+use Touchbase\Data\StaticStore;
 use Touchbase\Core\Config\Store as ConfigStore;
 use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Core\Config\Provider\IniConfigProvider;
@@ -126,15 +127,16 @@ class Init
 			define('SITE_PROTOCOL', $protocol);
 		}
 		
-		if(!defined('SITE_ROOT')){
-			define("SITE_ROOT", rtrim(SITE_PROTOCOL.$_SERVER['HTTP_HOST'].'/'.WORKING_DIR, '/').'/', true);
+		if(!defined('SITE_URL')){
+			define("SITE_URL", rtrim(SITE_PROTOCOL.$_SERVER['HTTP_HOST'].'/'.WORKING_DIR, '/').'/', true);
+			define("SITE_ROOT", SITE_URL, true);
 		}
 		
 /*
 		\pre_r(BASE_PATH);
 		\pre_r(TOUCHBASE_PATH);
 		\pre_r(PROJECT_PATH);
-		\pre_r(SITE_ROOT);
+		\pre_r(SITE_URL);
 		\pre_r(TOUCHBASE_ENV);
 */
 	}
@@ -202,6 +204,7 @@ class Init
 			};
 			$loadExtraConfig($config->get("config")->get("files", ""));
 			
+			StaticStore::shared()->set(ConfigStore::CONFIG_KEY, $config);
 		} catch(\Exception $e){}
 		
 		if(!defined('PROJECT_PATH')){

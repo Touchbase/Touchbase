@@ -60,7 +60,7 @@ class Folder extends Filesystem {
 		
 		//Does the developer want use to construct the path?
 		if(is_array($path)){
-			$path = call_user_func_array("static::buildFolderPath", $path);
+			$path = call_user_func_array("static::buildPath", $path);
 		}
 		
 		//TODO: Allow empty paths to create tempory folders?
