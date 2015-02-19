@@ -45,7 +45,7 @@ class Webpage extends \Touchbase\Core\Object
 
 	public function __construct(){
 		//Add Requirments
-		$this->assets = new Assets($this);
+		$this->assets = Assets::shared();
 		$this->setLayout($this->layout);
 	}
 	
@@ -81,7 +81,7 @@ class Webpage extends \Touchbase\Core\Object
 			}
 		}
 		
-		throw new \Exception("Layout Template Doesn't Exist.");
+		throw new \Exception("Layout Template Doesn't Exist: $filename");
 	}
 	
 	/**
@@ -104,11 +104,11 @@ class Webpage extends \Touchbase\Core\Object
 		
 		//Print Styles
 		$head.= "\r\n<!-- STYLE SHEETS -->\r\n";
-		$head.= implode("\n", $this->assets->constructStyle());
+		$head.= implode("\n", $this->assets->constructStyles());
 		
 		//Print Javascript
 		$head.= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
-		$head.= implode("\n", $this->assets->constructJs(true));
+		$head.= implode("\n", $this->assets->constructScripts(true));
 		
 		//Print Extra
 		$head.= "\r\n<!-- EXTRA INCLUDES -->\r\n";
@@ -126,7 +126,7 @@ class Webpage extends \Touchbase\Core\Object
 		$body .= "\r\n<!-- END CONTENT -->\r\n";
 		
 		$body .= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
-		$body.= implode("\n", $this->assets->constructJs());
+		$body.= implode("\n", $this->assets->constructScripts());
 		
 		return $body;
 	}

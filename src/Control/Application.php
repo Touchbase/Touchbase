@@ -71,6 +71,10 @@ class Application extends Controller
 					
 		if($application = $this->handleApplication()){
 			
+			if(isset($application::$name)){
+				Assets::shared()->pushTitle($application::$name);
+			}
+						
 			$application ->setConfig($this->config())
 						 ->init()
 						 ->handleRequest($this->request, $response);

@@ -29,22 +29,49 @@
  
 namespace Touchbase\View;
 
-use \Touchbase\Control\Router;
+use Touchbase\Control\Router;
+use Touchbase\Data\StaticStore;
+use Touchbase\Core\Config\ConfigTrait;
+use Touchbase\Core\Config\Store as ConfigStore;
+
+use Touchbase\Filesystem\File;
 
 class Assets extends \Touchbase\Core\Object
 {
-
-	protected $documentTitle = array();
-	protected $documentMeta = array();
-	protected $documentCss = array();
-	protected $documentJs = array(
-		'head' => array(),
-		'body' => array()
-	);
+	use ConfigTrait;
+	
+	const ASSETS_KEY = 'touchbase.key.assets';
+	
+	protected $documentTitle = [];
+	protected $documentMeta = [];
+	protected $documentCss = [];
+	protected $documentScripts = [
+		'head' => [],
+		'body' => []
+	];
 	protected $documentExtra = array();
+		
+	/** 
+	 *	Shared
+	 *	@return \Touchbase\View\Assets
+	 */
+	public static function shared(){
+		$instance = StaticStore::shared()->get(self::ASSETS_KEY, false);
+		if(!$instance || is_null($instance)){		
+			//Find Config
+			$config = StaticStore::shared()->get(ConfigStore::CONFIG_KEY, null);
+			
+			//Save
+			StaticStore::shared()->set(self::ASSETS_KEY, $instance = new self($config));
+		}
+		
+		return $instance;
+	}
 	
 	//Default Requirements
-	public function __construct(Webpage $buffer){
+	public function __construct(ConfigStore $config = null){
+		
+		$this->setConfig($config);
 	
 		//Add Defualt Meta
 		$this->includeMeta(HtmlBuilder::make('meta')->attr('charset','UTF-8')->output());
@@ -60,45 +87,45 @@ class Assets extends \Touchbase\Core\Object
 		$this->includeMeta('apple-mobile-web-app-capable', 'yes');
 		
 		//Prevent Opening WebApp Links In Mobile Safari!
-		$this->includeJs(HtmlBuilder::make_r('script', '(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
+		$this->includeScripts(HtmlBuilder::make_r('script', '(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
 		
-/*
-		//Add Defualt Title
-		$this->pushTitle();
-
 		//ADD MODERNIZR
-		$this->includeJs(SITE_THEME_JS.'modernizr.js', true);
+		$this->includeScripts(BASE_SCRIPTS.'modernizr.js', true);
 		
-		//JQUERY Add
-		if(!(defined("JQUERY_DISABLE_LOAD") && JQUERY_DISABLE_LOAD)){
-			if(!defined("JQUERY_VERSION")){
-				define("JQUERY_VERSION", '1.8.1', true);
-			}
+		//Set Default Title, if available...
+		$this->pushTitle($this->config()->get("project")->get("name", null));
 		
+		//Include jQuery?
+		if($jqVersion = $this->config()->get("assets")->get("jquery_version", false)){
 			//Load From Google 
-			$this->includeJs("//ajax.googleapis.com/ajax/libs/jquery/".JQUERY_VERSION."/jquery.min.js");
+			$jqueryPath = File::buildPath($jqVersion, "jquery.min.js");
+
+			$this->includeScripts(File::buildPath("//ajax.googleapis.com/ajax/libs/jquery/", $jqueryPath));
+			
 			//If That Fails Load Locally
-			$this->includeJs(HtmlBuilder::make_r('script','window.jQuery||document.write(\'<script src="'.SITE_THEME_JS.'jquery-'.JQUERY_VERSION.'.min.js"><\/script>\')'));
+			//TODO: This will never load. Sort it out!
+			$jqueryFile = File::create([BASE_SCRIPTS, "jquery", $jqueryPath]);
+			if($jqueryFile->exists()){
+				$this->includeScripts(HtmlBuilder::make_r('script','window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
+			}
 		}
-		
-*/
+/*		
 		//Custom Top Site Thumbnail.
-/*
 		$previewFile = load()->newInstance('Filesystem\File', BASE_PATH.'topSitePreview.html');
 		if($previewFile->exists()){
-			$this->includeJs(HtmlBuilder::make_r('script', 'if(window.navigator && window.navigator.loadPurpose === "preview"){window.location.href = "'.SITE_ROOT.'topSitePreview.html"}'), true);
-		}
-		
-		//Get Theme Requirments
-		$themeRequire = load()->newInstance('Filesystem\File', BASE_PATH.'Themes/'.SITE_THEME.'/require.php');
-		if($themeRequire->exists()){
-			include($themeRequire->path);
+			$this->includeScripts(HtmlBuilder::make_r('script', 'if(window.navigator && window.navigator.loadPurpose === "preview"){window.location.href = "'.SITE_URL.'topSitePreview.html"}'), true);
 		}
 */
 	}
 		
-	//Include Meta Information In View
-	public function includeMeta($nameOrSnipit, $content = false){
+	/**
+	 *	Include Meta
+	 *	Add Meta Information In View
+	 *	@param string $nameOrSnipit
+	 *	@param BOOL $content
+	 *	@return \Touchbase\View\Assets
+	 */
+	public function includeMeta($nameOrSnipit, $content = null){
 		if(is_string($nameOrSnipit)){
 			if(!empty($content)){
 				$nameOrSnipit = array($nameOrSnipit => $content);
@@ -109,7 +136,10 @@ class Assets extends \Touchbase\Core\Object
 		return $this;
 	}
 	
-	//Get Meta
+	/**
+	 *	Construct Meta
+	 *	@return string
+	 */
 	public function constructMeta(){
 		$return = array();
 		
@@ -132,17 +162,27 @@ class Assets extends \Touchbase\Core\Object
 		return $return;
 	}
 	
-	//Clear Meta Info
+	/**
+	 *	Clear Meta
+	 *	@return \Touchbase\View\Assets
+	 */
 	public function clearMeta(){
 		$this->documentMeta = array();
 		
 		return $this;
 	}
 	
-	//Include Style Information In View
+	/**
+	 *	Include Style
+	 *	Add Style Information In View
+	 *	@param string $file
+	 *	@param string $media
+	 *	@return \Touchbase\View\Assets
+	 */
 	public function includeStyle($file, $media = null){
 		if(is_string($file)){
 			if(!$this->isSnipit('css', $file)){
+				//TODO: Check file exists
 				//$file = Router::relativeUrl($file);
 			}
 			
@@ -157,8 +197,11 @@ class Assets extends \Touchbase\Core\Object
 		return $this;
 	}
 	
-	//Get Styles
-	public function constructStyle(){
+	/**
+	 *	Construct Styles
+	 *	@return string
+	 */
+	public function constructStyles(){
 		$return = array();
 		
 		foreach($this->documentCss as $css){
@@ -182,39 +225,53 @@ class Assets extends \Touchbase\Core\Object
 		return $return;
 	}
 	
-	//Clear Css Includes
-	public function clearStyle(){
+	/**
+	 *	Clear Styles
+	 *	@return \Touchbase\View\Assets
+	 */
+	public function clearStyles(){
 		$this->documentCss = array();
 		
 		return $this;
 	}
 	
-	//Include JS Information In View
-	public function includeJs($file, $head = false){
+	/**
+	 *	Include Scripts
+	 *	Include JS Information In View
+	 *	@param string $file 
+	 *	@param BOOL $head - Pass true to include the script in the head tag
+	 *	@return \Touchbase\View\Assets
+	 */
+	public function includeScript($file, $head = false){
 		if(is_string($file)){
 			if(!$this->isSnipit('js', $file)){
+				//TODO: Check file exists
 				//$file = Router::absoluteUrl($file);
 			}
 
 			if($head){
-				if(!in_array($file, $this->documentJs['head'])){
-					$this->documentJs['head'][] = $file;
+				if(!in_array($file, $this->documentScripts['head'])){
+					$this->documentScripts['head'][] = $file;
 				}
 			} else {
-				if(!in_array($file, $this->documentJs['body'])){
-					$this->documentJs['body'][] = $file;
+				if(!in_array($file, $this->documentScripts['body'])){
+					$this->documentScripts['body'][] = $file;
 				}
 			}
 		}
-
+		
 		return $this;
 	}
 	
-	//Get Javascript
-	public function constructJs($head = false){
+	/**
+	 *	Construct Scripts
+	 *	@param BOOL $head
+	 *	@return string
+	 */
+	public function constructScripts($head = false){
 		$return = array();
 		
-		foreach($this->documentJs[($head?'head':'body')] as $js){
+		foreach($this->documentScripts[($head?'head':'body')] as $js){
 			if(!$this->isSnipit('js', $js)){
 				$js = HtmlBuilder::make('script')->attr('type', 'text/javascript')->attr('src', Router::absoluteURL($js))->output();
 			}
@@ -225,14 +282,23 @@ class Assets extends \Touchbase\Core\Object
 		return $return;
 	}
 	
-	//Clear Javascript Includes
-	public function clearJs(){
-		$this->documentJs = array();
+	/**
+	 *	Clear Scripts
+	 *	@return \Touchbase\View\Assets
+	 */
+	public function clearScripts(){
+		$this->documentScripts = array();
 		
 		return $this;
 	}
 	
-	//Add Extra Elements To Head
+	/**
+	 *	Include Extra
+	 *	Add Extra Elements To Head
+	 *	@param string $name
+	 *	@param array $args
+	 *	@return \Touchbase\View\Assets
+	 */
 	public function includeExtra($name, $args){
 		//Head Only Allows Certain Elements. Since We Have Covered The Rest These Three Are Left
 		if(in_array($name, array('base', 'link', 'noscript')) && is_array($args)){
@@ -242,7 +308,10 @@ class Assets extends \Touchbase\Core\Object
 		return $this;
 	}
 	
-	//Get Extra
+	/**
+	 *	Construct Extra
+	 *	@return string
+	 */
 	public function constructExtra(){
 		$return = array();
 		
@@ -259,7 +328,10 @@ class Assets extends \Touchbase\Core\Object
 		return $return;
 	}
 	
-	//Reset
+	/**
+	 *	Clear Extra
+	 *	@return \Touchbase\View\Assets
+	 */
 	public function clearExtra(){
 		$this->documentExtra = array();
 	
@@ -267,32 +339,36 @@ class Assets extends \Touchbase\Core\Object
 	}
 	
 	
-	//Check If Already Snipit
+	/**
+	 *	Is Snipit
+	 *	This method will determine whether the included item already contains the html tags required to display correctly
+	 *	@param string $type
+	 *	@param string $check
+	 *	@return BOOL
+	 */
 	protected function isSnipit($type, $check){
 		switch($type){
 			case 'link':
 			case 'css':
-				if(strpos($check, "<link") !== false || strpos($check, "<style") !== false){
-					return true;
-				}
-			break;
-			case 'meta':
-				if(strpos($check, "<meta") !== false){
-					return true;
-				}
+				return strpos($check, "<link") !== false || strpos($check, "<style") !== false;
 			break;
 			case 'js':
 			case 'javascript':
-				if(strpos($check, "<script") !== false){
-					return true;
-				}
+					return strpos($check, "<script") !== false;
+			break;
+			case 'meta':
+				return strpos($check, "<meta") !== false;
 			break;
 		}
 		
 		return false;
 	}
-
-	//Adds n amount of titles to the documentTitle array
+	
+	/**
+	 *	Push Title
+	 *	Adds n amount of titles to the documentTitle array
+	 *	@return \Touchbase\View\Assets
+	 */
 	public function pushTitle(){
 		$titles = func_num_args();
 		for ($i = 0; $i < $titles; $i++) {
@@ -300,30 +376,41 @@ class Assets extends \Touchbase\Core\Object
 			if(is_array($titleData)){
 				$this->documentTitle = array_merge($this->documentTitle, $titleData);
 			} else {
-				array_push($this->documentTitle, $titleData);
+				if(!in_array($titleData, $this->documentTitle)){
+					array_push($this->documentTitle, $titleData);
+				}
 			}
 		}
 		
 		return $this;
 	}
 	
-	//Pop Current Title
+	/**
+	 *	Pop Title
+	 *	@return string
+	 */
 	public function popTitle(){
 		return array_pop($this->documentTitle);
 	}
 	
-	//Reset Title
+	/**
+	 *	Clear Title
+	 *	@return \Touchbase\View\Assets
+	 */
 	public function clearTitle(){
 		$this->documentTitle = array();
 		
 		return $this;
 	}
 	
-	//Construct Title for Output
+	/**
+	 *	Construct Title
+	 *	@param BOOL $reverse
+	 *	@return string 
+	 */
 	public function contsructTitle($reverse = false){
 		$titleData = (!$reverse)?array_reverse($this->documentTitle):$this->documentTitle;
 		
-		return implode(" ".(defined("SITE_TITLE_SEPARATOR")?SITE_TITLE_SEPARATOR:'|')." ", array_map('ucfirst', $titleData)); 
+		return implode(" ".$this->config()->get("web")->get("title_separator", "|")." ", array_map('ucfirst', $titleData)); 
 	}
-
 }

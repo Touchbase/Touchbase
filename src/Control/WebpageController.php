@@ -35,8 +35,12 @@ use Touchbase\View\Webpage;
 
 class WebpageController extends Controller
 {
-
-	protected $_webpage;
+	/**
+	 *	@var \Touchbase\View\Webpage
+	 */
+	private $_webpage;
+	
+	/* Public Methods */
 	
 	public function init(){
 		parent::init();
@@ -45,6 +49,12 @@ class WebpageController extends Controller
 		$this->_webpage = new Webpage();
 	}
 	
+	/**
+	 *	Handle Request
+	 *	@param HTTPRequest &$request
+	 *	@param HTTPResponse &$response
+	 *	@return string
+	 */
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
 		
 		//Pass through to Controller
@@ -54,11 +64,23 @@ class WebpageController extends Controller
 			return $body;
 		}
 		
+		if(isset(static::$name)){
+			$this->_webpage->assets->pushTitle(static::$name);
+		}
+		
 		//Set Webpage Response
 		$this->_webpage->setBody($body);
 		$this->response->setBody($this->_webpage->output());
 		
 		return $body;
+	}
+	
+	/**
+	 *	Webpage
+	 *	@return \Touchbase\View\Webpage
+	 */
+	public function webpage(){
+		return $this->_webpage;
 	}
 
 }
