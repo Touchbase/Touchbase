@@ -29,6 +29,8 @@
 
 namespace Touchbase\Utils;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate, \JsonSerializable
 {
 	protected $enum;

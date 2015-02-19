@@ -29,6 +29,8 @@
  
 namespace Touchbase\Core\Config;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 class Store extends \Touchbase\Data\Store
 {
 	const CONFIG_KEY = 'touchbase.key.config';

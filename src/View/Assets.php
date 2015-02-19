@@ -29,6 +29,8 @@
  
 namespace Touchbase\View;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 use Touchbase\Control\Router;
 use Touchbase\Data\StaticStore;
 use Touchbase\Core\Config\ConfigTrait;

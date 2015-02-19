@@ -29,6 +29,8 @@
  
 namespace Touchbase\View;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 use Touchbase\Utils\SystemDetection;
 use Touchbase\Filesystem\File;
 

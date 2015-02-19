@@ -29,6 +29,8 @@
  
 namespace Touchbase\Core\Config;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 trait ConfigTrait
 {
 	protected $_config;

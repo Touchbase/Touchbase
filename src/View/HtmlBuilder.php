@@ -29,6 +29,7 @@
  
 namespace Touchbase\View;
 
+defined('TOUCHBASE') or die("Access Denied.");
 
 class HtmlBuilder extends \Touchbase\Core\Object
 {

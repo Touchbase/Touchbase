@@ -29,6 +29,8 @@
  
 namespace Touchbase\Data;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorAggregate, \ArrayAccess, \JsonSerializable
 {
 	const CHAIN = "touchbase.key.chain.store";

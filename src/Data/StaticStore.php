@@ -29,6 +29,8 @@
  
 namespace Touchbase\Data;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 final class StaticStore extends Store
 {
 	/**

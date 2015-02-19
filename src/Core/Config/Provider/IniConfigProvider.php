@@ -29,6 +29,8 @@
  
 namespace Touchbase\Core\Config\Provider;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 class IniConfigProvider extends \Touchbase\Core\Object
 {
 

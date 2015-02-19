@@ -185,11 +185,11 @@ class RequestHandler extends \Touchbase\Core\Object
 					} else if($test == '::isAuthenticated'){
 						return Auth::isAuthenticated();
 					} else {
-						//Case 3: Check if user has permission
+						//Case 4: Check if user has permission
 						return Auth::isAuthenticated() && Auth::currentUser()->can($test);
 					}
 				} else if((($key = array_search($actionOrAll, $allowedActions, true)) !== false) && is_numeric($key)){
-					//Case 4: Allow numeric array notation (search for array value as action instead of key)
+					//Case 5: Allow numeric array notation (search for array value as action instead of key)
 					return true;
 				}
 			}

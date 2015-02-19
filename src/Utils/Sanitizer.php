@@ -29,6 +29,8 @@
  
 namespace Touchbase\Utils;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 use Touchbase\Control\Router;
 
 class Sanitizer extends \Touchbase\Core\Object

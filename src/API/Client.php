@@ -29,6 +29,8 @@
 
 namespace Touchbase\API;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 use Touchbase\API\Client\ClientInterface;
 
 use Touchbase\Filesystem\File;

@@ -29,6 +29,8 @@
 
 namespace Touchbase\API\Client;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 interface ClientInterface
 {
 	

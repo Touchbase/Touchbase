@@ -29,6 +29,8 @@
 
 namespace Touchbase\API\Client\Provider;
 
+defined('TOUCHBASE') or die("Access Denied.");
+
 use Artax\AsyncClient;
 use Alert\ReactorFactory;
 use Touchbase\API\Client\ClientInterface;
