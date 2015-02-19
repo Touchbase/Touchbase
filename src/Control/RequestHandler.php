@@ -42,7 +42,10 @@ class RequestHandler extends \Touchbase\Core\Object
 	protected $response = null;
 	protected $request = null;	
 	
-	//Default Internal Url Handling
+	/**
+	 *	Default Internal Url Handling
+	 *	@var array
+	 */
 	protected $urlHandlers = array(
 		'$Action' => '$Action'
 	);
@@ -53,15 +56,22 @@ class RequestHandler extends \Touchbase\Core\Object
 	//AllowedActions Declare
 	protected $allowedActions = null;
 	
-	//Called on Each controller until request is handled
+	/**
+	 *	Handle Request
+	 *	Called on Each controller until request is handled
+	 *	@param \Touchbase\Control\HTTPRequest &$request
+	 *	@param \Touchbase\Control\HTTPResponse &$response
+	 *	@return mixed $result
+	 */
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){
 
 		$handlerClass = "$this";
 		while($handlerClass != __CLASS__){
 			$getClassUrlHandler = get_class_vars($handlerClass);
 			$urlHandlers = $getClassUrlHandler['urlHandlers'];
-
+			
 			if(!empty($urlHandlers)){
+				
 				foreach($urlHandlers as $rule => $action){
 					if(is_numeric($rule)){
 						$rule = $action;
@@ -119,13 +129,13 @@ class RequestHandler extends \Touchbase\Core\Object
 							}
 							
 							return $return;
-						} else if ($request->allParsed()){
-							return $result;
-						} else {
+						}
+*/
+
+						if(!$request->allParsed()){
 							return $this->throwHTTPError(404, "I can't handle sub-URLs of a $this object");
 						}
 						
-*/
 						return $result;
 					}
 				}
@@ -139,7 +149,12 @@ class RequestHandler extends \Touchbase\Core\Object
 		return $this;
 	}
 	
-	//Check that the $Action can be called form a URL
+	/**
+	 *	Check Access Action
+	 *	Check that the $Action can be called form a URL
+	 *	@param string $action
+	 *	@return BOOL
+	 */
 	protected function checkAccessAction($action){
 		//Always Allow Index!
 		if($action == 'index') return true;
@@ -165,8 +180,10 @@ class RequestHandler extends \Touchbase\Core\Object
 						//Case 1: TRUE should always allow access
 						return true;
 					} else if(substr($test, 0 , 2) == '->'){
-						//This is todo with custom methods -> TODO: MAY NOT NEED
+						//Fire a custom method to determine if access is allowed
 						return $this->{substr($test, 2)}();
+					} else if($test == '::isAuthenticated'){
+						return Auth::isAuthenticated();
 					} else {
 						//Case 3: Check if user has permission
 						return Auth::isAuthenticated() && Auth::currentUser()->can($test);
@@ -177,9 +194,16 @@ class RequestHandler extends \Touchbase\Core\Object
 				}
 			}
 		}
+		
+		return false;
 	}
 	
-	//Checks whether the request handler has the specific action!
+	/**
+	 *	Has Action
+	 *	Checks whether the request handler has the specific action!
+	 *	@param string $action
+	 *	@return BOOL
+	 */
 	protected function hasAction($action){
 		$action = strtolower($action);
 		$allowedActions = $this->getAllowedActions();
@@ -196,7 +220,11 @@ class RequestHandler extends \Touchbase\Core\Object
 		return false; 
 	}
 	
-	//Merge AllowedActions Between Classes and Return Them!
+	/**
+	 *	Get Allowed Actions
+	 *	Merge AllowedActions Between Classes and Return Them!
+	 *	@return VOID
+	 */
 	protected function getAllowedActions(){
 		static $mergedAllowedActions = null;
 
@@ -221,8 +249,13 @@ class RequestHandler extends \Touchbase\Core\Object
 		return $this->allowedActions;
 	}
 	
-	//Set Params to allow use of $this->urlParamName;
-	protected function setParams($params){
+	/**
+	 *	Set Params
+	 *	Set Params to allow use of $this->urlParamName;
+	 *	@param array $params
+	 *	@return VOID
+	 */
+	protected function setParams(array $params){
 		if(is_array($params)){
 			foreach($params as $paramName => $paramValue){
 				$this->$paramName = $paramValue;
@@ -230,7 +263,13 @@ class RequestHandler extends \Touchbase\Core\Object
 		}
 	}
 	
-	//HTTP ERROR HELPER
+	/**
+	 *	Throw HTTP Error
+	 *	@param int $erroCode
+	 *	@param string $errorMessage
+	 *	@throws \Touchbase\Control\Exception\HTTPResponseException
+	 *	@return VOID
+	 */
 	protected function throwHTTPError($errorCode, $errorMessage = null){
 		user_error("Exception: ".$errorMessage, E_USER_ERROR);
 	
@@ -241,29 +280,6 @@ class RequestHandler extends \Touchbase\Core\Object
 		
 		throw $e;
 	}
-
-
-	//These are needed.
-	public function __isset($property){
-		return $this->hasProperty($property);
-	}
-	
-	public function __set($property, $value){
-		if($this->hasMethod($method = "set$property")) {
-			$this->$property = $this->$method($value);
-		} else {
-			$this->$property = $value;
-		}
-	}
-	
-	public function __get($property){
-		if($this->hasMethod($method = "$property")) {
-			return $this->$method();
-		} else {
-			return $this->$property;
-		}
-	}
-	
 }
 
 ?>

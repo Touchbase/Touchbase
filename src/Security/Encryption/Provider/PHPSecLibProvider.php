@@ -39,7 +39,7 @@ class PHPSecLibProvider implements EncryptionInterface
 	protected $_encryption;
 	
 	public function configure(ConfigStore $config){
-		$encryptionLibrary = $config->get("encryption")->get("library", "Crypt_AES");
+		$encryptionLibrary = $config->get("encryption")->get("library", "phpseclib\Crypt\AES");
 		
 		if(class_exists($encryptionLibrary)){
 			$this->_encryption = new $encryptionLibrary;
@@ -47,7 +47,7 @@ class PHPSecLibProvider implements EncryptionInterface
 				$config->get("encryption")->get("key", "#o%jR=S0Y6+ic7R$~6Y;0a7b65u\$_%")
 			);
 		} else {
-			throw new \RuntimeException("Encryption library does not exist");
+			throw new \RuntimeException(sprintf("Encryption library does not exist: %s", $encryptionLibrary));
 		}
 	}
 

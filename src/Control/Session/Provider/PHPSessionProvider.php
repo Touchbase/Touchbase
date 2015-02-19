@@ -42,7 +42,7 @@ class PHPSessionProvider implements SessionInterface
 	}
 
 	/**
-	 * @return $this
+	 *	@return $this
 	 */
 	public function init(){
 		session_start();
@@ -53,33 +53,37 @@ class PHPSessionProvider implements SessionInterface
 		return $this;
 	}
 	
+	/**
+	 *	ID
+	 *	@return $this
+	 */
 	public function id(){
 		return session_id();
 	}
 	
 	/**
-	 * @return $this
+	 *	@return $this
 	 */
-	public function regenerateId(){
+	public function regenerateID(){
 		session_regenerate_id();
 		
 		return $this;
 	}
 	
 	/**
-	 * @param string $key
+	 *	@param string $key
 	 *
-	 * @return mixed|null
+	 *	@return mixed|null
 	 */
 	public function get($key){
 		return $this->exists($key) ? $_SESSION['touchbase'][$key] : null;
 	}
 	
 	/**
-	 * @param string $key
-	 * @param mixed  $data
+	 *	@param string $key
+	 *	@param mixed  $data
 	 *
-	 * @return $this
+	 *	@return $this
 	 */
 	public function set($key, $data){
 		$_SESSION['touchbase'][$key] = $data;
@@ -88,9 +92,21 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
-	 * @param string $key
+	 *	@param string $key
+	 *	@param mixed  $data
 	 *
-	 * @return $this
+	 *	@return $this
+	 */
+	public function flash($key, $data){
+		$_SESSION['touchbase'][$key] = $data;
+		
+		return $this;
+	}
+	
+	/**
+	 *	@param string $key
+	 *
+	 *	@return $this
 	 */
 	public function delete($key){
 		unset($_SESSION['touchbase'][$key]);
@@ -99,17 +115,16 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
-	 * @param string $key
+	 *	@param string $key
 	 *
-	 * @return bool
+	 *	@return bool
 	 */
 	public function exists($key){
 		return isset($_SESSION['touchbase'][$key]);
 	}
 	
 	/**
-	 * @return $this
-	 *
+	 *	@return $this
 	 */
 	public function destroy(){
 		unset($_SESSION['touchbase']);

@@ -104,6 +104,7 @@ class Client extends \Touchbase\Core\Object
 		}
 		
 		if(static::$shouldThrowErrors){
+			
 			//Check HTTP Status Codes
 			if(!in_array(static::lastResponseCode(), static::acceptableStatusCodes())){
 				throw new \OutOfRangeException(sprintf("Expected status code in (%s), got %d", static::printAcceptableStatusCodes(), static::lastResponseCode()));

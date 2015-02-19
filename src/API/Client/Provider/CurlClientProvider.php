@@ -36,7 +36,6 @@ use Touchbase\Core\Config\Store as ConfigStore;
 
 class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements ClientInterface
 {
-
 	use ConfigTrait;
 	
 	protected $headers = [
@@ -80,7 +79,7 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 		
 		$this->addHeaders($requestHeaders);
 		
-		\pre_r($requestMethod, $requestEndpoint, $requestBody, $this->getAllHeaders());
+		//\pre_r($requestMethod, $requestEndpoint, $requestBody, $this->getAllHeaders());
 		
 		$c = curl_init();
 		curl_setopt($c, CURLOPT_URL, $requestEndpoint);

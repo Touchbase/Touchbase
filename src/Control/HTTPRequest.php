@@ -36,18 +36,30 @@ class HTTPRequest extends HTTPHeaders
 	
 	protected $httpMethod;
 	
-	protected $_GET = array();
+	/**
+	 *	@var array
+	 */
+	protected $_GET = [];
 	
-	protected $_POST = array();
+	/**
+	 *	@var array
+	 */
+	protected $_POST = [];
 	
 	protected $url;
 	
 	protected $extension;
 	
-	protected $urlSegments = array();
+	/**
+	 *	@var array
+	 */
+	protected $urlSegments = [];
 	
 	protected $data;
 	
+	/**
+	 *	@var int
+	 */
 	protected $requestTime;
 	
 	/**
@@ -56,7 +68,7 @@ class HTTPRequest extends HTTPHeaders
 	 * It's a "historical record" that's specific to the current call of
 	 * {@link handleRequest()}, and is only complete once the "last call" to that method is made.
 	 */
-	protected $allParams = array();
+	protected $allParams = [];
 	
 	/**
 	 * @var array $urlParams Contains an associative array of all
@@ -66,10 +78,11 @@ class HTTPRequest extends HTTPHeaders
 	 * while processed in {@link RequestHandler} and to get the last
 	 * processes arguments.
 	 */
-	protected $urlParams = array();
+	protected $urlParams = [];
 	
 	protected $unshiftedButParsedParts = 0;
 	
+	/* Public Functions */
 	
 	public function __construct($httpMethod, $url, $get = null, $post = null, $data = null) {
 		$this->requestTime = time();
@@ -87,6 +100,11 @@ class HTTPRequest extends HTTPHeaders
 		$this->addHeaders($this->parseRequestHeaders());
 	}
 	
+	/**
+	 *	Set URL
+	 *	@param string $url
+	 *	@return \Touchbase\Control\HTTPRequest
+	 */
 	public function setUrl($url) {
 		$this->url = $url;
 		
@@ -106,10 +124,19 @@ class HTTPRequest extends HTTPHeaders
 		return $this;
 	}
 	
+	/**
+	 *	URL
+	 *	@return string
+	 */
 	public function url(){
 		return $this->url;
 	}
 	
+	/**
+	 *	Match
+	 *	Given the url pattern (eg. $Action/$ID/$OtherID) this method will attempt to match the variable to the segment in the URL
+	 *	@return array
+	 */
 	function match($pattern){
 		$params = array();
 		$shiftCount = 0;
@@ -150,112 +177,12 @@ class HTTPRequest extends HTTPHeaders
 		
 		return $params;
 	}
-
-	function matches($pattern, $shiftOnSuccess = false) {
 	
-		// Check if a specific method is required
-		if(preg_match('/^([A-Za-z]+) +(.*)$/', $pattern, $matches)) {
-			$requiredMethod = $matches[1];
-			if($requiredMethod != $this->httpMethod) return false;
-			
-			// If we get this far, we can match the URL pattern as usual.
-			$pattern = $matches[2];
-		}
-				
-		// Special case for the root URL controller
-		if(!$pattern) {
-			return ($this->urlSegments == array()) ? array('Matched' => true) : false;
-		}
-
-		// Check for the '//' marker that represents the "shifting point"
-		$doubleSlashPoint = strpos($pattern, '//');
-		if($doubleSlashPoint !== false) {
-			$shiftCount = substr_count(substr($pattern,0,$doubleSlashPoint), '/') + 1;
-			$pattern = str_replace('//', '/', $pattern);
-			$patternParts = explode('/', $pattern);
-		} else {
-			$patternParts = explode('/', $pattern);
-			$shiftCount = count($patternParts);
-		}
-
-		$matched = true;
-		$arguments = array();
-		foreach($patternParts as $i => $part) {
-			$part = trim($part);
-
-			// Match a variable
-			if(isset($part[0]) && $part[0] == '$') {
-				// A variable ending in ! is required
-				if(substr($part,-1) == '!'){
-					$varRequired = true;
-					$varName = substr($part,1,-1);
-					
-				// A Variable ending in * is required and merges all segments after it 
-				} else if(substr($part,-1) == '*'){
-					$varRequired = true;
-					$mergeRemaining = true;
-					$varName = substr($part,1,-1);
-					
-				} else {
-					$varRequired = false;
-					$varName = substr($part,1);
-				} 
-				
-				// Fail if a required variable isn't populated
-				if($varRequired && !isset($this->urlSegments[$i])) return false;
-				
-				if(isset($mergeRemaining)){
-					$leftUrlSegments = $this->urlSegments;
-					$this->shift($i, $leftUrlSegments);
-					$arguments[$varName] = implode("/", $leftUrlSegments);
-					$shiftCount += count($leftUrlSegments);
-
-					//No More Process
-					break;
-				}
-				
-				$arguments[$varName] = isset($this->urlSegments[$i])?$this->urlSegments[$i]:null;
-				
-				\pre_r($arguments['Controller']);
-				
-				if($part == '$Controller' && (!class_exists($arguments['Controller']) || !is_subclass_of($arguments['Controller'], 'Controller'))) {
-					return false;
-				}
-				
-			// Literal parts with extension
-//			} else if(isset($this->urlSegments[$i]) && $this->urlSegments[$i] . '.' . $this->extension == $part) {
-//				continue;
-	
-			// Literal parts must always be there
-			} else if(!isset($this->urlSegments[$i]) || $this->urlSegments[$i] != $part) {
-				return false;
-			}
-			
-		}
-
-		if($shiftOnSuccess) {
-			$this->shift($shiftCount);
-			// We keep track of pattern parts that we looked at but didn't shift off.
-			// This lets us say that we have *parsed* the whole URL even when we haven't *shifted* it all
-			if(isset($mergeRemaining)){
-				//All Parsed if Remaining.
-				$this->unshiftedButParsedParts = count($patternParts) - $shiftCount;
-			}
-			$this->unshiftedButParsedParts = ($this->unshiftedButParsedParts > 0)?$this->unshiftedButParsedParts:0;
-		}
-
-		$this->urlParams = $arguments;
-
-		// Load the arguments that actually have a value into $this->allParams
-		// This ensures that previous values aren't overridden with blanks
-		foreach($arguments as $k => $v) {
-			if($v || !isset($this->allParams[$k])) $this->allParams[$k] = $v;
-		}
-		
-		if($arguments === array()) $arguments['_matched'] = true;
-		return $arguments;
-	}
-	
+	/**
+	 *	Time
+	 *	The time since 1970 that the request was made
+	 *	@return int
+	 */
 	public function time(){
 		return $this->requestTime;
 	}
@@ -275,10 +202,20 @@ class HTTPRequest extends HTTPHeaders
 		return !empty($_POST)?$_POST:(!empty($_GET)?$_GET:null);
 	}
 	
+	/**
+	 *	Request VARS
+	 *	@return array
+	 */
 	public function requestVARS(){
 		return array_merge_recursive($this->_GET, $this->_POST);
 	}
 	
+	/**
+	 *	Get URL Params
+	 *	This method will return either all of the params or a single param
+	 *	@param string $paramName
+	 *	@return mixed
+	 */
 	public function getUrlParams($paramName = false){
 		if(!empty($paramName)){
 			if(isset($this->urlParams[$paramName])){
@@ -289,30 +226,62 @@ class HTTPRequest extends HTTPHeaders
 		return $this->urlParams;
 	}
 	
+	/**
+	 *	URL Segment
+	 *	Use thie method to return a specific URL segment
+	 *	@param int $segment
+	 *	@return string
+	 */
 	public function urlSegment($segment = 0){
 		return (isset($this->urlSegments[$segment]))?$this->urlSegments[$segment]:"";
 	}
 	
+	/**
+	 *	URL Segments
+	 *	Use this method to return a portion of the URL segments
+	 *	@param int $offset
+	 *	@param int $length
+	 *	@return array
+	 */
 	public function urlSegments($offset = 0, $length = null){
 		return array_slice($this->urlSegments, $offset, $length);
 	}
 	
+	/**
+	 *	Remaining
+	 *	This method will return the remaining unparsed segments (eg /i/wasnt/parsed.png)
+	 *	@return string
+	 */
 	public function remaining(){
 		return implode("/", $this->urlSegments);
 	}
 	
+	/**
+	 *	Extension
+	 *	Returns the extension used in the URL if one is present
+	 *	@return BOOL
+	 */
 	public function extension(){
 		return $this->extension;
 	}
 	
+	/**
+	 *	Is Empty Pattern
+	 *	@return BOOL
+	 */
 	public function isEmptyPattern($pattern) {
 		if(preg_match('/^([A-Za-z]+) +(.*)$/', $pattern, $matches)) {
 			$pattern = $matches[2];
 		}
 		
-		if(trim($pattern) == "") return true;
+		return empty(trim($pattern));
 	}
 	
+	/**
+	 *	All Parsed
+	 *	This method will return true if all of the url segments have been parsed
+	 *	@return BOOL
+	 */
 	public function allParsed() {
 		return count($this->urlSegments) <= $this->unshiftedButParsedParts;
 	}
@@ -352,6 +321,8 @@ class HTTPRequest extends HTTPHeaders
 	/**
 	 *	Shift 
 	 *	This function shifts url segments off the array
+	 *	@param int $count
+	 *	@param array $array
 	 *	@return (array)
 	 */
 	public function shift($count = 1, &$array = null) {		
