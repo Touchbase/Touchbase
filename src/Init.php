@@ -41,6 +41,9 @@ namespace {
 }
 
 namespace Touchbase {;
+	
+//To Gain Access To Class Files
+defined('TOUCHBASE') or define('TOUCHBASE', true);
 
 error_reporting(E_ALL | E_STRICT);
 
@@ -63,9 +66,6 @@ class Init
 	
 	public function __construct($autoLoader = null, $basePath = null){
 		$this->_autoLoader = $autoLoader;
-		
-		//To Gain Access To Class Files
-		defined('TOUCHBASE') or define('TOUCHBASE', true);
 		
 		if(!defined('TOUCHBASE_ENV')){
 			define("TOUCHBASE_ENV", "production", true);
