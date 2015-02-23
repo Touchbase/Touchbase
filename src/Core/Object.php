@@ -169,6 +169,9 @@ abstract class Object
 			$property = substr($method, 4);
 			return $this->$property = $arguments[0];
 		}
+		
+		$caller = current(debug_backtrace());
+		trigger_error(sprintf("Call to undefined function %s() in %s on line %d", $method, $caller['file'], $caller['line']), E_USER_ERROR);
 	}
 	
 	/**
