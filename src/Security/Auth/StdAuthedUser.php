@@ -32,9 +32,13 @@ namespace Touchbase\Security\Auth;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use \Touchbase\Data\Store;
+use \Touchbase\Security\PermissionInterface;
+use \Touchbase\Security\PermissionTrait;
 
-class StdAuthedUser extends \Touchbase\Core\Object implements AuthedUserInterface 
+class StdAuthedUser extends \Touchbase\Core\Object implements AuthedUserInterface, PermissionInterface
 {
+	use PermissionTrait;
+	
 	protected $_ID;
 	protected $_username;
 	protected $_userInfo;
