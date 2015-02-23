@@ -39,7 +39,19 @@ class Cookie extends \Touchbase\Core\Object {
 	const SIX_MONTHS = 15811200;
 	const ONE_YEAR = 31536000;
 	const LIFETIME = 1893456000; // 2030-01-01 00:00:00
+	
+	/* Public Methods */
 
+	/**
+	 *	Set
+	 *	@param string $name
+	 *	@param mixed $value
+	 *	@param int $expiry
+	 *	@param sting $path
+	 *	@param string $domain
+	 *	@param bool $httponly
+	 *	@return BOOL
+	 */
 	public static function set($name, $value, $expiry = self::ONE_YEAR, $path = '/', $domain = null, $httponly = false){
 		if(headers_sent()) return false;
 	
@@ -64,14 +76,30 @@ class Cookie extends \Touchbase\Core\Object {
 		return setcookie($name, $value, $expiry, $path, $domain, $secure, $httponly);
 	}
 	
+	/**
+	 *	Get
+	 *	@param string $name
+	 *	@return mixed
+	 */
 	public static function get($name){
 		return @$_COOKIE[$name];	
 	}
 	
+	/**
+	 *	Delete
+	 *	@param string $name
+	 *	@return BOOL
+	 */
 	public static function delete($name){
+		if(isset($_COOKIE[$name])) unset($_COOKIE[$name]);
 		return self::set($name, '');
 	}
 	
+	/**
+	 *	Exists
+	 *	@param string $name
+	 *	@return BOOL
+	 */
 	public static function exists($name){
 		return array_key_exists($name, $_COOKIE);
 	}
