@@ -151,7 +151,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 		$backTrace = debug_backtrace();
 		$caller = current($backTrace);
 		
-		trigger_error(sprintf("%s, use `buildPath` instead. Called: %s:%d", __METHOD__, $caller['file'], $caller['line']), E_USER_DEPRECATED);
+		trigger_error(sprintf("%s, use `buildPath` instead.", __METHOD__), E_USER_DEPRECATED);
 		return call_user_func_array("self::buildPath", func_get_args());
 	}
 	public static function buildPath(){

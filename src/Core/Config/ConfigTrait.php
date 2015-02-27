@@ -50,9 +50,12 @@ trait ConfigTrait
 	
 	/**
 	 *	Get Config
+	 *	@param string $section
 	 *	@return \Touchbase\Core\Config\Store
 	 */
-	public function config(){
+	public function config($section = null){
+		if($section) return $this->_config->get($section);
+		
 		return $this->_config;
 	}
 }

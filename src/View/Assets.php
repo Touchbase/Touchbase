@@ -89,10 +89,10 @@ class Assets extends \Touchbase\Core\Object
 		$this->includeMeta('apple-mobile-web-app-capable', 'yes');
 		
 		//Prevent Opening WebApp Links In Mobile Safari!
-		$this->includeScripts(HtmlBuilder::make_r('script', '(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
+		$this->includeScript(HtmlBuilder::make_r('script', '(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
 		
 		//ADD MODERNIZR
-		$this->includeScripts(BASE_SCRIPTS.'modernizr.js', true);
+		$this->includeScript(BASE_SCRIPTS.'modernizr.js', true);
 		
 		//Set Default Title, if available...
 		$this->pushTitle($this->config()->get("project")->get("name", null));
@@ -100,15 +100,15 @@ class Assets extends \Touchbase\Core\Object
 		//Include jQuery?
 		if($jqVersion = $this->config()->get("assets")->get("jquery_version", false)){
 			//Load From Google 
-			$jqueryPath = File::buildPath($jqVersion, "jquery.min.js");
+			$jqueryPath = Router::buildPath($jqVersion, "jquery.min.js");
 
-			$this->includeScripts(File::buildPath("//ajax.googleapis.com/ajax/libs/jquery/", $jqueryPath));
+			$this->includeScript(Router::buildPath("//ajax.googleapis.com/ajax/libs/jquery/", $jqueryPath));
 			
 			//If That Fails Load Locally
 			//TODO: This will never load. Sort it out!
 			$jqueryFile = File::create([BASE_SCRIPTS, "jquery", $jqueryPath]);
 			if($jqueryFile->exists()){
-				$this->includeScripts(HtmlBuilder::make_r('script','window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
+				$this->includeScript(HtmlBuilder::make_r('script','window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
 			}
 		}
 /*		
@@ -135,6 +135,7 @@ class Assets extends \Touchbase\Core\Object
 			
 			$this->documentMeta[] = $nameOrSnipit;
 		} 
+		
 		return $this;
 	}
 	

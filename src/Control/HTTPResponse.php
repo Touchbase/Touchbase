@@ -104,6 +104,7 @@ class HTTPResponse extends HTTPHeaders
 	
 	protected $body = null;
 	
+	/* Public Functions */
 	
 	public function __construct($body = null, $statusCode = null, $statusDescription = null){
 		$this->setBody($body);

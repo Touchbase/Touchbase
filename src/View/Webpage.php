@@ -36,19 +36,37 @@ use Touchbase\Filesystem\File;
 
 class Webpage extends \Touchbase\Core\Object
 {
-
-	protected $view;
-	
+	/**
+	 *	@var string
+	 */
 	protected $layout = "layout.tpl.php";
 	
+	/**
+	 *	@var string
+	 */
 	protected $body = null;
 	
+	/**
+	 *	@var \Touchbase\View\Assets
+	 */
 	public $assets;
+	
+	/**
+	 *	@var string
+	 */
+	private $_htmlTag = null;
+	private $_bodyTag = null;
+	
+	/* Public Methods */
 
 	public function __construct(){
 		//Add Requirments
 		$this->assets = Assets::shared();
 		$this->setLayout($this->layout);
+		
+		//HTML
+		$this->_htmlTag = HtmlBuilder::make('html')->attr("lang", "en")->addClass('no-js');
+		$this->_bodyTag = HtmlBuilder::make('body');
 	}
 	
 	/**
@@ -86,13 +104,28 @@ class Webpage extends \Touchbase\Core\Object
 		throw new \Exception("Layout Template Doesn't Exist: $filename");
 	}
 	
+	public function htmlTag(){
+		return $this->_htmlTag;
+	}
+	
+	public function bodyTag(){
+		return $this->_bodyTag;
+	}
+	
 	/**
 	 *	Output Function
+	 *	@return string
 	 */
 	public function output(){
 		return $this->constructLayout();
 	}
-		
+	
+	/* Protected Methods */
+	
+	/**
+	 *	Construct Head
+	 *	@return string
+	 */
 	protected function constructHead(){		
 		$head = "\r\n<!-- Header Information -->\r\n";
 		
@@ -119,6 +152,10 @@ class Webpage extends \Touchbase\Core\Object
 		return $head;
 	}
 	
+	/**
+	 *	Construct Body
+	 *	@return string
+	 */
 	protected function constructBody(){
 		$body = "\r\n<!-- START CONTENT -->\r\n";
 		$body .= '	<!--[if lt IE 7]><p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p><![endif]-->';
@@ -133,19 +170,23 @@ class Webpage extends \Touchbase\Core\Object
 		return $body;
 	}
 	
+	/**
+	 *	Constuct Layout
+	 *	@return string
+	 */
 	protected function constructLayout(){
 		
 		//HTML5 DocType
 		$layout = "<!DOCTYPE html>\n";
 		
 		//HTML
-		$html = HtmlBuilder::make('html')->attr("lang", "en")->addClass('no-js')->addClass($this->createBrowserClassString());
+		$html = $this->_htmlTag->addClass($this->createBrowserClassString());
 		
 		//HEAD
 		$head = HtmlBuilder::make('head')->html($this->constructHead());
 		
 		//BODY
-		$body = HtmlBuilder::make('body')->html($this->constructBody());
+		$body = $this->_bodyTag->html($this->constructBody());
 		
 		//COMBINE
 		$layout .= $html->html($head."\n".$body)->output();
@@ -153,8 +194,13 @@ class Webpage extends \Touchbase\Core\Object
 		return $layout;
 	}
 	
+	/* Private Methods */
 	
-	//Return Browser Information
+	/**
+	 *	Create Browser Class String
+	 *	This method will create a class string based on the browser information
+	 *	@return string
+	 */
 	private function createBrowserClassString(){
 		$browser = SystemDetection::shared();
 		

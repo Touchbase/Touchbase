@@ -31,7 +31,7 @@ namespace {
 		$traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[0];
 		$caller = basename($traces['file']).':'.$traces['line'];
 		foreach(func_get_args() as $print){
-			print "<pre>[$caller] ".htmlentities(print_r($print, true))."</pre>\n";
+			print "<pre>[$caller] ".htmlentities(print_r($print && $print !== true?$print:var_export($print, true), true))."</pre>\n";
 		}
 	}
 	
@@ -47,6 +47,7 @@ defined('TOUCHBASE') or define('TOUCHBASE', true);
 
 error_reporting(E_ALL | E_STRICT);
 
+use Touchbase\Control\Router;
 use Touchbase\Filesystem\File;
 use Touchbase\Data\StaticStore;
 use Touchbase\Core\Config\Store as ConfigStore;
@@ -66,11 +67,7 @@ class Init
 	
 	public function __construct($autoLoader = null, $basePath = null){
 		$this->_autoLoader = $autoLoader;
-		
-		if(!defined('TOUCHBASE_ENV')){
-			define("TOUCHBASE_ENV", "production", true);
-		}
-		
+				
 		//Base Working Directory
 		if(!defined('BASE_PATH')){
 			if(is_null($basePath)){
@@ -81,10 +78,14 @@ class Init
 		}
 		
 		//Error Logging
-		//$error = new \Touchbase\Debug\Error();
+		$error = new \Touchbase\Debug\Error();
 		
 		//Configure Touchbase Project
 		$this->setConfig($this->_configure(ConfigStore::create()));
+		
+		if(!defined('TOUCHBASE_ENV')){
+			define("TOUCHBASE_ENV", $this->config()->get("project")->get("environment", "production"), true);
+		}
 		
 		//Work out touchbase path
 		if($this->_autoLoader instanceof \Composer\Autoload\ClassLoader){
@@ -111,7 +112,7 @@ class Init
 					$baseURL = substr($_SERVER['SCRIPT_NAME'], 0, -strlen($urlSegmentToRemove));
 				}
 			}
-			define('WORKING_DIR', rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/")."/");
+			define('WORKING_DIR', rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/"));
 		}
 		
 		if(!defined('SITE_PROTOCOL')){
@@ -128,7 +129,7 @@ class Init
 		}
 		
 		if(!defined('SITE_URL')){
-			define("SITE_URL", rtrim(SITE_PROTOCOL.$_SERVER['HTTP_HOST'].'/'.WORKING_DIR, '/').'/', true);
+			define("SITE_URL", Router::buildPath(SITE_PROTOCOL.$_SERVER['HTTP_HOST'], WORKING_DIR."/"), true);
 			define("SITE_ROOT", SITE_URL, true);
 		}
 		
@@ -183,7 +184,7 @@ class Init
 							//Not a domain, path or environment - load always
 							if(is_numeric($condition)){
 								$config->addConfig($extraConfig = $configurationData->getConfiguration());
-								$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file)."/");
+								$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file).DIRECTORY_SEPARATOR);
 							
 							//We want to match a certain condition
 							} else {
@@ -195,7 +196,7 @@ class Init
 									TOUCHBASE_ENV == $condition // Are we on a different environment (dev/live)
 								){
 									$config->addConfig($extraConfig = $configurationData->getConfiguration());
-									$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file)."/");
+									$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file).DIRECTORY_SEPARATOR);
 								}
 							}
 						}

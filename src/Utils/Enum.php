@@ -33,18 +33,26 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate, \JsonSerializable
 {
+	/**
+	 *	@var mixed
+	 */
 	protected $enum;
 	
+	/**
+	 *	@var array
+	 */
 	protected static $constantsCache = [];
+	
+	/* Public Methods */
 
 	public function __construct($enum = null, $strict = false){
 		
 		if(!in_array($enum, $this->getConstantsList())) {
-			throw \IllegalArgumentException();
+			throw new \InvalidArgumentException(sprintf("%s does not contain the enum value `%d`", get_class($this), $enum));
 		}
 		
 		if(is_null($enum) && !defined('static::__default')){
-			throw \IllegalArgumentException(sprintf("No argument was passed, %s does not contain a default value `static::__default`", __CLASS__));
+			throw new \InvalidArgumentException(sprintf("No argument was passed, %s does not contain a default value `static::__default`", get_class($this)));
 		}
 		
 		$this->enum = $enum?:static::__default;

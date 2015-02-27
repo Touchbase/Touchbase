@@ -169,18 +169,18 @@ class Router extends \Touchbase\Core\Object
 	 */
 	public static function absoluteURL($url, $relativeToSiteBase = false) {
 		if(!isset($_SERVER['REQUEST_URI'])) return false;
-		
+			
 		if(strpos($url,'/') === false && !$relativeToSiteBase){
 			$url = dirname($_SERVER['REQUEST_URI'] . 'x') . '/' . $url;
 		}
-
-	 	if(substr($url,0,4) != "http"){
-	 		if($url[0] != "/"){
-	 			$url = SITE_URL.$url;
-	 		} else if(strpos($url, BASE_PATH) === 0){
+		
+	 	if(strpos($url, "http") !== 0 && strpos($url, "//") !== 0){
+	 		if(strpos($url, WORKING_DIR) === 0){
 	 			//Remove BASE_PATH and add SITE_URL
-	 			$url = SITE_URL.substr($url, strlen(BASE_PATH));
-	 		}
+	 			$url = static::buildPath(SITE_URL, substr($url, strlen(WORKING_DIR)));
+	 		} else {
+		 		$url = static::buildPath(SITE_URL, $url);
+		 	}
 		}
 		
 		return $url;
@@ -289,10 +289,7 @@ class Router extends \Touchbase\Core\Object
 	 *	@return (string) - /example/file/path
 	 */
 	public static function buildUrlPath(){
-		$backTrace = debug_backtrace();
-		$caller = current($backTrace);
-		
-		trigger_error(sprintf("%s, use `buildPath` instead. Called: %s:%d", __METHOD__, $caller['file'], $caller['line']), E_USER_DEPRECATED);
+		trigger_error(sprintf("%s, use `buildPath` instead.", __METHOD__), E_USER_DEPRECATED);
 		return call_user_func_array("self::buildPath", func_get_args());
 	}
 	public static function buildPath(){
@@ -305,7 +302,15 @@ class Router extends \Touchbase\Core\Object
 		}, $paths)));
 	}
 	
-//Enviroment Settings	
+//Enviroment Settings
+
+	/**
+	 *	Is CLI
+	 *	@return BOOL
+	 */
+	public static function isCLI(){
+		return php_sapi_name() == "cli";
+	}
 	
 	/**
 	 *	Is Live
@@ -321,12 +326,8 @@ class Router extends \Touchbase\Core\Object
 	 *	@return BOOL
 	 */
 	public static function isDev(){
-		
-		if(!Auth::isAuthenticated() || !Auth::currentUser()->can("runDiagnosticTools")){
-			return false;
-		}
-		
-		if(isset($_GET['isDev'])){
+				
+		if(isset($_GET['isDev']) && Auth::isAuthenticated() && Auth::currentUser()->can("runDiagnosticTools")){
 			SESSION::set("isDevelopment", $_GET['isDev']);
 		}
 		
@@ -342,10 +343,10 @@ class Router extends \Touchbase\Core\Object
 	 */
 	public static function isTest(){
 		
-		if(isset($_GET['isTest'])){
+		if(isset($_GET['isTest']) && Auth::isAuthenticated() && Auth::currentUser()->can("runTestingTools")){
 			SESSION::set("isTest", $_GET['isTest']);
 		}
-				
+		
 		return !static::isDev() && (
 			SESSION::get("isTest")
 			|| TOUCHBASE_ENV == 'test'
