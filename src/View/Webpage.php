@@ -65,8 +65,8 @@ class Webpage extends \Touchbase\Core\Object
 		$this->setLayout($this->layout);
 		
 		//HTML
-		$this->_htmlTag = HtmlBuilder::make('html')->attr("lang", "en")->addClass('no-js');
-		$this->_bodyTag = HtmlBuilder::make('body');
+		$this->_htmlTag = HTML::html()->attr("lang", "en")->addClass('no-js');
+		$this->_bodyTag = HTML::body();
 	}
 	
 	/**
@@ -131,23 +131,23 @@ class Webpage extends \Touchbase\Core\Object
 		
 		//Print Page Title
 		$head.= "\r\n<!-- SITE TITLE -->\r\n";
-		$head.= HtmlBuilder::make('title', $this->assets->contsructTitle())->output();
+		$head.= HTML::title($this->assets->contsructTitle());
 		
 		//Print Meta
 		$head.= "\r\n<!-- META INFORMATION -->\r\n";
-		$head.= implode("\n", $this->assets->constructMeta());
+		$head.= implode("", $this->assets->constructMeta());
 		
 		//Print Styles
 		$head.= "\r\n<!-- STYLE SHEETS -->\r\n";
-		$head.= implode("\n", $this->assets->constructStyles());
+		$head.= implode("", $this->assets->constructStyles());
 		
 		//Print Javascript
 		$head.= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
-		$head.= implode("\n", $this->assets->constructScripts(true));
+		$head.= implode("", $this->assets->constructScripts(true));
 		
 		//Print Extra
 		$head.= "\r\n<!-- EXTRA INCLUDES -->\r\n";
-		$head.= implode("\n", $this->assets->constructExtra());
+		$head.= implode("", $this->assets->constructExtra());
 		
 		return $head;
 	}
@@ -165,7 +165,7 @@ class Webpage extends \Touchbase\Core\Object
 		$body .= "\r\n<!-- END CONTENT -->\r\n";
 		
 		$body .= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
-		$body.= implode("\n", $this->assets->constructScripts());
+		$body.= implode("", $this->assets->constructScripts());
 		
 		return $body;
 	}
@@ -183,13 +183,13 @@ class Webpage extends \Touchbase\Core\Object
 		$html = $this->_htmlTag->addClass($this->createBrowserClassString());
 		
 		//HEAD
-		$head = HtmlBuilder::make('head')->html($this->constructHead());
+		$head = HTML::head($this->constructHead());
 		
 		//BODY
-		$body = $this->_bodyTag->html($this->constructBody());
+		$body = $this->_bodyTag->content($this->constructBody());
 		
 		//COMBINE
-		$layout .= $html->html($head."\n".$body)->output();
+		$layout .= $html->content($head."\n".$body)->render();
 		
 		return $layout;
 	}

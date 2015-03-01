@@ -76,20 +76,20 @@ class Assets extends \Touchbase\Core\Object
 		$this->setConfig($config);
 	
 		//Add Defualt Meta
-		$this->includeMeta(HtmlBuilder::make('meta')->attr('charset','UTF-8')->output());
-		$this->includeMeta(HtmlBuilder::make('meta')->attr('http-equiv','Content-type')->attr('content', 'text/html; charset=utf-8')->output());
+		$this->includeMeta(HTML::meta()->attr('charset','UTF-8'));
+		$this->includeMeta(HTML::meta()->attr('http-equiv','Content-type')->attr('content', 'text/html; charset=utf-8'));
 		$this->includeMeta('generator', 'Touchbase - http://touchbase.williamgeorge.co.uk');
 		
 		//WebApp
 		$this->includeMeta('HandheldFriendly', 'true');
 		$this->includeMeta('MobileOptimized', '320');
-		$this->includeMeta(HtmlBuilder::make('meta')->attr('http-equiv', 'cleartype')->attr('content', 'on')->output());
+		$this->includeMeta(HTML::meta()->attr('http-equiv', 'cleartype')->attr('content', 'on'));
 		$this->includeMeta('viewport', 'user-scalable=no, initial-scale=1.0, maximum-scale=1.0');
 		$this->includeMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
 		$this->includeMeta('apple-mobile-web-app-capable', 'yes');
 		
 		//Prevent Opening WebApp Links In Mobile Safari!
-		$this->includeScript(HtmlBuilder::make_r('script', '(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
+		$this->includeScript(HTML::script('(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
 		
 		//ADD MODERNIZR
 		$this->includeScript(BASE_SCRIPTS.'modernizr.js', true);
@@ -108,14 +108,14 @@ class Assets extends \Touchbase\Core\Object
 			//TODO: This will never load. Sort it out!
 			$jqueryFile = File::create([BASE_SCRIPTS, "jquery", $jqueryPath]);
 			if($jqueryFile->exists()){
-				$this->includeScript(HtmlBuilder::make_r('script','window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
+				$this->includeScript(HTML::script('window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
 			}
 		}
 /*		
 		//Custom Top Site Thumbnail.
 		$previewFile = load()->newInstance('Filesystem\File', BASE_PATH.'topSitePreview.html');
 		if($previewFile->exists()){
-			$this->includeScripts(HtmlBuilder::make_r('script', 'if(window.navigator && window.navigator.loadPurpose === "preview"){window.location.href = "'.SITE_URL.'topSitePreview.html"}'), true);
+			$this->includeScripts(HTML::script('if(window.navigator && window.navigator.loadPurpose === "preview"){window.location.href = "'.SITE_URL.'topSitePreview.html"}'), true);
 		}
 */
 	}
@@ -153,7 +153,7 @@ class Assets extends \Touchbase\Core\Object
 			}
 			
 			if(!$this->isSnipit('meta', $meta)){
-				$meta = HtmlBuilder::make('meta')->attr('name', $name)->attr('content', $meta)->output();
+				$meta = HTML::meta()->attr('name', $name)->attr('content', $meta)->render();
 				
 				//RESET
 				unset($name);
@@ -213,13 +213,13 @@ class Assets extends \Touchbase\Core\Object
 				$css = current($css);
 			}
 			if(!$this->isSnipit('css', $css)){
-				$link = HtmlBuilder::make('link')->attr("rel", "stylesheet")->attr('href', Router::absoluteURL($css))->attr("type", "text/css");
+				$link = HTML::link()->attr("rel", "stylesheet")->attr('href', Router::absoluteURL($css))->attr("type", "text/css");
 				if(isset($media)){
 					$link->attr('media', $media);
 					unset($media);
 				}
 				
-				$css = $link->output();
+				$css = $link->render();
 			}
 			
 			$return[] = $css;
@@ -276,7 +276,7 @@ class Assets extends \Touchbase\Core\Object
 		
 		foreach($this->documentScripts[($head?'head':'body')] as $js){
 			if(!$this->isSnipit('js', $js)){
-				$js = HtmlBuilder::make('script')->attr('type', 'text/javascript')->attr('src', Router::absoluteURL($js))->output();
+				$js = HTML::script()->attr('type', 'text/javascript')->attr('src', Router::absoluteURL($js))->render();
 			}
 			
 			$return[] = $js;
@@ -323,7 +323,7 @@ class Assets extends \Touchbase\Core\Object
 				$name = key($extra);
 				$attr = current($extra);
 				
-				$extra = HtmlBuilder::make($name)->attr($attr)->output();
+				$extra = HTML::create($name)->attr($attr)->render();
 				$return[] = $extra;
 			}
 		}
