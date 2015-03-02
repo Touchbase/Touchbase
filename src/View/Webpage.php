@@ -31,8 +31,9 @@ namespace Touchbase\View;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\Utils\SystemDetection;
 use Touchbase\Filesystem\File;
+use Touchbase\Utils\SystemDetection;
+use Touchbase\Control\WebpageController;
 
 class Webpage extends \Touchbase\Core\Object
 {
@@ -47,6 +48,11 @@ class Webpage extends \Touchbase\Core\Object
 	protected $body = null;
 	
 	/**
+	 *	@var \Touchbase\Control\WebpageController
+	 */
+	protected $controller = null;
+	
+	/**
 	 *	@var \Touchbase\View\Assets
 	 */
 	public $assets;
@@ -59,7 +65,10 @@ class Webpage extends \Touchbase\Core\Object
 	
 	/* Public Methods */
 
-	public function __construct(){
+	public function __construct(WebpageController $controller){
+		
+		$this->controller = $controller;
+		
 		//Add Requirments
 		$this->assets = Assets::shared();
 		$this->setLayout($this->layout);
@@ -79,7 +88,7 @@ class Webpage extends \Touchbase\Core\Object
 	public function setBody($body){
 		$this->body = Template::create(array(
 			"BODY" => $body
-		))->renderWith($this->layout);
+		))->setController($this->controller)->renderWith($this->layout);
 	}
 	
 	/**

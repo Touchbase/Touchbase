@@ -173,7 +173,7 @@ class Application extends Controller
 	private function getApplicationController($controllerName){
 		$controllerClass = $this->_applicationNamespace.'\Controllers\\'.$controllerName."Controller";
 		if(class_exists($controllerClass) && is_subclass_of($controllerClass, '\Touchbase\Control\Controller')){
-			return $controllerClass::create();
+			return $controllerClass::create()->setControllerName($controllerName);
 		}
 	}
 	

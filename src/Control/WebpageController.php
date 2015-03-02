@@ -46,7 +46,7 @@ class WebpageController extends Controller
 		parent::init();
 		
 		//Create Webpage.
-		$this->_webpage = new Webpage();
+		$this->_webpage = new Webpage($this);
 	}
 	
 	/**

@@ -31,27 +31,36 @@ namespace Touchbase\Control;
 defined('TOUCHBASE') or die("Access Denied.");
 
 class Controller extends RequestHandler
-{
-	
-	protected $controllerStack = array();
-	
+{	
+	/**
+	 *	@var array
+	 */
 	protected $urlHandlers = [
 		'$Action/$ID/$OtherID'
 	];
 	
-	//Default Action
+	/**
+	 *	@var string
+	 */
 	protected $defaultAction = 'handleAction';
 	
-	//Allowed Actions
+	/**
+	 *	@var array
+	 */
 	protected $allowedActions = [
 		'handleAction',
 		'index'
 	];
 	
+	/**
+	 *	@var string
+	 */
+	protected $_controllerName;
+	
 	//A Helper function to check if all Inits are called on child classes.
 	protected $baseInitCalled = false;
 	protected function init(){
-		$this->baseInitCalled = true;	
+		$this->baseInitCalled = true;
 	}
 	
 	//Calls this controll and returns a HTTPResponse Object
@@ -107,7 +116,29 @@ class Controller extends RequestHandler
 	 *	@return (\Touchbase\View\Template)
 	 */
 	public function template(array $templateArgs = NULL){
-		return \Touchbase\View\Template::create($templateArgs);
+		return \Touchbase\View\Template::create($templateArgs)->setController($this);
+	}
+	
+	/* Getters / Setter */
+	
+	public function setControllerName($controllerName){
+		$this->_controllerName = $controllerName;
+		return $this;
+	}
+	
+	public function controllerName(){
+		if(isset($this->_controllerName)){
+			return $this->_controllerName;
+		}
+		
+		$reflector = new \ReflectionClass($this);
+		$controllerName = $reflector->getShortName();
+		
+		if((($pos = strrpos($controllerName, $suffix = "Controller")) !== false)){
+			$controllerName = substr_replace($controllerName, "", $pos, strlen($suffix));
+		}
+		
+		return $this->_controllerName = $controllerName;
 	}
 }
 

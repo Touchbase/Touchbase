@@ -119,7 +119,7 @@ abstract class Object
 	 *	@return BOOL
 	 */
 	public function hasProperty($property){
-		return property_exists($this, $property) || $this->hasMethod($property);
+		return property_exists($this, $property) || ($this->hasMethod($property) && property_exists($this, "_$property"));
 	}
 	
 	/**
@@ -164,7 +164,7 @@ abstract class Object
 	 *	@return mixed
 	 */
 	public function __get($property){
-		if($this->hasMethod($method = "$property")) {
+		if($this->hasMethod($method = "$property") && $this->hasProperty("_$property")) {
 			return $this->$method();
 		} else if(isset($this->$property)){
 			return $this->$property;

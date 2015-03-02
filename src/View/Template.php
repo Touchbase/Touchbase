@@ -29,10 +29,23 @@
  
 namespace Touchbase\View;
 
-class Template extends \Touchbase\Core\Object
-{
+defined('TOUCHBASE') or die("Access Denied.");
 
-	private $vars = array();
+use Touchbase\Control\Router;
+
+class Template extends \Touchbase\Core\Object
+{	
+	/**
+	 *	\Touchbase\Control\Controller
+	 */
+	private $controller;
+	
+	/**
+	 *	@var array
+	 */
+	private $vars = [];
+	
+	/* Public Methods */
 	
 	public function __construct($vars = false){
 		//Add variables to template.
@@ -40,13 +53,25 @@ class Template extends \Touchbase\Core\Object
 		
 		//Set up store if not already
 		if(!isset($GLOBALS['TemplateVars'])){
-			$GLOBALS['TemplateVars'] = array();
+			$GLOBALS['TemplateVars'] = [];
 		}
 	}
 	
 	/**
-	 * @param String - Template file location
-	 * @return String - Parsed template contents
+	 *	Set Controller	
+	 *	@return \Touchbase\View\Template
+	 */
+	public function setController($controller){
+		
+		$this->controller = $controller;
+		
+		return $this;
+	}
+	
+	/**
+	 *	Render With
+	 *	@param string $templateFile - Template file location
+	 *	@return string - Parsed template contents
 	 */
 	public function renderWith($templateFile){
 		
@@ -61,17 +86,15 @@ class Template extends \Touchbase\Core\Object
 			//Find Assets Path
 			$assetsPath = BASE_PATH.'assets/';
 			
-/*
-			//CSS autoloader
-			if($cssPath = getRealPath(REQUEST_URI, 'assets/css')) {
-				//${HTML}->assets->includeStyle($cssPath);
+			if(isset($this->controller)){
+				$controllerName = strtolower($this->controller->controllerName);
+				
+				//CSS autoloader
+				Assets::shared()->includeStyle(Router::buildPath(APPLICATION_STYLES, $controllerName . ".css"));
+				
+				//JS autoloader
+				Assets::shared()->includeScript(Router::buildPath(APPLICATION_SCRIPTS, $controllerName . ".js"));
 			}
-			
-			//JS autoloader
-			if($jsPath = getRealPath(REQUEST_URI, 'assets/js')) {
-				//${HTML}->assets->includeJs($jsPath);
-			}
-*/
 			
 			return $template;
 		}
@@ -80,9 +103,10 @@ class Template extends \Touchbase\Core\Object
 	}
 	
 	/**
-	 * @param String $tplVar - Variable in template to replace 
-	 * @param String $value - Value of variable
-	 * @return false
+	 *	Assign
+	 *	@param string $tplVar - Variable in template to replace 
+	 *	@param string $value - Value of variable
+	 *	@return VOID
 	 */
 	public function assign($tplVar, $value = false){
 		if(!empty($tplVar)){
@@ -94,14 +118,14 @@ class Template extends \Touchbase\Core\Object
 				$this->vars[$tplVar] = $value;
 			}
 		}
-		return false;	
 	}
 	
 #praga mark - Internal Methods
 	
 	/**
-	 *	@param String $templateFile - file location of template
-	 *	@return String - Template
+	 *	Read Template
+	 *	@param string $templateFile - file location of template
+	 *	@return string - Template
 	 */
 	private function readTemplate($templateFile){
 		if(file_exists($templateFile)){			
@@ -116,20 +140,21 @@ class Template extends \Touchbase\Core\Object
 			ob_end_clean();
 			
 			//Run it through variable finder.
-			return $this->variableFinder($fileContents, $templateFile);	
+			return $this->variableFinder($fileContents);	
 		}
 		return false;
 	}
 	
 	/**
+	 *	Variable Finder
 	 *	This is the cleaver function that removes the need to use <?php print $varname; ?> in template.
 	 *	All thats needed is $varname
 	 *	
-	 *	@param $content - contents of template
-	 *	@return String - Template
+	 *	@param string $contents - contents of the template file
+	 *	@return string
 	 */
-	private function variableFinder($contents, $templateFile){
-		preg_match_all("/\\$([A-Za-z0-9\_\-\]\[\.]+)\\$/i", $contents, $templateVars);
+	private function variableFinder($contents){
+		preg_match_all("/\\$([A-Za-z0-9\_\-\]\[\.\:]+)\\$/i", $contents, $templateVars);
 
 		if(!empty($templateVars[1])){
 			
@@ -150,6 +175,15 @@ class Template extends \Touchbase\Core\Object
 					$replaceVar($var, $this->vars[$var], $contents);
 					unset($this->vars[$var]);
 					continue;
+				} else if($pos = strpos($var, "::") !== false){
+					// Property Exists
+					$property = substr($var, $pos+1);
+					$controller = $this->controller;
+					
+					if(isset($controller::${$property})){
+						$replaceVar($var, $controller::${$property}, $contents);
+						continue;
+					} 
 				} else if(defined($var)){
 					$replaceVar($var, constant($var), $contents);
 					continue;
@@ -159,12 +193,30 @@ class Template extends \Touchbase\Core\Object
 				} else if(array_key_exists($var, $GLOBALS)){
 					$replaceVar($var, $GLOBALS[$var], $contents);
 					continue;
-				}
+				} 
 				
-				//$_REQUEST, $_COOKIE, $_SESSION Finder
+				//$_REQUEST, $_COOKIE, $_SESSION, Class Object Finder
 				if(strpos($var, ".") !== false){
 					$varParts = explode(".", $var);
-					if(isset($GLOBALS["_".$varParts[0]])){
+					
+					if(empty($varParts[0])){
+						unset($varParts[0]);
+						
+						$property = $this->controller;
+						while($part = array_shift($varParts)){
+							if(isset($property->$part)){
+								$property = $property->$part;
+							} else {
+								trigger_error(sprintf("Trying to get property $%s of non-object", $part), E_USER_NOTICE);
+								$property = null;
+							}
+						}
+						
+						if($property && !is_object($property)){
+							$replaceVar($var, $property, $contents);
+							continue;
+						}
+					} else if(isset($GLOBALS["_".$varParts[0]])){
 						$findVar = $GLOBALS["_".$varParts[0]];
 						for($i=1; $i < count($varParts); $i++){
 							if(isset($findVar[$varParts[$i]])){
@@ -176,6 +228,7 @@ class Template extends \Touchbase\Core\Object
 						//We were successfull in finding the var
 						if($i == count($varParts)){
 							$replaceVar($var, $findVar, $contents);
+							continue;
 						}
 					}
 				}
@@ -183,7 +236,7 @@ class Template extends \Touchbase\Core\Object
 				//Template Finder
 				preg_match("/(.*)[\[]{1}(.*)[\]]{1}$/i", $var, $type);
 				if(is_array($type) && count($type) > 1 && defined($typevar = "TPL_".strtoupper($type[2])."_PATH")) {
-					$moreContents = new Template($this->vars);
+					$moreContents = (new Template($this->vars))->setController($this->controller);
 					$contents = str_replace($templateVars[0][$k], $moreContents->renderWith(getRealPath($type[1], constant($typevar))), $contents);
 				}
 				
@@ -194,7 +247,7 @@ class Template extends \Touchbase\Core\Object
 		
 		//Save Unused Vars - Might be used in a parent template.
 		$GLOBALS['TemplateVars'] = array_merge($GLOBALS['TemplateVars'], $this->vars);
-	
+		
 		//Return String
 	 	return $contents;
 	}
