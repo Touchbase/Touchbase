@@ -71,9 +71,9 @@ class Init
 		//Base Working Directory
 		if(!defined('BASE_PATH')){
 			if(is_null($basePath)){
-				define('BASE_PATH', rtrim(realpath(dirname($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+				define('BASE_PATH', rtrim(realpath(dirname($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR));
 			} else {
-				define('BASE_PATH', rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+				define('BASE_PATH', rtrim($basePath, DIRECTORY_SEPARATOR));
 			}
 		}
 		
@@ -98,7 +98,7 @@ class Init
 			}
 		}
 		if(!defined('TOUCHBASE_PATH')){
-			define('TOUCHBASE_PATH', rtrim(realpath($nsBasePath), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+			define('TOUCHBASE_PATH', rtrim(realpath($nsBasePath), DIRECTORY_SEPARATOR));
 		}
 		
 		//Base Working Directory
@@ -110,6 +110,7 @@ class Init
 				$urlSegmentToRemove = substr($path, strlen(BASE_PATH));
 				if(substr($_SERVER['SCRIPT_NAME'], -strlen($urlSegmentToRemove)) == $urlSegmentToRemove) {
 					$baseURL = substr($_SERVER['SCRIPT_NAME'], 0, -strlen($urlSegmentToRemove));
+					
 				}
 			}
 			define('WORKING_DIR', rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/"));
@@ -166,7 +167,7 @@ class Init
 		
 		try {
 			//Load Main Configuration File
-			$configurationData = IniConfigProvider::create()->parseIniFile(File::create(BASE_PATH.'config.ini'));
+			$configurationData = IniConfigProvider::create()->parseIniFile(File::create([BASE_PATH, 'config.ini']));
 			$config->addConfig($configurationData->getConfiguration());
 			
 			$ns  = $config->get("project")->get("namespace", "Project");
@@ -177,14 +178,14 @@ class Init
 				if(!empty($files)){
 					foreach($files as $condition => $file){
 						
-						$extraConfigFile = File::create($configFilePath.$file);
+						$extraConfigFile = File::create([$configFilePath, $file]);
 						
 						if($extraConfigFile->exists()){
 							$configurationData = IniConfigProvider::create()->parseIniFile($extraConfigFile);
 							//Not a domain, path or environment - load always
 							if(is_numeric($condition)){
 								$config->addConfig($extraConfig = $configurationData->getConfiguration());
-								$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file).DIRECTORY_SEPARATOR);
+								$loadExtraConfig($extraConfig->get("config")->get("files", ""), File::buildPath($configFilePath, dirname($file)));
 							
 							//We want to match a certain condition
 							} else {
@@ -193,10 +194,10 @@ class Init
 									strpos($_SERVER["REQUEST_URI"], $condition) === 0 || //Are we a different working dir?
 									strpos($_SERVER["SERVER_NAME"], $condition) === 0 || //Are we on a different server?
 									(strtoupper(substr(php_uname('s'), 0, 3)) === 'WIN' && $condition == "windows") || //Are we on a differnet os?
-									TOUCHBASE_ENV == $condition // Are we on a different environment (dev/live)
+									(defined("TOUCHBASE_ENV") && TOUCHBASE_ENV == $condition) // Are we on a different environment (dev/live)
 								){
 									$config->addConfig($extraConfig = $configurationData->getConfiguration());
-									$loadExtraConfig($extraConfig->get("config")->get("files", ""), $configFilePath.dirname($file).DIRECTORY_SEPARATOR);
+									$loadExtraConfig($extraConfig->get("config")->get("files", ""), File::buildPath($configFilePath, dirname($file)));
 								}
 							}
 						}
@@ -209,9 +210,9 @@ class Init
 		} catch(\Exception $e){}
 		
 		if(!defined('PROJECT_PATH')){
-			$psr0 = realpath(BASE_PATH . DIRECTORY_SEPARATOR . $src . DIRECTORY_SEPARATOR . $ns);
-			$psr4 = realpath(BASE_PATH . DIRECTORY_SEPARATOR . $src);
-			define('PROJECT_PATH', ($psr0 ?: $psr4) . DIRECTORY_SEPARATOR);
+			$psr0 = realpath(File::buildPath(BASE_PATH, $src, $ns));
+			$psr4 = realpath(File::buildPath(BASE_PATH, $src));
+			define('PROJECT_PATH', $psr0 ?: $psr4);
 		}
 		
 		return $config;

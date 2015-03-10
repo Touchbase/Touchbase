@@ -171,4 +171,3 @@ class Sanitizer extends \Touchbase\Core\Object
 		self::$transliterator = $t;
 	}
 }
-?>

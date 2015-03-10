@@ -30,6 +30,8 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Filesystem\Filesystem;
+
 class Controller extends RequestHandler
 {	
 	/**
@@ -56,6 +58,7 @@ class Controller extends RequestHandler
 	 *	@var string
 	 */
 	protected $_controllerName;
+	protected $_applicationPath;
 	
 	//A Helper function to check if all Inits are called on child classes.
 	protected $baseInitCalled = false;
@@ -139,6 +142,19 @@ class Controller extends RequestHandler
 		}
 		
 		return $this->_controllerName = $controllerName;
+	}
+	
+	public function applicationPath(){
+		if(isset($this->_applicationPath)){
+			return $this->_applicationPath;
+		}
+		
+		$reflector = new \ReflectionClass($this);
+		$controllerNamespace = $reflector->getNamespaceName();
+		$controllerNamespace = ltrim(strstr($controllerNamespace, $needle = "\\") ?: $controllerNamespace, $needle);
+		
+		$applicationNamespace = str_replace("\\Controllers", "", $controllerNamespace);
+		return $this->_applicationPath = Filesystem::buildPath(PROJECT_PATH, str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace));
 	}
 }
 

@@ -47,7 +47,7 @@ class PHPSessionProvider implements SessionInterface
 	public function init(){
 		session_start();
 		if(!isset($_SESSION['touchbase'])){
-		  $_SESSION['touchbase'] = array();
+			$_SESSION['touchbase'] = array();
 		}
 		
 		return $this;
@@ -75,8 +75,8 @@ class PHPSessionProvider implements SessionInterface
 	 *
 	 *	@return mixed|null
 	 */
-	public function get($key){
-		return $this->exists($key) ? $_SESSION['touchbase'][$key] : null;
+	public function get($key, $default = null){
+		return $this->exists($key) ? $_SESSION['touchbase'][$key] : $default;
 	}
 	
 	/**
@@ -98,7 +98,7 @@ class PHPSessionProvider implements SessionInterface
 	 *	@return $this
 	 */
 	public function flash($key, $data){
-		$_SESSION['touchbase'][$key] = $data;
+		$_SESSION['touchbase.flash'][$key] = $data;
 		
 		return $this;
 	}

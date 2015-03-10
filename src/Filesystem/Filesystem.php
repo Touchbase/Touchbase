@@ -36,7 +36,13 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	public $fileChmod = 02775;
 	
 	public $folderChmod = 02775;
-
+	
+	/**
+	 *	Make Dir
+	 *	@param string - $folder
+	 *	@param BOOL - $recursive
+	 *	@return BOOL
+	 */
 	public function makeDir($folder, $recursive = true){
 		if(!file_exists($folder)){
 			return mkdir($folder, $this->folderChmod, $recursive);
@@ -45,6 +51,12 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 		return false;
 	}
 
+	/**
+	 *	Remove Dir 
+	 *	@param string - $folder
+	 *	@param BOOL - $contentsOnly
+	 *	@return VOID
+	 */
 	public function removeDir($folder, $contentsOnly = false) {
 		// remove a file encountered by a recursive call.
 		if(is_file($folder) || is_link($folder)) {
@@ -65,10 +77,16 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 		}
 	}
 	
+	/**
+	 *	Dir Modified Time 
+	 *	@param string - $folder
+	 *	@param array - $extensionList
+	 *	@return int
+	 */
 	public function dirModifiedTime($folder, $extensionList = null) {		
 		$modTime = 0;
 		
-		$items = scandir(BASE_PATH.$folder);
+		$items = scandir(static::buildPath(BASE_PATH, $folder));
 		foreach($items as $item) {
 			if($item[0] != '.') {
 				// Recurse into folders
@@ -88,6 +106,11 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 		return $modTime;
 	}
 	
+	/**
+	 *	Dir Size 
+	 *	@param string - $folder
+	 *	@return int
+	 */
 	public function dirSize($folder){
 		if(is_dir($folder)){
 			$io = popen('/usr/bin/du -sk '.$folder, 'r' );
@@ -100,18 +123,21 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 		return false;		
 	}
 	
+	/**
+	 *	Format Size 
+	 *	@param int - $size
+	 *	@return string
+	 */
 	public function formatSize($size) {
 		$sizes = array(" Bytes", " KB", " MB", " GB", " TB", " PB", " EB", " ZB", " YB");
 		if($size > 0) return round($size/pow(1024, ($i = floor(log($size, 1024)))), $i > 1 ? 2 : 0) . $sizes[$i];
 		return '-';
 	}
-	
-	/**
-	 *	Helper Methods
-	 */
 	 
 	/**
 	 *	Print Working Directory 
+	 *	@param BOOL - $fullPath
+	 *	@return string
 	 */
 	public function pwd($fullPath = false){
 		return !$fullPath?basename(dirname($this->path)):$this->path;
@@ -119,17 +145,35 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	 
 	/**
 	 *	Path Exists
-	 *	@param (String) - $path
-	 *	@return (BOOL)
+	 *	@param string - $path
+	 *	@return BOOL
 	 */
 	public function exists($path = null){
-		$path = isset($path)?$path:$this->path;
-		return file_exists($path) && (is_dir($path) || is_file($path));
+		$path = $path?:$this->path;
+		return file_exists($path) && ($this->isDir($path) || $this->isFile($path));
+	}
+	
+	/**
+	 *	Is File
+	 *	@param string - $path
+	 *	@return BOOL
+	 */
+	public function isFile($path = null){
+		return is_file($path?:$this->path);
+	}
+	
+	/**
+	 *	Is Dir
+	 *	@param string - $path
+	 *	@return BOOL
+	 */
+	public function isDir($path = null){
+		return is_dir($path?:$this->path);
 	}
 	
 	/**
 	 *	Path Writable
-	 *	@return (BOOL)
+	 *	@return BOOL
 	 */
 	public function writable(){
 		return is_writable($this->path);
@@ -137,7 +181,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Path Readable
-	 *	@return (BOOL)
+	 *	@return BOOL
 	 */
 	public function readable(){
 		return is_readable($this->path);
@@ -145,7 +189,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Build Path
-	 *	@return (string) - /example/file/path/
+	 *	@return string - /example/file/path/
 	 */
 	public static function buildFolderPath(){
 		$backTrace = debug_backtrace();

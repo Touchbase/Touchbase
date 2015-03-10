@@ -32,6 +32,9 @@ namespace Touchbase\Control;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\View\Webpage;
+use Touchbase\Control\Router;
+use Touchbase\Control\Session;
+use Touchbase\Utils\Validation;
 
 class WebpageController extends Controller
 {
@@ -70,7 +73,11 @@ class WebpageController extends Controller
 		
 		//Set Webpage Response
 		$this->_webpage->setBody($body);
-		$this->response->setBody($this->_webpage->output());
+		
+		//Set Response
+		$htmlDocument = $this->_webpage->output();
+		$this->validateHtml($htmlDocument);
+		$this->response->setBody($htmlDocument);
 		
 		return $body;
 	}
@@ -82,5 +89,60 @@ class WebpageController extends Controller
 	public function webpage(){
 		return $this->_webpage;
 	}
-
+	
+	/* Private Methods */
+	
+	private function validateHtml($htmlDocument){
+		libxml_use_internal_errors(true);
+		$dom = new \DOMDocument;
+		$dom->loadHtml($htmlDocument, LIBXML_NOWARNING | LIBXML_NOERROR);
+		foreach($dom->getElementsByTagName('form') as $form){
+			
+			if($formAction = $form->getAttribute("action")){
+				if(!Router::isSiteUrl($formAction)){
+					return;
+				}
+			}
+			
+			$formValidation = Validation::create($form->getAttribute("name"));
+			
+			foreach($form->getElementsByTagName('input') as $input){
+				if($input->hasAttributes()){
+					$inputValidation = Validation::create($input->getAttribute("name"));
+					$inputType = $input->getAttribute("type");
+					
+					$inputValidation->type($inputType);
+					
+					if($input->hasAttribute("required")){
+						$inputValidation->required();
+					}
+					if($input->hasAttribute("readonly")){
+						$inputValidation->readonly($input->getAttribute("value"));
+					}
+					if($input->hasAttribute("disabled")){
+						$inputValidation->disabled();
+					}
+					if($maxLength = $input->getAttribute("maxlength")){
+						$inputValidation->maxLength($maxLength);
+					}
+					if(in_array($inputType, ["number", "range", "date", "datetime", "datetime-local", "month", "time", "week"])){
+						if($min = $input->getAttribute("min")){
+							$inputValidation->min($min);
+						}
+						
+						if($min = $input->getAttribute("max")){
+							$inputValidation->min($max);
+						}
+					}
+					if($pattern = $input->getAttribute("pattern")){
+						$inputValidation->pattern($pattern);
+					}
+					
+					if(count($inputValidation)){
+						$formValidation->addRule($inputValidation);
+					}
+				}
+			}
+		}
+	}
 }

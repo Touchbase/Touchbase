@@ -258,7 +258,7 @@ class RequestHandler extends \Touchbase\Core\Object
 	protected function setParams(array $params){
 		if(is_array($params)){
 			foreach($params as $paramName => $paramValue){
-				$this->$paramName = $paramValue;
+				$this->$paramName = filter_var($paramValue, FILTER_SANITIZE_STRING);
 			}
 		}
 	}

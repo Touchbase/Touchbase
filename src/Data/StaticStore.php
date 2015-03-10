@@ -51,12 +51,8 @@ final class StaticStore extends Store
 	}
 	
 	/**
-	 * protected so no one else can instance it 
+	 * NO-OP
 	 */
-	protected function __construct(){}
-	
-	/**
-	 * protected to prevent clonning 
-	 */
-	protected function __clone(){}
+	final public function __construct(){}
+	final protected function __clone(){}
 }

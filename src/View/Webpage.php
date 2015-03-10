@@ -32,6 +32,7 @@ namespace Touchbase\View;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Filesystem\File;
+use Touchbase\Control\Router;
 use Touchbase\Utils\SystemDetection;
 use Touchbase\Control\WebpageController;
 
@@ -71,6 +72,29 @@ class Webpage extends \Touchbase\Core\Object
 		
 		//Add Requirments
 		$this->assets = Assets::shared();
+		
+		//Add Defualt Meta
+		$this->assets->includeMeta(HTML::meta()->attr('charset','UTF-8'));
+		$this->assets->includeMeta(HTML::meta()->attr('http-equiv','Content-type')->attr('content', 'text/html; charset=utf-8'));
+		$this->assets->includeMeta('generator', 'Touchbase - http://touchbase.williamgeorge.co.uk');
+		
+		//WebApp
+		$this->assets->includeMeta('HandheldFriendly', 'true');
+		$this->assets->includeMeta('MobileOptimized', '320');
+		$this->assets->includeMeta(HTML::meta()->attr('http-equiv', 'cleartype')->attr('content', 'on'));
+		$this->assets->includeMeta('viewport', 'user-scalable=no, initial-scale=1.0, maximum-scale=1.0');
+		$this->assets->includeMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
+		$this->assets->includeMeta('apple-mobile-web-app-capable', 'yes');
+		
+		//Prevent Opening WebApp Links In Mobile Safari!
+		$this->assets->includeScript(HTML::script('(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
+		
+		//ADD MODERNIZR
+		$this->assets->includeScript([BASE_SCRIPTS, 'modernizr.js'], true);
+		
+		//Set Default Title, if available...
+		$this->assets->pushTitle($this->controller->config("project")->get("name", null));
+		
 		$this->setLayout($this->layout);
 		
 		//HTML
@@ -99,10 +123,14 @@ class Webpage extends \Touchbase\Core\Object
 	 *	@return VOID
 	 */
 	public function setLayout($layout){
+		if(is_array($layout)){
+			$layout = call_user_func_array("Touchbase\Filesystem\Filesystem::buildPath", $layout); 
+		}
+		
 		$ext = pathinfo($layout)['extension'];
 		$filename = $layout.(empty($ext)?".tpl.php":"");
 			
-		foreach([$filename, APPLICATION_TEMPLATES.$filename, BASE_TEMPLATES.$filename] as $path){
+		foreach([$filename, File::buildPath(APPLICATION_TEMPLATES, $filename), File::buildPath(BASE_TEMPLATES, $filename)] as $path){
 			$layoutFile = File::create($path);
 			if($layoutFile->exists()){
 				$this->layout = $layoutFile->path;
@@ -139,24 +167,24 @@ class Webpage extends \Touchbase\Core\Object
 		$head = "\r\n<!-- Header Information -->\r\n";
 		
 		//Print Page Title
-		$head.= "\r\n<!-- SITE TITLE -->\r\n";
-		$head.= HTML::title($this->assets->contsructTitle());
+		$head .= "\r\n<!-- SITE TITLE -->\r\n";
+		$head .= HTML::title($this->assets->contsructTitle());
 		
 		//Print Meta
-		$head.= "\r\n<!-- META INFORMATION -->\r\n";
-		$head.= implode("", $this->assets->constructMeta());
+		$head .= "\r\n<!-- META INFORMATION -->\r\n";
+		$head .= implode("", $this->assets->meta());
 		
 		//Print Styles
-		$head.= "\r\n<!-- STYLE SHEETS -->\r\n";
-		$head.= implode("", $this->assets->constructStyles());
+		$head .= "\r\n<!-- STYLE SHEETS -->\r\n";
+		$head .= implode("", $this->assets->styles());
 		
 		//Print Javascript
-		$head.= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
-		$head.= implode("", $this->assets->constructScripts(true));
+		$head .= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
+		$head .= implode("", $this->assets->scripts(true));
 		
 		//Print Extra
-		$head.= "\r\n<!-- EXTRA INCLUDES -->\r\n";
-		$head.= implode("", $this->assets->constructExtra());
+		$head .= "\r\n<!-- EXTRA INCLUDES -->\r\n";
+		$head .= implode("", $this->assets->extra());
 		
 		return $head;
 	}
@@ -167,14 +195,13 @@ class Webpage extends \Touchbase\Core\Object
 	 */
 	protected function constructBody(){
 		$body = "\r\n<!-- START CONTENT -->\r\n";
-		$body .= '	<!--[if lt IE 7]><p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p><![endif]-->';
 			
 		$body .= $this->body;
 
 		$body .= "\r\n<!-- END CONTENT -->\r\n";
 		
 		$body .= "\r\n<!-- JAVASCRIPT INCLUDES -->\r\n";
-		$body.= implode("", $this->assets->constructScripts());
+		$body .= implode("", $this->assets->scripts());
 		
 		return $body;
 	}

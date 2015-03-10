@@ -99,14 +99,6 @@ abstract class Object
 	}
 	
 	/**
-	 *	Is A
-	 *	@return BOOL
-	 */
-	public function is_a($class){
-		return $this instanceof $class;
-	}
-	
-	/**
 	 *	Has Method
 	 *	@return BOOL
 	 */
@@ -182,8 +174,9 @@ abstract class Object
 		if($this->hasProperty($property = "$method")) {
 			return $this->$property;
 		} else if(substr($method, 0, 3) === "set" && !empty($arguments)){
-			$property = substr($method, 4);
-			return $this->$property = $arguments[0];
+			$property = lcfirst(substr($method, 3));
+			$this->$property = $arguments[0];
+			return $this;
 		}
 		
 		trigger_error(sprintf("Call to undefined function %s()", $method), E_USER_NOTICE);

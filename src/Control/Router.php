@@ -39,6 +39,7 @@ use Touchbase\Security\Permission;
 use Touchbase\Control\Session;
 use Touchbase\Control\HTTPRequest;
 use Touchbase\Control\Exception\HTTPResponseException;
+use Touchbase\View\Assets;
 
 class Router extends \Touchbase\Core\Object
 {
@@ -67,19 +68,22 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		$url = preg_replace("/^\/".str_replace("/", "\/?", WORKING_DIR)."/", '', $_SERVER["REQUEST_URI"]);
-		if(strpos($url,'?') !== false) {
+		if(strpos($url, '?') !== false) {
 			list($url, $query) = explode('?', $url, 2);
 			parse_str($query, $_GET);
 			if ($_GET) $_REQUEST = array_merge((array)$_REQUEST, (array)$_GET);
 		}
 		
 		// Pass back to the webserver for files that exist
-		if(php_sapi_name() == 'cli-server' && file_exists(BASE_PATH.'public_html'.$url) && is_file(BASE_PATH.'public_html'.$url)){
-			//return false not working (PHP5.5.14), read file instead.
-			readfile(BASE_PATH.'public_html'.$url);
-			return false;
+		if(!$this->isLive()){
+			$realFile = File::create([BASE_PATH, 'public_html', $url]);
+			if(php_sapi_name() == 'cli-server' && $realFile->isFile() && $realFile->exists()){
+				//return false not working (PHP5.5.14), read file instead.
+				readfile($realFile->path);
+				return false;
+			}
 		}
-				
+		
 		//Remove base folders from the URL if webroot is hosted in a subfolder
 		if(substr(strtolower($url), 0, strlen(BASE_PATH)) == strtolower(BASE_PATH)){
 			$url = substr($url, strlen(BASE_PATH));
@@ -99,7 +103,6 @@ class Router extends \Touchbase\Core\Object
 				$dispatch::create()	->setConfig($this->config())
 									->init()
 									->handleRequest($request, $response);
-				//\pre_r("Final:", $response);
 			} else {
 				\pre_r("Could Not Load Project");
 			}
@@ -114,7 +117,7 @@ class Router extends \Touchbase\Core\Object
 	private function handleRequest(HTTPRequest $request, HTTPResponse &$response){
 						
 		//Have we mapped a path?
-		$assetFilePath = $this->config()->get("assets")->get("asset_map")->get($request->urlSegment(), "");
+		$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
 		if($assetFilePath){
 			$assetFile = File::create([
 				PROJECT_PATH,
@@ -139,6 +142,16 @@ class Router extends \Touchbase\Core\Object
 				$response->addHeader("Content-Type", $contentType);
 				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
 				$result = $response->setBody($assetFile->read());
+			}
+		}
+		
+		//TopSite Preview
+		if(isset($_SERVER["HTTP_X_PURPOSE"]) && $_SERVER["HTTP_X_PURPOSE"] == "preview"){
+			$preview = File::create([BASE_PATH, 'public_html', 'preview.html']);
+			if($preview->exists()){
+				$response->addHeader("Content-Type", "text/html");
+				$response->addHeader('Content-Length', $preview->size()); //TODO: Should be done in response setBody!
+				$result = $response->setBody($preview->read());
 			}
 		}
 		
@@ -176,7 +189,7 @@ class Router extends \Touchbase\Core\Object
 		
 	 	if(strpos($url, "http") !== 0 && strpos($url, "//") !== 0){
 	 		if(strpos($url, WORKING_DIR) === 0){
-	 			//Remove BASE_PATH and add SITE_URL
+	 			//Remove WORKING_DIR and add SITE_URL
 	 			$url = static::buildPath(SITE_URL, substr($url, strlen(WORKING_DIR)));
 	 		} else {
 		 		$url = static::buildPath(SITE_URL, $url);
@@ -269,7 +282,7 @@ class Router extends \Touchbase\Core\Object
 	
 	/**
 	 *	Build Url
-	 *	@return (string)
+	 *	@return string
 	 */
 	public static function buildUrl($parsedUrl){
 		$scheme = isset($parsedUrl['scheme']) ? $parsedUrl['scheme'] . ':' . (!strcasecmp($parsedUrl['scheme'], 'mailto') ? '' : '//') : ''; 
@@ -285,8 +298,8 @@ class Router extends \Touchbase\Core\Object
 	}
 	
 	/**
-	 *	Build URL Path
-	 *	@return (string) - /example/file/path
+	 *	Build Path
+	 *	@return string - example/file/path
 	 */
 	public static function buildUrlPath(){
 		trigger_error(sprintf("%s, use `buildPath` instead.", __METHOD__), E_USER_DEPRECATED);
@@ -297,9 +310,27 @@ class Router extends \Touchbase\Core\Object
 		
 		$count = $totalArgs = func_num_args();
 		return implode("/", array_filter(array_map(function($component) use (&$count, $totalArgs){
-			$func = ($count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
-			return $func($component, " \t\n\r\0\x0B/");
+			$func = ($firstArg = $count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
+			$isProtocol = substr_compare($component, $needle="://", -strlen($needle)) === 0;
+			$component = $func($component, " \t\n\r\0\x0B".($isProtocol?"":"/"));
+			return ($isProtocol && $firstArg && $totalArgs > 1)?substr($component, 0, -1):$component;
 		}, $paths)));
+	}
+	
+	/**
+	 *	Build Params
+	 *	@param string $baseUrl - optional
+	 *	@param array $params
+	 *	@return string
+	 */
+	public static function buildParams(/* $baseUrl, array $params */){
+		$params = func_get_args();
+		$baseUrl = (count($params) > 1) ? array_shift($params) : "";
+		
+		if(empty($params) || empty($params[0])) return $baseUrl;
+		
+		$separator = (parse_url($baseUrl, PHP_URL_QUERY) == NULL) ? '?' : '&';
+		return $baseUrl.$separator.urldecode(http_build_query($params[0]));
 	}
 	
 //Enviroment Settings

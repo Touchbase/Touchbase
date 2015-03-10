@@ -68,4 +68,3 @@ class Transliterator extends \Touchbase\Core\Object
 		return strtr($source, $table);
 	}
 }
-?>

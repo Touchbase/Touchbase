@@ -90,8 +90,8 @@ class HTTPRequest extends HTTPHeaders
 		$this->httpMethod = $httpMethod;
 		$this->setUrl($url);
 		
-		$this->_GET = (array)(isset($get)?$get:$_GET);
-		$this->_POST = (array)(isset($post)?$post:array_merge_recursive($_POST, $_FILES));
+		$this->_GET = (array)$get?:$_GET;
+		$this->_POST = (array)$post?:array_merge_recursive($_POST, $_FILES);
 		
 		//(php://input) Standard Input Stream -> Contains POST and PUT data! 
 		$this->data = isset($data)?$data:@file_get_contents('php://input');
@@ -137,7 +137,7 @@ class HTTPRequest extends HTTPHeaders
 	 *	Given the url pattern (eg. $Action/$ID/$OtherID) this method will attempt to match the variable to the segment in the URL
 	 *	@return array
 	 */
-	function match($pattern){
+	public function match($pattern){
 		$params = array();
 		$shiftCount = 0;
 		
@@ -187,19 +187,26 @@ class HTTPRequest extends HTTPHeaders
 		return $this->requestTime;
 	}
 	
-	//Variable Info
-	private function requestGET($name){
-		return (isset($this->_GET[$name]))?$this->_GET[$name]:null;
-	}
-	
-	private function requestPOST($name){ 
-		return (isset($this->_POST[$name]))?$this->_POST[$name]:null;
-	}
-	
+	/**
+	 *	Request VAR
+	 *	@param string - $name
+	 *	@return string
+	 */
 	public function requestVAR($name){
-		$_POST = $this->requestPOST($name);
-		$_GET = $this->requestGET($name);
-		return !empty($_POST)?$_POST:(!empty($_GET)?$_GET:null);
+		trigger_error(sprintf("%s, use `_VAR` instead.", __METHOD__), E_USER_DEPRECATED);
+		return $this->_VAR($name);
+	}
+	public function _VAR($name){
+		
+		if(isset($this->_POST[$name]) && !empty($post = $this->_POST[$name])){
+			return filter_var($post, FILTER_SANITIZE_STRING);
+		}
+		
+		if(isset($this->_GET[$name]) && !empty($get = $this->_GET[$name])){
+			return filter_var($get, FILTER_SANITIZE_STRING);
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -207,6 +214,10 @@ class HTTPRequest extends HTTPHeaders
 	 *	@return array
 	 */
 	public function requestVARS(){
+		trigger_error(sprintf("%s, use `_VARS` instead.", __METHOD__), E_USER_DEPRECATED);
+		return $this->_VARS($name);
+	}
+	public function _VARS(){
 		return array_merge_recursive($this->_GET, $this->_POST);
 	}
 	
@@ -342,31 +353,7 @@ class HTTPRequest extends HTTPHeaders
 		
 		return array_shift($array);
 	}
-	
-	/**
-	 *	Parse Request Headers
-	 *	Get headers sent in to the server
-	 *	@return array
-	 */
-	private function parseRequestHeaders(){
-		$headers = array();
-		foreach($_SERVER as $k=>$v){
-			if(substr($k, 0, 5)=="HTTP_"){
-				$header = str_replace(' ', '-', ucwords(str_replace('_', ' ', strtolower(substr($k, 5)))));
-        		$headers[$header] = $v;
-			}
-		}
-		
-		if(isset($_SERVER['CONTENT_TYPE'])){
-			$headers['Content-Type'] = $_SERVER['CONTENT_TYPE'];
-		}
-		if(isset($_SERVER['CONTENT_LENGTH'])){
-			$headers['Content-Length'] = $_SERVER['CONTENT_LENGTH'];
-		}
 
-		return $headers;
-	}
-	
 	/**
 	 *	Client IP
 	 *	Returns the real IP address of the user
@@ -403,6 +390,32 @@ class HTTPRequest extends HTTPHeaders
 		
 		// Return with the found IP or the remote address
 		return (!empty($ip) ? $ip : $_SERVER['REMOTE_ADDR']);
+	}
+	
+	/* Private Methods */
+
+	/**
+	 *	Parse Request Headers
+	 *	Get headers sent in to the server
+	 *	@return array
+	 */
+	private function parseRequestHeaders(){
+		$headers = array();
+		foreach($_SERVER as $k=>$v){
+			if(substr($k, 0, 5)=="HTTP_"){
+				$header = str_replace(' ', '-', ucwords(str_replace('_', ' ', strtolower(substr($k, 5)))));
+				$headers[$header] = $v;
+			}
+		}
+		
+		if(isset($_SERVER['CONTENT_TYPE'])){
+			$headers['Content-Type'] = $_SERVER['CONTENT_TYPE'];
+		}
+		if(isset($_SERVER['CONTENT_LENGTH'])){
+			$headers['Content-Length'] = $_SERVER['CONTENT_LENGTH'];
+		}
+
+		return $headers;
 	}
 	
 }

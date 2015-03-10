@@ -83,9 +83,9 @@ class Folder extends Filesystem {
 	 *	@return (SELF)
 	 */
 	public function cd($path){
-		$path = realpath($path)."/";
+		$path = realpath($path).DIRECTORY_SEPARATOR;
 		
-		if($this->exists($path)){		
+		if($this->exists($path)){
 			$this->path = $path;
 		}	
 

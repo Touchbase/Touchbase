@@ -81,7 +81,11 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 		
 		$this->addHeaders($requestHeaders);
 		
-		//\pre_r($requestMethod, $requestEndpoint, $requestBody, $this->getAllHeaders());
+		ob_start();
+			\pre_r($requestMethod, $requestEndpoint, $requestBody, $this->getAllHeaders());
+			$apiLog = ob_get_contents();
+		ob_end_clean();
+		error_log($apiLog);
 		
 		$c = curl_init();
 		curl_setopt($c, CURLOPT_URL, $requestEndpoint);
@@ -92,10 +96,16 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 		curl_setopt($c, CURLOPT_HTTPHEADER, $this->getAllHeaders());
 		curl_setopt($c, CURLOPT_CUSTOMREQUEST, strtoupper($requestMethod));
 		curl_setopt($c, CURLOPT_POSTFIELDS, $requestBody);
+		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false); 
 	
 		$this->_lastResponse = curl_exec($c);
 		$this->_lastResponseStatus = curl_getinfo($c, CURLINFO_HTTP_CODE);
 		$this->_lastResponseContentType = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
+		
+		$curlError = curl_error($c);
+		if($curlError){
+			throw new \RuntimeException(is_string($curlError)?$curlError:"Something Terrible Happened!");
+		}
 		
 		return $this->_lastResponse;
 	}
@@ -151,7 +161,7 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 	 *  @return VOID
 	 */
 	public function setAuthorizationHeaderWithToken($token){
-		 $this->addHeader("Authorization", "Token token=\"$token\" ");
+		 $this->addHeader("Authorization", "Bearer $token");
 		 
 		 return $this;
 	}

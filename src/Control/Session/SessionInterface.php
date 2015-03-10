@@ -67,7 +67,7 @@ interface SessionInterface
 	 *
 	 *	@return mixed|null
 	 */
-	public function get($key);
+	public function get($key, $default = null);
 	
 	/**
 	 *	@param string $key

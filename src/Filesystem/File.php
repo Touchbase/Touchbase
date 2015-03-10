@@ -317,7 +317,7 @@ class File extends Filesystem {
 	}
 	
 	public function mime(){
-		if($this->exists()){
+		if($this->exists() && $this->isFile()){
 			if(function_exists('finfo_open')){
 				$finfo = finfo_open(FILEINFO_MIME);
 				list($type, $charset) = explode(';', finfo_file($finfo, $this->path));

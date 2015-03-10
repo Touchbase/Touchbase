@@ -43,15 +43,13 @@ class Assets extends \Touchbase\Core\Object
 	use ConfigTrait;
 	
 	const ASSETS_KEY = 'touchbase.key.assets';
+	const ASSET_JS = 'js';
+	const ASSET_CSS = 'css';
+	const ASSET_META = 'meta';
+	const ASSET_OTHER = 'other';
 	
-	protected $documentTitle = [];
-	protected $documentMeta = [];
-	protected $documentCss = [];
-	protected $documentScripts = [
-		'head' => [],
-		'body' => []
-	];
-	protected $documentExtra = array();
+	protected $documentTitle = [];	
+	protected $documentAssets = [];
 		
 	/** 
 	 *	Shared
@@ -74,50 +72,19 @@ class Assets extends \Touchbase\Core\Object
 	public function __construct(ConfigStore $config = null){
 		
 		$this->setConfig($config);
-	
-		//Add Defualt Meta
-		$this->includeMeta(HTML::meta()->attr('charset','UTF-8'));
-		$this->includeMeta(HTML::meta()->attr('http-equiv','Content-type')->attr('content', 'text/html; charset=utf-8'));
-		$this->includeMeta('generator', 'Touchbase - http://touchbase.williamgeorge.co.uk');
-		
-		//WebApp
-		$this->includeMeta('HandheldFriendly', 'true');
-		$this->includeMeta('MobileOptimized', '320');
-		$this->includeMeta(HTML::meta()->attr('http-equiv', 'cleartype')->attr('content', 'on'));
-		$this->includeMeta('viewport', 'user-scalable=no, initial-scale=1.0, maximum-scale=1.0');
-		$this->includeMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
-		$this->includeMeta('apple-mobile-web-app-capable', 'yes');
-		
-		//Prevent Opening WebApp Links In Mobile Safari!
-		$this->includeScript(HTML::script('(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
-		
-		//ADD MODERNIZR
-		$this->includeScript(BASE_SCRIPTS.'modernizr.js', true);
-		
-		//Set Default Title, if available...
-		$this->pushTitle($this->config()->get("project")->get("name", null));
 		
 		//Include jQuery?
-		if($jqVersion = $this->config()->get("assets")->get("jquery_version", false)){
+		if($jqVersion = $this->config("assets")->get("jquery_version", false)){
 			//Load From Google 
 			$jqueryPath = Router::buildPath($jqVersion, "jquery.min.js");
-
 			$this->includeScript(Router::buildPath("//ajax.googleapis.com/ajax/libs/jquery/", $jqueryPath));
 			
 			//If That Fails Load Locally
-			//TODO: This will never load. Sort it out!
 			$jqueryFile = File::create([BASE_SCRIPTS, "jquery", $jqueryPath]);
 			if($jqueryFile->exists()){
 				$this->includeScript(HTML::script('window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
 			}
 		}
-/*		
-		//Custom Top Site Thumbnail.
-		$previewFile = load()->newInstance('Filesystem\File', BASE_PATH.'topSitePreview.html');
-		if($previewFile->exists()){
-			$this->includeScripts(HTML::script('if(window.navigator && window.navigator.loadPurpose === "preview"){window.location.href = "'.SITE_URL.'topSitePreview.html"}'), true);
-		}
-*/
 	}
 		
 	/**
@@ -128,13 +95,12 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function includeMeta($nameOrSnipit, $content = null){
-		if(is_string($nameOrSnipit)){
-			if(!empty($content)){
-				$nameOrSnipit = array($nameOrSnipit => $content);
-			}
-			
-			$this->documentMeta[] = $nameOrSnipit;
-		} 
+		
+		if(!empty($content)){
+			$nameOrSnipit = HTML::meta()->attr('name', $nameOrSnipit)->attr('content', $content);
+		}
+		
+		$this->includeAsset(self::ASSET_META, $nameOrSnipit);
 		
 		return $this;
 	}
@@ -143,26 +109,8 @@ class Assets extends \Touchbase\Core\Object
 	 *	Construct Meta
 	 *	@return string
 	 */
-	public function constructMeta(){
-		$return = array();
-		
-		foreach($this->documentMeta as $meta){
-			if(is_array($meta)){
-				$name = key($meta);
-				$meta = current($meta);
-			}
-			
-			if(!$this->isSnipit('meta', $meta)){
-				$meta = HTML::meta()->attr('name', $name)->attr('content', $meta)->render();
-				
-				//RESET
-				unset($name);
-			}
-			
-			$return[] = $meta;
-		}
-		
-		return $return;
+	public function meta(){
+		return @$this->documentAssets[self::ASSET_META]['head']?:[];
 	}
 	
 	/**
@@ -170,7 +118,7 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function clearMeta(){
-		$this->documentMeta = array();
+		$this->documentAssets[self::ASSET_META] = [];
 		
 		return $this;
 	}
@@ -183,20 +131,9 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function includeStyle($file, $media = null){
-		if(is_string($file)){
-			if(!$this->isSnipit('css', $file)){
-				//TODO: Check file exists
-				//$file = Router::relativeUrl($file);
-			}
-			
-			if(!empty($media)){
-				$file = array($media => $file);
-			}
-			
-			if(!in_array($file, $this->documentCss)){
-				$this->documentCss[] = $file;
-			}
-		}
+		$this->includeAsset(self::ASSET_CSS, $file, [
+			"media" => $media
+		]);
 		return $this;
 	}
 	
@@ -204,28 +141,8 @@ class Assets extends \Touchbase\Core\Object
 	 *	Construct Styles
 	 *	@return string
 	 */
-	public function constructStyles(){
-		$return = array();
-		
-		foreach($this->documentCss as $css){
-			if(is_array($css)){
-				$media = key($css);
-				$css = current($css);
-			}
-			if(!$this->isSnipit('css', $css)){
-				$link = HTML::link()->attr("rel", "stylesheet")->attr('href', Router::absoluteURL($css))->attr("type", "text/css");
-				if(isset($media)){
-					$link->attr('media', $media);
-					unset($media);
-				}
-				
-				$css = $link->render();
-			}
-			
-			$return[] = $css;
-		}
-		
-		return $return;
+	public function styles(){		
+		return @$this->documentAssets[self::ASSET_CSS]['head']?:[];
 	}
 	
 	/**
@@ -233,7 +150,7 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function clearStyles(){
-		$this->documentCss = array();
+		$this->documentAssets[self::ASSET_CSS] = [];
 		
 		return $this;
 	}
@@ -246,22 +163,9 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function includeScript($file, $head = false){
-		if(is_string($file)){
-			if(!$this->isSnipit('js', $file)){
-				//TODO: Check file exists
-				//$file = Router::absoluteUrl($file);
-			}
-
-			if($head){
-				if(!in_array($file, $this->documentScripts['head'])){
-					$this->documentScripts['head'][] = $file;
-				}
-			} else {
-				if(!in_array($file, $this->documentScripts['body'])){
-					$this->documentScripts['body'][] = $file;
-				}
-			}
-		}
+		$this->includeAsset(self::ASSET_JS, $file, [
+			'body' => !$head
+		]);
 		
 		return $this;
 	}
@@ -271,18 +175,8 @@ class Assets extends \Touchbase\Core\Object
 	 *	@param BOOL $head
 	 *	@return string
 	 */
-	public function constructScripts($head = false){
-		$return = array();
-		
-		foreach($this->documentScripts[($head?'head':'body')] as $js){
-			if(!$this->isSnipit('js', $js)){
-				$js = HTML::script()->attr('type', 'text/javascript')->attr('src', Router::absoluteURL($js))->render();
-			}
-			
-			$return[] = $js;
-		}
-		
-		return $return;
+	public function scripts($head = false){
+		return @$this->documentAssets[self::ASSET_JS][$head?'head':'body']?:[];
 	}
 	
 	/**
@@ -290,7 +184,7 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function clearScripts(){
-		$this->documentScripts = array();
+		$this->documentAssets[self::ASSET_JS] = [];
 		
 		return $this;
 	}
@@ -305,7 +199,7 @@ class Assets extends \Touchbase\Core\Object
 	public function includeExtra($name, $args){
 		//Head Only Allows Certain Elements. Since We Have Covered The Rest These Three Are Left
 		if(in_array($name, array('base', 'link', 'noscript')) && is_array($args)){
-			$this->documentExtra[][$name] = $args; 
+			$this->includeAsset(self::ASSET_OTHER, HTML::create($name)->attr($args));
 		}
 		
 		return $this;
@@ -315,20 +209,8 @@ class Assets extends \Touchbase\Core\Object
 	 *	Construct Extra
 	 *	@return string
 	 */
-	public function constructExtra(){
-		$return = array();
-		
-		foreach($this->documentExtra as $extra){
-			if(is_array($extra)){
-				$name = key($extra);
-				$attr = current($extra);
-				
-				$extra = HTML::create($name)->attr($attr)->render();
-				$return[] = $extra;
-			}
-		}
-		
-		return $return;
+	public function extra(){
+		return @$this->documentAssets[self::ASSET_OTHER]['head']?:[];
 	}
 	
 	/**
@@ -336,51 +218,25 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function clearExtra(){
-		$this->documentExtra = array();
+		$this->documentAssets[self::ASSET_OTHER] = [];
 	
 		return $this;
 	}
-	
-	
-	/**
-	 *	Is Snipit
-	 *	This method will determine whether the included item already contains the html tags required to display correctly
-	 *	@param string $type
-	 *	@param string $check
-	 *	@return BOOL
-	 */
-	protected function isSnipit($type, $check){
-		switch($type){
-			case 'link':
-			case 'css':
-				return strpos($check, "<link") !== false || strpos($check, "<style") !== false;
-			break;
-			case 'js':
-			case 'javascript':
-					return strpos($check, "<script") !== false;
-			break;
-			case 'meta':
-				return strpos($check, "<meta") !== false;
-			break;
-		}
 		
-		return false;
-	}
-	
 	/**
 	 *	Push Title
 	 *	Adds n amount of titles to the documentTitle array
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function pushTitle(){
-		$titles = func_num_args();
-		for ($i = 0; $i < $titles; $i++) {
-			$titleData = func_get_arg($i);
-			if(is_array($titleData)){
-				$this->documentTitle = array_merge($this->documentTitle, $titleData);
+		foreach(func_get_args() as $title){
+			if(empty($title)) continue;
+			
+			if(is_array($title)){
+				$this->documentTitle = array_merge($this->documentTitle, $title);
 			} else {
-				if(!in_array($titleData, $this->documentTitle)){
-					array_push($this->documentTitle, $titleData);
+				if(!in_array($title, $this->documentTitle)){
+					array_push($this->documentTitle, $title);
 				}
 			}
 		}
@@ -415,5 +271,122 @@ class Assets extends \Touchbase\Core\Object
 		$titleData = (!$reverse)?array_reverse($this->documentTitle):$this->documentTitle;
 		
 		return implode(" ".$this->config()->get("web")->get("title_separator", "|")." ", array_map('ucfirst', $titleData)); 
+	}
+	
+	/**
+	 *	Asset Map For Path
+	 *	@param string $path
+	 *	@return string
+	 */
+	public static function assetMapForPath($path){
+		return substr(md5($path), 0, 6);
+	}
+	
+	/**
+	 *	Path For Asset Map
+	 *	@param string $assetMap
+	 *	@return string
+	 */
+	public static function pathForAssetMap($assetMap){
+		return StaticStore::shared()->get(ConfigStore::CONFIG_KEY)->get("assets")->get("asset_map")->get($assetMap, null);
+	}
+	
+	/**
+	 *	Path For Asset Url
+	 *	@param string assetUrl
+	 *	@return string
+	 */
+	public static function pathForAssetUrl($assetUrl){
+		if(Router::isSiteUrl($assetUrl)){
+			//Does the file exist?
+			list($assetMapFragment, $assetUrl) = explode("/", Router::relativeUrl($assetUrl), 2);
+			$file = File::create([PROJECT_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
+			if($file->exists()){
+				return $file->path;	
+			}
+			
+			return null;
+		} 
+		
+		return $assetUrl;
+	}
+	
+	/**
+	 *	Include Asset
+	 *	Helper method to include the asset
+	 *	@param string $assetType
+	 *	@param string $file
+	 *	@param array $options
+	 *	@return VOID
+	 */
+	private function includeAsset($assetType, $file, $options = []){
+		//Construct File Path
+		if(is_array($file)){
+			$file = call_user_func_array("Touchbase\Filesystem\File::buildPath", $file);
+		}
+		
+		if(is_object($file) && $file instanceof HTML){
+			$file = $file->render();
+		}
+		
+		if(is_string($file)){
+			if(!$this->isSnipit($assetType, $file)){
+				if(!static::pathForAssetUrl($file)) return;
+				
+				switch($assetType){
+					case self::ASSET_CSS:
+						$file = HTML::link()->attr($options)->attr([
+							"rel" => "stylesheet",
+							"type" => "text/css",
+							"href" => Router::absoluteURL($file)
+						])->render();
+					break;
+					case self::ASSET_JS:
+						$file = HTML::script()->attr($options)->attr([
+							"type" => "text/javascript",
+							"src" => Router::absoluteURL($file)
+						])->render();
+					break;
+					default:
+						return;
+				}
+			}
+			
+			if(empty($this->documentAssets[$assetType])){
+				$this->documentAssets[$assetType] = [];
+				$this->documentAssets[$assetType]['head'] = [];
+				
+				if($assetType == self::ASSET_JS){
+					$this->documentAssets[$assetType]['body'] = [];
+				}
+			}
+			
+			if(!in_array($file, $this->documentAssets[$assetType][@$options['body']?'body':'head'])){
+				$this->documentAssets[$assetType][@$options['body']?'body':'head'][] = $file;
+			}
+		} 
+	}
+	
+	/**
+	 *	Is Snipit
+	 *	This method will determine whether the included item already contains the html tags required to display correctly
+	 *	@param string $assetType
+	 *	@param string $check
+	 *	@return BOOL
+	 */
+	private function isSnipit($assetType, $check){
+		switch($assetType){
+			case self::ASSET_CSS:
+				return strpos($check, "<link") !== false || strpos($check, "<style") !== false;
+			break;
+			case self::ASSET_JS:
+				return strpos($check, "<script") !== false;
+			break;
+			case self::ASSET_META:
+				return strpos($check, "<meta") !== false;
+			break;
+		}
+		
+		return false;
 	}
 }

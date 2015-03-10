@@ -51,12 +51,12 @@ class Application extends Controller
 		
 		//Define BASE Asset paths
 		$assetConfig = $this->config()->get("assets");
-		$assetPath = $assetConfig->get("assets","assets/");
+		$assetPath = $assetConfig->get("assets","assets");
 		if(!defined("BASE_ASSETS")) define("BASE_ASSETS", Router::buildPath(SITE_URL, $assetPath));
-		if(!defined("BASE_IMAGES")) define("BASE_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images/")));
-		if(!defined("BASE_STYLES")) define("BASE_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css/")));
-		if(!defined("BASE_SCRIPTS")) define("BASE_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js/")));
-		if(!defined("BASE_TEMPLATES")) define("BASE_TEMPLATES", Filesystem::buildPath(PROJECT_PATH, $assetConfig->get("templates","Templates/")));
+		if(!defined("BASE_IMAGES")) define("BASE_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images")));
+		if(!defined("BASE_STYLES")) define("BASE_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css")));
+		if(!defined("BASE_SCRIPTS")) define("BASE_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js")));
+		if(!defined("BASE_TEMPLATES")) define("BASE_TEMPLATES", Filesystem::buildPath(PROJECT_PATH, $assetConfig->get("templates","Templates")));
 			
 		return $this;
 	}
@@ -68,13 +68,13 @@ class Application extends Controller
 		if(!$this->baseInitCalled){
 			user_error("init() method on class '$this' doesn't call Application::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
 		}
+		
+		if(isset(static::$name)){
+			Assets::shared()->pushTitle(static::$name);
+		}
 					
 		if($application = $this->handleApplication()){
 			
-			if(isset($application::$name)){
-				Assets::shared()->pushTitle($application::$name);
-			}
-						
 			$application ->setConfig($this->config())
 						 ->init()
 						 ->handleRequest($this->request, $response);
@@ -85,16 +85,16 @@ class Application extends Controller
 				
 				//Define Application Assets Path
 				$applicationNamespace = ltrim(strstr($this->_applicationNamespace, $needle = "\\") ?: $this->_applicationNamespace, $needle);
-				define("APPLICATION_PATH", PROJECT_PATH.str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace).DIRECTORY_SEPARATOR);
+				define("APPLICATION_PATH", Filesystem::buildPath(PROJECT_PATH, str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace)));
 					
 				$assetConfig = $this->config()->get("assets");
-				$assetPath = substr(md5(str_replace("\\", "/", $this->_applicationNamespace)."/".$assetConfig->get("assets","assets/")), 0, 6)."/";
+				$assetPath = Assets::assetMapForPath(str_replace("\\", "/", $this->_applicationNamespace)."/".$assetConfig->get("assets","assets"));
 				
 				define("APPLICATION_ASSETS", Router::buildPath(SITE_URL, $assetPath));
-				define("APPLICATION_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images/")));
-				define("APPLICATION_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css/")));
-				define("APPLICATION_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js/")));
-				define("APPLICATION_TEMPLATES", Filesystem::buildPath(APPLICATION_PATH, $assetConfig->get("templates","Templates/")));
+				define("APPLICATION_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images")));
+				define("APPLICATION_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css")));
+				define("APPLICATION_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js")));
+				define("APPLICATION_TEMPLATES", Filesystem::buildPath(APPLICATION_PATH, $assetConfig->get("templates","Templates")));
 
 				$controller	->setConfig($this->config())
 							->handleRequest($this->request, $response);

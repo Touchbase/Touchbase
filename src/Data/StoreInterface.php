@@ -43,5 +43,5 @@ interface StoreInterface
 	 *	Helper Methods
 	 */
 	public function exists($name);
-	public function fromArray(array $array);
+	public function fromArray($array);
 }
