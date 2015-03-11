@@ -318,7 +318,6 @@ class HTTPRequest extends HTTPHeaders
 		return $this->httpMethod == 'HEAD';
 	}
 	
-	
 	/**
 	 *	Is Ajax
 	 * 
