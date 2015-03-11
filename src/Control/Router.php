@@ -43,6 +43,8 @@ use Touchbase\View\Assets;
 
 class Router extends \Touchbase\Core\Object
 {
+	const ROUTE_HISTORY_SESSION_KEY = "touchbase.key.session.route_history";
+	
 	use ConfigTrait {
 		setConfig as traitSetConfig;
 	}
@@ -100,6 +102,8 @@ class Router extends \Touchbase\Core\Object
 			}
 			
 			if(class_exists($dispatch)){
+				self::setRouteHistory(static::buildParams($request->url() ?: "/", $_GET));
+				
 				$dispatch::create()	->setConfig($this->config())
 									->init()
 									->handleRequest($request, $response);
@@ -383,5 +387,29 @@ class Router extends \Touchbase\Core\Object
 			|| TOUCHBASE_ENV == 'test'
 			|| in_array(@$_SERVER['HTTP_HOST'], self::$testingServers)
 		);
-	}	
+	}
+	
+	/* Getters / Setters */
+	
+	/**
+	 *	Set Route History
+	 *	@return \Touchbase\Control\Router
+	 */
+	protected static function setRouteHistory($route){
+		if($route){
+			$routeHistory = static::routeHistory();
+			if(end($routeHistory) != $route){
+				array_push($routeHistory, $route);
+			}
+			Session::set(self::ROUTE_HISTORY_SESSION_KEY, $routeHistory);
+		}
+	}
+	
+	public static function routeHistory(){
+		return Session::get(self::ROUTE_HISTORY_SESSION_KEY, []);
+	}
+	
+	public static function clearRouteHistory(){
+		Session::delete(self::ROUTE_HISTORY_SESSION_KEY);
+	}
 }
