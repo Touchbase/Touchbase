@@ -158,6 +158,9 @@ abstract class Object
 	public function __get($property){
 		if($this->hasMethod($method = "$property") && $this->hasProperty("_$property")) {
 			return $this->$method();
+		} else if(property_exists($this, $property)){
+			$scope = (new \ReflectionProperty($this, $property))->isProtected()?"protected":"private";
+			trigger_error(sprintf("Cannot access %s property %s::$%s", $scope, get_class($this), $property), E_USER_ERROR);
 		} else if(isset($this->$property)){
 			return $this->$property;
 		}
@@ -171,7 +174,13 @@ abstract class Object
 	 *	@return mixed
 	 */
 	public function __call($method, array $arguments){
-		if($this->hasProperty($property = "$method")) {
+		if($this->hasProperty($property = "$method")){
+			$propertyReflection = new \ReflectionProperty($this, $property);
+			if(!$propertyReflection->isPublic()){
+				$scope = $propertyReflection->isProtected()?"protected":"private";
+				trigger_error(sprintf("Cannot access %s property %s::$%s", $scope, get_class($this), $property), E_USER_ERROR);
+			}
+			
 			return $this->$property;
 		} else if(substr($method, 0, 3) === "set" && !empty($arguments)){
 			$property = lcfirst(substr($method, 3));
