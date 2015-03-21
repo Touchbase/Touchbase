@@ -68,10 +68,8 @@ class Folder extends Filesystem {
 			$this->makeDir($path);
 		}
 		
-		//if (!Folder::isAbsolute($path)) {
-		//	$path = realpath($path);
-		//}
-			
+		$path = realpath($path);
+		
 		if(!empty($path)){
 			$this->cd($path);
 		}

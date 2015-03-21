@@ -47,19 +47,18 @@ class File extends Filesystem {
 				$path = call_user_func_array("static::buildPath", $path);
 			}
 			
-			$this->folder = Folder::create(dirname($path), $create, $mode);
-			
 			if(!is_dir($path)){
+				$this->folder = Folder::create(dirname($path), $create, $mode);
 				$this->name = basename($path);
-			}
 
-			$this->path = $this->folder->path.$this->name;
-				
-			if($create && !$this->exists()){
-				$this->create();
-			}
+				$this->path = $this->folder->path.$this->name;
+					
+				if($create && !$this->exists()){
+					$this->create();
+				}
 			
-			$this->info();
+				$this->info();
+			}
 		}
 	}
 	

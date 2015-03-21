@@ -107,11 +107,12 @@ class SystemDetection extends \Touchbase\Core\Object
 		$userAgent = isset($_SERVER['HTTP_USER_AGENT'])?$_SERVER['HTTP_USER_AGENT']:"";
 		if(!empty($userAgent)){	
 			//Broswer Detection
-			preg_match_all("/(Opera|Chrome|Version|Firefox|MSIE)[\/|\s](\d+(?:[\_|\.]\d+){1,2})\b/", $userAgent, $matches, PREG_SET_ORDER);
+			preg_match_all("/(Opera|Chrome|CriOS|Version|Firefox|MSIE)[\/|\s](\d+(?:[\_|\.]\d+){1,2})\b/", $userAgent, $matches, PREG_SET_ORDER);
 			if(!empty($matches)){
 				list($browser, $version) = array($matches[0][1], str_replace(".","_",$matches[0][2]));
 				$browser = ($browser=="Version")?"Safari":$browser;
 				$browser = ($browser=="MSIE")?"IE":$browser;
+				$browser = ($browser=="CriOS")?"Chrome":$browser;
 				$browser = strtolower($browser);
 			}
 			
@@ -182,6 +183,8 @@ class SystemDetection extends \Touchbase\Core\Object
 					$os = 'mountainLion';
 				}else if(stripos($osversion, '10_9') !== false){
 					$os = 'mavericks';
+				}else if(stripos($osversion, '10_10') !== false){
+					$os = 'yosemite';
 				}
 			} elseif( stripos($userAgent, 'android') !== false ) {
 				$platform = 'android';
