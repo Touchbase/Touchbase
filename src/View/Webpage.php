@@ -32,6 +32,7 @@ namespace Touchbase\View;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Filesystem\File;
+use Touchbase\Filesystem\Folder;
 use Touchbase\Control\Router;
 use Touchbase\Utils\SystemDetection;
 use Touchbase\Control\WebpageController;
@@ -85,6 +86,25 @@ class Webpage extends \Touchbase\Core\Object
 		$this->assets->includeMeta('viewport', 'user-scalable=no, initial-scale=1.0, maximum-scale=1.0');
 		$this->assets->includeMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
 		$this->assets->includeMeta('apple-mobile-web-app-capable', 'yes');
+		$this->assets->includeMeta('apple-mobile-web-app-title', $this->controller->config("project")->get("name", null));
+		$this->assets->includeMeta('mobile-web-app-capable', 'yes');
+		
+				
+		//WebAppIcons
+		$manifest = File::create([Assets::pathForAssetUrl(BASE_IMAGES), 'icons', 'manifest.json']);
+		if($manifest->exists()){
+			$manifestData = json_decode($manifest->read());
+			$manifestUrl = Assets::urlForPath($manifest->folder->path);
+			
+			$this->assets->includeExtra(HTML::link()->href(Router::buildPath($manifestUrl, $manifest->name))->rel("manifest"));
+			
+			//Launch Images
+			
+			//Icons
+			foreach($manifestData->icons as $icon){
+				$this->assets->includeExtra(HTML::link()->href(Router::buildPath($manifestUrl, $icon->src))->sizes($icon->sizes)->rel("apple-touch-icon-precomposed"));
+			}
+		}
 		
 		//Prevent Opening WebApp Links In Mobile Safari!
 		$this->assets->includeScript(HTML::script('(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")'), true);
@@ -97,7 +117,7 @@ class Webpage extends \Touchbase\Core\Object
 		
 		$this->setLayout($this->layout);
 		
-		//HTML
+		//HTML		
 		$this->_htmlTag = HTML::html()->attr("lang", "en")->addClass('no-js');
 		$this->_bodyTag = HTML::body();
 	}
@@ -246,7 +266,8 @@ class Webpage extends \Touchbase\Core\Object
 			$browser->os,
 			$browser->os.$browser->osVersion,
 			$browser->browser,
-			$browser->browser.$browser->browserVersion
+			$browser->browser.$browser->browserVersion,
+			(strcasecmp(SystemDetection::shared()->os, "ios") == 0 && empty($browser->browser))?"webapp":""
 		]);
 	}
 }

@@ -41,9 +41,11 @@ use Touchbase\Control\HTTPRequest;
 use Touchbase\Control\Exception\HTTPResponseException;
 use Touchbase\View\Assets;
 
+use Touchbase\Data\SessionStore;
+
 class Router extends \Touchbase\Core\Object
 {
-	const ROUTE_HISTORY_SESSION_KEY = "touchbase.key.session.route_history";
+	const ROUTE_HISTORY_KEY = "touchbase.key.route_history";
 	
 	use ConfigTrait {
 		setConfig as traitSetConfig;
@@ -401,20 +403,18 @@ class Router extends \Touchbase\Core\Object
 	 *	@return \Touchbase\Control\Router
 	 */
 	protected static function setRouteHistory($route){
-		if($route){
-			$routeHistory = static::routeHistory();
-			if(end($routeHistory) != $route){
-				array_push($routeHistory, $route);
-			}
-			Session::set(self::ROUTE_HISTORY_SESSION_KEY, $routeHistory);
+		
+		$routeHistory = static::routeHistory();
+		if(end($routeHistory) != $route){
+			SessionStore::push(self::ROUTE_HISTORY_KEY, $route);
 		}
 	}
 	
 	public static function routeHistory(){
-		return Session::get(self::ROUTE_HISTORY_SESSION_KEY, []);
+		return SessionStore::get(self::ROUTE_HISTORY_KEY, []);
 	}
 	
 	public static function clearRouteHistory(){
-		Session::delete(self::ROUTE_HISTORY_SESSION_KEY);
+		SessionStore::delete(self::ROUTE_HISTORY_KEY);
 	}
 }

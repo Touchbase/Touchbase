@@ -31,6 +31,9 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Data\Store;
+use Touchbase\Data\SessionStore;
+
 class HTTPResponse extends HTTPHeaders
 {
 
@@ -185,6 +188,11 @@ class HTTPResponse extends HTTPHeaders
 	
 	public function redirect($destinationUrl, $statusCode = 302) {
 		
+		if(is_numeric($destinationUrl) && $destinationUrl < 0){
+			$routeHistory = Router::routeHistory();
+			$destinationUrl = $routeHistory[count($routeHistory) - abs($destinationUrl)];
+		}
+		
 		if(Router::isRelativeURL($destinationUrl)){
 			$destinationUrl = Router::buildPath(SITE_URL, $destinationUrl);
 		}
@@ -192,6 +200,19 @@ class HTTPResponse extends HTTPHeaders
 		$statusCode = (in_array($statusCode, $this->redirectCodes)?$statusCode:302);
 		$this->setStatusCode($statusCode);
 		$this->addHeader('Location', $destinationUrl);
+		
+		return $this;
+	}
+	
+	public function withErrors(array $errors, $formName = 'global'){
+		$errors = Store::create()->set($formName, Store::create($errors));
+		SessionStore::flash("errors", SessionStore::get("errors")->set($errors));
+		
+		return $this;
+	}
+	
+	public function withData(array $data){
+		SessionStore::flash("post", SessionStore::get("post")->set($data));
 		
 		return $this;
 	}

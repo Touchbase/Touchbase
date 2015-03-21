@@ -103,6 +103,17 @@ class HTML extends \Touchbase\Core\Object
 	}
 	
 	/**
+	 *	__call
+	 *	Magic method to allow use ->href()->rel();
+	 *	@param string $attr
+	 *	@param array $arguments
+	 *	@return \Touchbase\View\HTML
+	 */
+	public function __call($attr, array $arguments){
+		return $this->attr($attr, implode(" ", $arguments));
+	}
+	
+	/**
 	 *	Open
 	 *	This method will open the given tag
 	 *	@param BOOL $escape

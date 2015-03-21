@@ -76,6 +76,8 @@ class Template extends \Touchbase\Core\Object
 			$templateFile = Filesystem::buildPath($this->controller->applicationPath, $templatesPath, $templateFile);
 		}
 		
+		$this->assign("errors", $this->controller->errors);
+		
 		if($template = $this->readTemplate($templateFile)){
 			/**
 			 *	Auto CSS / JS include
@@ -158,7 +160,7 @@ class Template extends \Touchbase\Core\Object
 			
 			$replaceVar = function($needle, $replacement, &$haystack){
 				//URL fix
-				if(substr($replacement, -1) === "/"){
+				if(is_string($replacement) && substr($replacement, -1) === "/"){
 					$haystack = str_replace($needle."/", $replacement, $haystack);
 				}
 				

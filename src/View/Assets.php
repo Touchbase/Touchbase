@@ -37,6 +37,7 @@ use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Core\Config\Store as ConfigStore;
 
 use Touchbase\Filesystem\File;
+use Touchbase\Filesystem\Folder;
 
 class Assets extends \Touchbase\Core\Object
 {
@@ -80,10 +81,18 @@ class Assets extends \Touchbase\Core\Object
 			$this->includeScript(Router::buildPath("//ajax.googleapis.com/ajax/libs/jquery/", $jqueryPath));
 			
 			//If That Fails Load Locally
-			$jqueryFile = File::create([BASE_SCRIPTS, "jquery", $jqueryPath]);
-			if($jqueryFile->exists()){
-				$this->includeScript(HTML::script('window.jQuery||document.write(\'<script src="'.$jqueryFile->path().'"><\/script>\')'));
+			if(static::pathForAssetUrl($jqueryUrl = Router::buildPath(BASE_SCRIPTS, "vendor", "jquery", $jqueryPath))){
+				$this->includeScript(HTML::script('window.jQuery||document.write(\'<script src="'.$jqueryUrl.'"><\/script>\')'));
 			}
+		}
+		
+		if(static::pathForAssetUrl($fastclickUrl = Router::buildPath(BASE_SCRIPTS, "vendor", "fastclick.js"))){
+			$this->includeScript($fastclickUrl);
+			$this->includeScript(HTML::script('if ("addEventListener" in document) {
+				document.addEventListener("DOMContentLoaded", function() {
+					FastClick.attach(document.body);
+				}, false);
+			}'));
 		}
 	}
 		
@@ -196,11 +205,15 @@ class Assets extends \Touchbase\Core\Object
 	 *	@param array $args
 	 *	@return \Touchbase\View\Assets
 	 */
-	public function includeExtra($name, $args){
+	public function includeExtra($name, $args = null){
 		//Head Only Allows Certain Elements. Since We Have Covered The Rest These Three Are Left
-		if(in_array($name, array('base', 'link', 'noscript')) && is_array($args)){
-			$this->includeAsset(self::ASSET_OTHER, HTML::create($name)->attr($args));
+		
+		if($args){
+			if(in_array($name, array('base', 'link', 'noscript')) && is_array($args)){
+				$name = HTML::create($name)->attr($args);
+			}
 		}
+		$this->includeAsset(self::ASSET_OTHER, $name);
 		
 		return $this;
 	}
@@ -272,6 +285,32 @@ class Assets extends \Touchbase\Core\Object
 		
 		return implode(" ".$this->config()->get("web")->get("title_separator", "|")." ", array_map('ucfirst', $titleData)); 
 	}
+
+	/**
+	 *	Url For Path
+	 *	@param string $path
+	 *	@return string
+	 */
+	public static function urlForPath($path){
+	
+		if(substr($path, 0, strlen(PROJECT_PATH)) == PROJECT_PATH) {
+			$path = trim(substr($path, strlen(PROJECT_PATH)), "/");
+		}
+		
+		$assetMaps = StaticStore::shared()->get(ConfigStore::CONFIG_KEY)->get("assets")->get("asset_map")->getIterator();
+		$assetMaps->uasort(function($a, $b) {
+			return strlen($b) - strlen($a);
+		});
+		
+		foreach($assetMaps as $assetMap => $searchPath){
+			if(substr($path, 0, strlen($searchPath)) == $searchPath) {
+				$path = Router::buildPath($assetMap, substr($path, strlen($searchPath)));
+				break;
+			}
+		}
+		
+		return Router::absoluteUrl($path);
+	}
 	
 	/**
 	 *	Asset Map For Path
@@ -291,6 +330,7 @@ class Assets extends \Touchbase\Core\Object
 		return StaticStore::shared()->get(ConfigStore::CONFIG_KEY)->get("assets")->get("asset_map")->get($assetMap, null);
 	}
 	
+	
 	/**
 	 *	Path For Asset Url
 	 *	@param string assetUrl
@@ -298,11 +338,18 @@ class Assets extends \Touchbase\Core\Object
 	 */
 	public static function pathForAssetUrl($assetUrl){
 		if(Router::isSiteUrl($assetUrl)){
-			//Does the file exist?
 			list($assetMapFragment, $assetUrl) = explode("/", Router::relativeUrl($assetUrl), 2);
+			
+			//Does the file exist?
 			$file = File::create([PROJECT_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
 			if($file->exists()){
 				return $file->path;	
+			}
+			
+			//Is it a folder?
+			$folder = Folder::create([PROJECT_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
+			if($folder->exists()){
+				return $folder->path;	
 			}
 			
 			return null;
@@ -384,6 +431,9 @@ class Assets extends \Touchbase\Core\Object
 			break;
 			case self::ASSET_META:
 				return strpos($check, "<meta") !== false;
+			break;
+			case self::ASSET_OTHER:
+				return strpos($check, "<link") !== false || strpos($check, "<base") !== false || strpos($check, "<noscript") !== false;
 			break;
 		}
 		

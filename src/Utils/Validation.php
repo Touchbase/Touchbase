@@ -31,18 +31,21 @@ namespace Touchbase\Utils;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Validation extends \Touchbase\Core\Object implements \Serializable, \Countable
+class Validation extends \Touchbase\Core\Object implements \Countable
 {
 	/**
 	 * Public Properties
 	 */
-	protected $ruleset;
+	protected $_ruleset;
 	protected $rules;
-	protected $errors = [];
+	public $errors = [];
 
 	/* Public Methods */
-	public function __construct($ruleset, $rules = []) {
-		$this->ruleset = $ruleset;
+	public function __construct($ruleset = null, array $rules = []) {
+		$this->_ruleset = $ruleset;
+		foreach($rules as $rule){
+			$this->addRule($rule);
+		}
 	}
 
 	public function addRule($rule, $errorMessage = null) {
@@ -53,10 +56,12 @@ class Validation extends \Touchbase\Core\Object implements \Serializable, \Count
 		} else {
 			trigger_error(sprintf("Argument %d passed to %s must be an instance of %s, %s given", 1, __METHOD__, "Closure", is_object($rule)?get_class($rule):gettype($rule)), E_USER_WARNING);
 		}
+		
+		return $this;
 	}
 
 	public function validate($input) {
-
+		
 		foreach ($this->rules as $rule) {
 			
 			list($rule, $errorMessage) = $rule;
@@ -69,8 +74,8 @@ class Validation extends \Touchbase\Core\Object implements \Serializable, \Count
 				continue;
 			}
 			
-			if (!$rule(@$input[$this->ruleset])) {
-				$this->errors[$this->ruleset] = $errorMessage;
+			if (!$rule(@$input[$this->_ruleset])) {
+				$this->errors[$this->_ruleset] = $errorMessage;
 			}
 		}
 
@@ -90,6 +95,11 @@ class Validation extends \Touchbase\Core\Object implements \Serializable, \Count
 				$this->addRule(function($value) {
 					return filter_var($value, FILTER_VALIDATE_URL) !== false;
 				}, $errorMessage ?: "Url is invalid");
+			break;
+			case "number":
+				$this->addRule(function($value) {
+					return filter_var($value, FILTER_VALIDATE_INT) !== false || filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
+				}, $errorMessage ?: "Number is invalid");
 			break;
 		}
 
@@ -178,34 +188,24 @@ class Validation extends \Touchbase\Core\Object implements \Serializable, \Count
 
 	public function equals($equals, $errorMessage = null) {
 		$this->addRule(function($value) use ($equals) {
-			return $value == $equals;
+			return $value === $equals;
 		}, $errorMessage ?: "Value does not match");
+
+		return $this;
+	}
+	
+	public function in(array $in, $errorMessage = null) {
+		$this->addRule(function($value) use ($equals) {
+			return in_array($value, $in);
+		}, $errorMessage ?: "Value was not expected");
 
 		return $this;
 	}
 
 	/* Getters / Setters */
 
-	public function rulesets() {
-		if (!$this->_rulesets) {
-
-		}
-
-		return $this->_rulesets;
-	}
-
-	/* Serializable */
-
-	public function serialize() {
-		return serialize(get_object_vars($this));
-	}
-
-	public function unserialize($data) {
-		if(is_array($data)){
-			foreach($data as $key => $value){
-				$this->$key = $value;
-			}
-		}
+	public function ruleset() {
+		return $this->_ruleset;
 	}
 
 	/* Countable */

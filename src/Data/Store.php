@@ -33,12 +33,12 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorAggregate, \ArrayAccess, \JsonSerializable, \Countable
 {
-	const CHAIN = "touchbase.key.chain.store";
+	const CHAIN_STORE = "touchbase.key.chain.store";
 	
 	/**
 	 *	In Memory Store
 	 */
-	protected $_data = array();
+	protected $_data = [];
 	
 	/**
 	 *	Construct
@@ -49,35 +49,106 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 		}
 	}
 	
+	//TODO: This is a temp function to show the error messages.
+	public function __toString(){
+		return implode("<br />", array_values($this->_data));
+	}
+	
+	/* Getter / Setters */
+	
 	/**
-	 *	Getter/Setter Methods
+	 *	Get
+	 *	Get a value from the array
+	 *	@param string $property
+	 *	@param mixed $default - Defaults to a new config store for chaining
+	 *	@return mixed
 	 */
 	public function __get($property){
 		return $this->get($property, null);
 	}
 	 
-	public function get($name, $default = self::CHAIN){
-		$default = ($default == self::CHAIN)?new Store():$default;
+	public function get($name, $default = self::CHAIN_STORE){
+		$default = ($default == self::CHAIN_STORE)?new Store():$default;
 		return $this->exists($name)?$this->_data[$name]:$default;
-	}
+	}	
 	
+	/**
+	 *	Set
+	 *	Add a key /value pair to the array
+	 *	@param string $name
+	 *	@param mixed $value - If null the key will be removed
+	 *	@return \Touchbase\Data\Store
+	 */
 	public function __set($name, $value){
 		return $this->set($name, $value);	
 	}
 	
 	public function set($name, $value = null){
+		//Set Value
 		if(isset($value)){
-			//Set Value
-			if(isset($value)){
-				$this->_data[$name] = $value;
-					
-			//Delete Value
-			} else if(isset($this->_data[$name])){
-				unset($this->_data[$name]);
-			}	
+			$this->_data[$name] = $value;
+			
+		} else if(is_array($name) || $name instanceof $this){
+			
+			foreach($name as $key => $value){
+				$this->set($key, $value);
+			}
+			
+		//Delete Value
+		} else if(isset($this->_data[$name])){
+			unset($this->_data[$name]);
 		}
 		
 		return $this;
+	}
+	
+	/**
+	 *	Pop
+	 *	Removes an element from the array and returns it
+	 *	@param string $property
+	 *	@param mixed $default
+	 *	@return mixed
+	 */
+	public function pop($property, $default = null){
+		$array = $this->get($property, []);
+		
+		if(!is_array($array)){
+			throw new \InvalidArgumentException("Property is not an array.");
+		}
+		
+		$result = array_pop($array);
+		$this->set($property, $array);
+		return $result ?: $default;
+	}
+	
+	/**
+	 *	Push
+	 *	Pushes arbitrary variables to the array
+	 *	@param string $name
+	 *	@return mixed
+	 */
+	public function push($name /*, ...$values */){
+		$array = $this->get($name, []);
+		
+		$values = func_get_args(); array_shift($values);
+		foreach($values as $value){
+			if(isset($value)){
+				$array[] = $value;
+			}
+		}
+		
+		$this->set($name, $array);		
+		return $array;
+	}
+	
+	/**
+	 *	Delete
+	 *	Removes a property from the store.
+	 *	@param string $name
+	 *	@return VOID
+	 */
+	public function delete($name){
+		$this->set($name, null);
 	}
 	
 	/**

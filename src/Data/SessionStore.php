@@ -31,23 +31,35 @@ namespace Touchbase\Data;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-final class StaticStore
+use Touchbase\Control\Session;
+
+final class SessionStore
 {
+	const FLASH_KEY = 'touchbase.key.store.flash';
+	const STORE_SESSION_KEY = 'touchbase.key.store.session';
+	
 	/**
-	 *	Static In Memory Store
+	 *	Determine if new request.
 	 */
-	private static $instance;
+	private static $flushFlash = true;
 	
 	/**
 	 *	Shared
-	 *	@return \Touchbase\Data\StaticStore
+	 *	@return \Touchbase\Data\Store
 	 */
 	public static function shared(){
-		if(!static::$instance){
-			static::$instance = new Store();
+		
+		$store = Session::get(self::STORE_SESSION_KEY, new Store());
+		if(!$store->count()){
+			Session::set(self::STORE_SESSION_KEY, $store);
 		}
 		
-		return static::$instance;
+		if(static::$flushFlash){
+			static::$flushFlash = false;
+			static::ageFlashedData($store);
+		}
+		
+		return $store;
 	}
 	
 	/**
@@ -61,6 +73,37 @@ final class StaticStore
 			return call_user_func_array([static::shared(), $name], $arguments);
 		}
 	}
+	
+	
+	/* Public Methods */
+	
+	public static function flash($key, $value){
+		static::shared()->set($key, $value);
+		static::shared()->push(self::FLASH_KEY, $key);
+		
+		static::shared()->set(self::FLASH_KEY.".aged", array_diff(static::shared()->get(self::FLASH_KEY.".aged", []), [$key]));
+	}
+	
+	public static function reflash(){
+		//TODO: reflash sounds like a good idea.	
+	}
+	
+	public static function flush(){
+		static::shared()->delete(self::STORE_SESSION_KEY);
+	}
+	
+	/* Private Methods */
+	
+	private static function ageFlashedData(Store $store){
+		
+		foreach($store->get(self::FLASH_KEY.".aged") as $flashKey){
+			$store->delete($flashKey);
+		}
+		
+		$store->set(self::FLASH_KEY.".aged", $store->get(self::FLASH_KEY, []));
+		$store->set(self::FLASH_KEY, []);
+
+	}	
 	
 	/**
 	 * NO-OP

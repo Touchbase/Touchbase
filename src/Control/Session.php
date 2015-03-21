@@ -72,8 +72,8 @@ class Session
 	}
 	
 	public static function __callStatic($name, $arguments){
-		if(method_exists(self::shared(), $name)){
-			return call_user_func_array([self::shared(), $name], $arguments);
+		if(method_exists(static::shared(), $name)){
+			return call_user_func_array([static::shared(), $name], $arguments);
 		}
 	}
 }
