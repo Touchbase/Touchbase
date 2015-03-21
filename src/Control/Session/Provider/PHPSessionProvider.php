@@ -45,7 +45,13 @@ class PHPSessionProvider implements SessionInterface
 	 *	@return $this
 	 */
 	public function init(){
+		ini_set('session.use_cookies', 1);
+		ini_set('session.use_only_cookies', 1);
+		ini_set('session.use_trans_sid', 0);
+		ini_set('session.cookie_httponly', 1);
+
 		session_start();
+		
 		if(!isset($_SESSION['touchbase'])){
 			$_SESSION['touchbase'] = array();
 		}
@@ -57,7 +63,7 @@ class PHPSessionProvider implements SessionInterface
 	 *	ID
 	 *	@return $this
 	 */
-	public function id(){
+	public function ID(){
 		return session_id();
 	}
 	
@@ -65,7 +71,7 @@ class PHPSessionProvider implements SessionInterface
 	 *	@return $this
 	 */
 	public function regenerateID(){
-		session_regenerate_id();
+		session_regenerate_id(true);
 		
 		return $this;
 	}

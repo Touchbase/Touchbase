@@ -129,7 +129,7 @@ class HTTPRequest extends HTTPHeaders
 	 *	@return string
 	 */
 	public function url(){
-		return $this->url;
+		return $this->url ?: "/";
 	}
 	
 	/**
@@ -325,7 +325,7 @@ class HTTPRequest extends HTTPHeaders
 	 *	@return BOOL
 	 */
 	public function isAjax(){
-		return $this->requestVAR('ajax') || ($this->getHeader('X-Requested-With') && $this->getHeader('X-Requested-With') == "XMLHttpRequest");
+		return $this->_VAR('ajax') || ($this->getHeader('X-Requested-With') && $this->getHeader('X-Requested-With') == "XMLHttpRequest");
 	}
 	
 	/**

@@ -76,9 +76,14 @@ class Auth
 	}
 	
 	public static function currentUser(){
+		
+		if(!$currentUserCookie = self::shared()->retrieveUserFromCookie()){
+			return null;
+		}
+		
 		$currentUser = Session::get(self::AUTH_SESSION_KEY);
-		if(!$currentUser){
-			$currentUser = self::shared()->retrieveUserFromCookie();
+		if(!$currentUser || $currentUser->ID() != $currentUserCookie->ID()){
+			return null;
 		}
 		
 		return $currentUser;
@@ -94,6 +99,8 @@ class Auth
 	}
 	
 	public static function authenticateUser(AuthedUserInterface $user){
+		Session::regenerateID();
+		
 		if(self::shared()->storeUser($user)){
 			Session::set(self::AUTH_SESSION_KEY, $user);
 			return true;

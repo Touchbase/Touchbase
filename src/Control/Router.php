@@ -138,7 +138,12 @@ class Router extends \Touchbase\Core\Object
 				"svg" => "image/svg+xml",
 				"apk" => "application/vnd.android.package-archive",
 				"ipa" => "application/octet-stream",
-				"htc" => "text/x-component"
+				"htc" => "text/x-component",
+				"svg" => "image/svg+xml",
+				"otf" => "application/font-otf",
+				"eot" => "application/vnd.ms-fontobject",
+				"ttf" => "application/font-ttf",
+				"woff"=> "application/font-woff"
 			];
 			
 			$contentType = @$supportedAssets[$request->extension()];
@@ -215,7 +220,7 @@ class Router extends \Touchbase\Core\Object
 
 		// Only bother comparing the URL to the absolute version if $url looks like a URL.
 		if(preg_match('/^https?[^:]*:\/\//i',$url)) {
-			$base1 = strtolower(SITE_URL);
+			$base1 = static::buildPath(strtolower(SITE_URL), "/");
 			// If we are already looking at baseURL, return '' (substr will return false)
 			if(strtolower($url) == $base1) return '';
 			else if(strtolower(substr($url,0,strlen($base1))) == $base1) return substr($url,strlen($base1));
@@ -224,11 +229,11 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		// test for base folder, e.g. /var/www
-		$base2 = strtolower(BASE_PATH);
+		$base2 = static::buildPath(strtolower(BASE_PATH), "/");
 		if(strtolower(substr($url,0,strlen($base2))) == $base2) return substr($url,strlen($base2));
 
 		// Test for relative base url, e.g. mywebsite/ if the full URL is http://localhost/mywebsite/
-		$base3 = strtolower(WORKING_DIR);
+		$base3 = static::buildPath(strtolower(WORKING_DIR), "/");
 		if(strtolower(substr($url,0,strlen($base3))) == $base3) return substr($url,strlen($base3));
 		
 		// Nothing matched, fall back to returning the original URL
@@ -315,10 +320,10 @@ class Router extends \Touchbase\Core\Object
 		$count = $totalArgs = func_num_args();
 		return implode("/", array_filter(array_map(function($component) use (&$count, $totalArgs){
 			$func = ($firstArg = $count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
-			$isProtocol = substr_compare($component, $needle="://", -strlen($needle)) === 0;
+			$isProtocol = strlen($component) > ($needle="://") && substr_compare($component, $needle, -strlen($needle)) === 0;
 			$component = $func($component, " \t\n\r\0\x0B".($isProtocol?"":"/"));
 			return ($isProtocol && $firstArg && $totalArgs > 1)?substr($component, 0, -1):$component;
-		}, $paths)));
+		}, $paths))).($paths[$totalArgs - 1] === "/"?"/":"");
 	}
 	
 	/**

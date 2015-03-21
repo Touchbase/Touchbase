@@ -113,7 +113,7 @@ class Init
 					
 				}
 			}
-			define('WORKING_DIR', rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/"));
+			define('WORKING_DIR', rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/") ?: "/");
 		}
 		
 		if(!defined('SITE_PROTOCOL')){
@@ -130,7 +130,7 @@ class Init
 		}
 		
 		if(!defined('SITE_URL')){
-			define("SITE_URL", Router::buildPath(SITE_PROTOCOL.$_SERVER['HTTP_HOST'], WORKING_DIR."/"), true);
+			define("SITE_URL", Router::buildPath(SITE_PROTOCOL.$_SERVER['HTTP_HOST'], WORKING_DIR), true);
 			define("SITE_ROOT", SITE_URL, true);
 		}
 		
