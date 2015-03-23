@@ -74,8 +74,9 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 				continue;
 			}
 			
-			if (!$rule(@$input[$this->_ruleset])) {
-				$this->errors[$this->_ruleset] = $errorMessage;
+			$overrideMessage = null;
+			if (!$rule(@$input[$this->_ruleset], $overrideMessage)) {
+				$this->errors[$this->_ruleset] = $overrideMessage ?: $errorMessage;
 			}
 		}
 
@@ -100,6 +101,58 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 				$this->addRule(function($value) {
 					return filter_var($value, FILTER_VALIDATE_INT) !== false || filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
 				}, $errorMessage ?: "Number is invalid");
+			break;
+			case "file":
+				//Check File Validity
+				$this->addRule(function($value) {
+					$tmpName = $value['tmp_name'];
+					if(is_array($tmpName)){
+						foreach($tmpName as $tmp){
+							if(!is_uploaded_file($tmp)){
+								return false;
+							}
+						}
+						return true;
+					}
+					
+					return is_uploaded_file($tmpName);
+				}, $errorMessage ?: "A file uploaded was not processed correctly");
+				
+				//Check File Errored
+				$this->addRule(function($value, &$message) {
+					$error = $value['error'];
+					$errorValidation = function($error){
+						switch($error){
+							case UPLOAD_ERR_OK:
+								return true;
+							case UPLOAD_ERR_INI_SIZE:
+							case UPLOAD_ERR_FORM_SIZE:
+								$message = "A file that was uploaded was greater than the allowed size";
+								return false;
+							case UPLOAD_ERR_PARTIAL:
+							case UPLOAD_ERR_NO_FILE:
+								$message = "A file failed to upload fully";
+								return false;
+							case UPLOAD_ERR_NO_TMP_DIR:
+							case UPLOAD_ERR_CANT_WRITE:
+							case UPLOAD_ERR_EXTENSION:
+								$message = "An error occurred whilst trying to upload a file";
+								return false;
+						}
+					};
+					
+					if(is_array($error)){
+						foreach($error as $err){
+							if(!$errorValidation($err)){
+								return false;
+							}
+						}
+						
+						return true;
+					}
+					
+					return $errorValidation($error);
+				});
 			break;
 		}
 
@@ -195,7 +248,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	}
 	
 	public function in(array $in, $errorMessage = null) {
-		$this->addRule(function($value) use ($equals) {
+		$this->addRule(function($value) use ($in) {
 			return in_array($value, $in);
 		}, $errorMessage ?: "Value was not expected");
 

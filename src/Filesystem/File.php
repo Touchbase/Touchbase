@@ -312,6 +312,23 @@ class File extends Filesystem {
 	}
 	
 	public function ext(){
+		if(!isset($this->info['extension'])){
+			//
+			if(isset($this->info['mime'])){
+				$regex = "/^(".preg_quote($this->info['mime'], "/").")\s+(\w+)/i";
+				$lines = file(dirname(__FILE__)."/mime.types"); 
+				foreach($lines as $line) { 
+					if(substr($line, 0, 1) == '#') continue; // skip comments 
+					$line = rtrim($line) . " "; 
+					if(preg_match($regex, $line, $matches)){ 
+						return $matches[2];
+					}
+				} 
+			}
+			
+			return false;
+		}
+		
 		return $this->info['extension'];
 	}
 	
@@ -319,23 +336,25 @@ class File extends Filesystem {
 		if($this->exists() && $this->isFile()){
 			if(function_exists('finfo_open')){
 				$finfo = finfo_open(FILEINFO_MIME);
-				list($type, $charset) = explode(';', finfo_file($finfo, $this->path));
+				list($type, $charset) = explode(';', finfo_file($finfo, $this->path), 2);
+				return $type;
 			} elseif (function_exists('mime_content_type')) {
 				//A Depriciated function. But better than nothing!
-				$type = @mime_content_type($this->path);
-			} else {
-				//All Else Fails.				
+				return @mime_content_type($this->path);
+			} else if(isset($this->info['extension'])){
+				//All Else Fails.
 				$regex = "/^([\w\+\-\.\/]+)\s+(\w+\s)*(".$this->info['extension']."\s)/i"; 
 				$lines = file(dirname(__FILE__)."/mime.types"); 
 				foreach($lines as $line) { 
 					if(substr($line, 0, 1) == '#') continue; // skip comments 
 					$line = rtrim($line) . " "; 
-					if(!preg_match($regex, $line, $matches)) continue; // no match to the extension 
-					$type = $matches[1]; 
+					if(preg_match($regex, $line, $matches)){ 
+						return $matches[1];
+					}
 				} 
 			}
 		}
-		return isset($type)?$type:false;
+		return false;
 	}
 	
 	public function md5($maxsize = 5) {

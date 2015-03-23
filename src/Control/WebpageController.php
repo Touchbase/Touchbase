@@ -37,6 +37,7 @@ use Touchbase\Control\Session;
 use Touchbase\Utils\Validation;
 use Touchbase\Data\Store;
 use Touchbase\Data\SessionStore;
+use Touchbase\Filesystem\File;
 
 class WebpageController extends Controller
 {
@@ -144,6 +145,75 @@ class WebpageController extends Controller
 					}
 					
 					$inputValidation->type($inputType);
+					if($inputType === "file" && $input->hasAttribute("accept")){
+						$validTypes = explode(",", $input->getAttribute("accept"));
+						
+						//File Extentions
+						$fileExt = array_filter($validTypes, function($value){
+							return strpos($value, ".") === 0;
+						});
+						if(!empty($fileExt)){
+							$inputValidation->addRule(function($value) use ($fileExt){
+								$name = $value['name'];
+								if(is_array($name)){
+	
+									foreach($name as $nme){
+										if(!in_array(pathinfo($nme, PATHINFO_EXTENSION), $fileExt)){
+											return false;
+										}
+									}
+									return true;
+								}
+								
+								return in_array(pathinfo($name, PATHINFO_EXTENSION), $fileExt);
+							}, "A file uploaded did not have the correct extension");
+						}
+						
+						//Mime Types
+						$validTypes = array_diff($validTypes, $fileExt);
+						$implicitFileMime = array_filter($validTypes, function($value){
+							return strpos($value, "/*") !== false;
+						});
+						if(!empty($implicitFileMime)){
+							$inputValidation->addRule(function($value) use ($implicitFileMime){
+								$tmpName = $value['tmp_name'];
+								if(is_array($tmpName)){
+	
+									foreach($tmpName as $tmp){
+										$mime = strstr(File::create($tmp)->mime(), "/", true)."/*";
+										if(!in_array($mime, $implicitFileMime)){
+											return false;	
+										}
+									}
+									return true;
+								}
+								
+								$mime = strstr(File::create($tmp)->mime(), "/", true)."/*";
+								return in_array($mime, $fileMime);
+							}, "A file uploaded did not have the correct mime type");
+						}
+						
+						$validTypes = array_diff($validTypes, $implicitFileMime);
+						$fileMime = array_filter($validTypes, function($value){
+							return strpos($value, "/") !== false;
+						});
+						if(!empty($fileMime)){
+							$inputValidation->addRule(function($value) use ($fileMime){
+								$tmpName = $value['tmp_name'];
+								if(is_array($tmpName)){
+	
+									foreach($tmpName as $tmp){
+										if(!in_array(File::create($tmp)->mime(), $fileMime)){
+											return false;
+										}
+									}
+									return true;
+								}
+								
+								return in_array(File::create($tmp)->mime(), $fileMime);
+							}, "A file uploaded did not have the correct mime type");
+						}
+					}
 					
 					if($input->hasAttribute("required")){
 						
@@ -197,9 +267,14 @@ class WebpageController extends Controller
 			
 			if($formAction = $form->getAttribute("action")){
 				if(!Router::isSiteUrl($formAction)){
-					return;
+					continue;
 				}
 			}
+			if($form->hasAttribute("novalidate")){
+				continue;
+			}
+			
+			
 			$formName = $form->getAttribute("name");
 			
 			$savedom = new \DOMDocument;
@@ -207,7 +282,9 @@ class WebpageController extends Controller
 				foreach($form->getElementsByTagName($tag) as $input){ 
 					//Populate form with previous data
 					if($newValue = SessionStore::get("post", new Store())->get($input->getAttribute("name"), false)){
-						$input->setAttribute('value', $newValue);
+						if(is_scalar($newValue)){
+							$input->setAttribute('value', $newValue);
+						}
 					}
 					
 					//Populate errors

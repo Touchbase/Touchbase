@@ -199,6 +199,10 @@ class HTTPRequest extends HTTPHeaders
 	public function _VAR($name){
 		
 		if(isset($this->_POST[$name]) && !empty($post = $this->_POST[$name])){
+			if(isset($_FILES[$name])){
+				return $post;
+			}
+			
 			return filter_var($post, FILTER_SANITIZE_STRING);
 		}
 		
