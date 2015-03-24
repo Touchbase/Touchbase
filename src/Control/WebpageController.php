@@ -177,8 +177,8 @@ class WebpageController extends Controller
 						if(!empty($implicitFileMime)){
 							$inputValidation->addRule(function($value) use ($implicitFileMime){
 								$tmpName = $value['tmp_name'];
+								
 								if(is_array($tmpName)){
-	
 									foreach($tmpName as $tmp){
 										$mime = strstr(File::create($tmp)->mime(), "/", true)."/*";
 										if(!in_array($mime, $implicitFileMime)){
@@ -188,8 +188,8 @@ class WebpageController extends Controller
 									return true;
 								}
 								
-								$mime = strstr(File::create($tmp)->mime(), "/", true)."/*";
-								return in_array($mime, $fileMime);
+								$mime = strstr(File::create($tmpName)->mime(), "/", true)."/*";
+								return in_array($mime, $implicitFileMime);
 							}, "A file uploaded did not have the correct mime type");
 						}
 						
@@ -200,8 +200,8 @@ class WebpageController extends Controller
 						if(!empty($fileMime)){
 							$inputValidation->addRule(function($value) use ($fileMime){
 								$tmpName = $value['tmp_name'];
+								
 								if(is_array($tmpName)){
-	
 									foreach($tmpName as $tmp){
 										if(!in_array(File::create($tmp)->mime(), $fileMime)){
 											return false;
@@ -210,7 +210,7 @@ class WebpageController extends Controller
 									return true;
 								}
 								
-								return in_array(File::create($tmp)->mime(), $fileMime);
+								return in_array(File::create($tmpName)->mime(), $fileMime);
 							}, "A file uploaded did not have the correct mime type");
 						}
 					}
