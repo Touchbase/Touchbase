@@ -108,17 +108,21 @@ class HTTPRequest extends HTTPHeaders
 	public function setUrl($url) {
 		$this->url = $url;
 		
-		// Normalize URL if its relative (strictly speaking), or has leading slashes
-		if(\Touchbase\Control\Router::isRelativeUrl($url) || preg_match('/^\//', $url)) {
-			$this->url = preg_replace(array('/\/+/','/^\//', '/\/$/'),array('/','',''), $this->url);
+		if(Router::isRelativeUrl($url)) {
+			$this->url = preg_replace(array('/\/+/', '/\/$/'), array('/',''), $this->url);
 		}
+		
 		if(preg_match('/^(.*)\.([A-Za-z][A-Za-z0-9]*)$/', $this->url, $matches)) {
 			$this->url = $matches[1];
 			$this->extension = $matches[2];
 		}
 		
 		if($this->url){
-			$this->urlSegments = preg_split('|/+|', $this->url);
+			if(strpos($this->url, "/") === 0){
+				$this->urlSegments = explode("/", substr($this->url, 1));
+			} else {
+				$this->urlSegments = explode("/", $this->url);
+			}
 		}
 		
 		return $this;
