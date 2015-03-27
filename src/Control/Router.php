@@ -93,9 +93,12 @@ class Router extends \Touchbase\Core\Object
 			$url = substr($url, strlen(BASE_PATH));
 		}
 		
+		
+		
 		$request = HTTPRequest::create($requestMethod, $url, $_GET);
 		
 		if(!$this->handleRequest($request, $response)){
+			
 			//Get Dispatchable
 			$dispatchNamespace = $this->config()->get("project")->get("namespace", "");
 			$dispatch = $dispatchNamespace.'\\'.$dispatchNamespace.'App';
@@ -148,11 +151,16 @@ class Router extends \Touchbase\Core\Object
 				"woff"=> "application/font-woff"
 			];
 			
-			$contentType = @$supportedAssets[$request->extension()];
-			if(isset($contentType) && $assetFile->exists()){
-				$response->addHeader("Content-Type", $contentType);
+			if($assetFile->exists() && array_key_exists($assetFile->ext(), $supportedAssets)){
+				$response->addHeader("Content-Type", $supportedAssets[$assetFile->ext()]);
+				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
 				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
-				$result = $response->setBody($assetFile->read());
+
+				if(function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules())){
+					$response->addHeader("X-Sendfile", $assetFile->path);
+				} else {
+					$result = $response->setBody($assetFile->read());
+				}
 			}
 		}
 		
@@ -341,7 +349,7 @@ class Router extends \Touchbase\Core\Object
 		if(empty($params) || empty($params[0])) return $baseUrl;
 		
 		$separator = (parse_url($baseUrl, PHP_URL_QUERY) == NULL) ? '?' : '&';
-		return $baseUrl.$separator.urldecode(http_build_query($params[0]));
+		return $baseUrl.$separator.http_build_query($params[0]);
 	}
 	
 //Enviroment Settings

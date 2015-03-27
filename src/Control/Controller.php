@@ -64,6 +64,8 @@ class Controller extends RequestHandler
 	protected $baseInitCalled = false;
 	protected function init(){
 		$this->baseInitCalled = true;
+		
+		return $this;
 	}
 	
 	//Calls this controll and returns a HTTPResponse Object

@@ -369,7 +369,7 @@ class Assets extends \Touchbase\Core\Object
 	private function includeAsset($assetType, $file, $options = []){
 		//Construct File Path
 		if(is_array($file)){
-			$file = call_user_func_array("Touchbase\Filesystem\File::buildPath", $file);
+			$file = call_user_func_array("Touchbase\Control\Router::buildPath", $file);
 		}
 		
 		if(is_object($file) && $file instanceof HTML){
@@ -379,6 +379,7 @@ class Assets extends \Touchbase\Core\Object
 		if(is_string($file)){
 			if(!$this->isSnipit($assetType, $file)){
 				if(!static::pathForAssetUrl($file)) return;
+				
 				
 				switch($assetType){
 					case self::ASSET_CSS:

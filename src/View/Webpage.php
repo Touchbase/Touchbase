@@ -79,6 +79,9 @@ class Webpage extends \Touchbase\Core\Object
 		$this->assets->includeMeta(HTML::meta()->attr('http-equiv','Content-type')->attr('content', 'text/html; charset=utf-8'));
 		$this->assets->includeMeta('generator', 'Touchbase - http://touchbase.williamgeorge.co.uk');
 		
+		//Include base url
+		$this->assets->includeExtra(HTML::base()->href(SITE_URL));
+		
 		//WebApp
 		$this->assets->includeMeta('HandheldFriendly', 'true');
 		$this->assets->includeMeta('MobileOptimized', '320');

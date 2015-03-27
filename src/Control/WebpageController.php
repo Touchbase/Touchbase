@@ -209,7 +209,6 @@ class WebpageController extends Controller
 									}
 									return true;
 								}
-								
 								return in_array(File::create($tmpName)->mime(), $fileMime);
 							}, "A file uploaded did not have the correct mime type");
 						}

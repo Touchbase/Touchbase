@@ -76,7 +76,9 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 			
 			$overrideMessage = null;
 			if (!$rule(@$input[$this->_ruleset], $overrideMessage)) {
-				$this->errors[$this->_ruleset] = $overrideMessage ?: $errorMessage;
+				if(!isset($this->errors[$this->_ruleset])){
+					$this->errors[$this->_ruleset] = $overrideMessage ?: $errorMessage;
+				}
 			}
 		}
 
@@ -86,6 +88,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	/* Validation Helpers */
 	
 	public function type($type, $errorMessage = null){
+		
 		switch($type){
 			case "email":
 				$this->addRule(function($value) {
@@ -102,26 +105,11 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 					return filter_var($value, FILTER_VALIDATE_INT) !== false || filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
 				}, $errorMessage ?: "Number is invalid");
 			break;
-			case "file":
-				//Check File Validity
-				$this->addRule(function($value) {
-					$tmpName = $value['tmp_name'];
-					if(is_array($tmpName)){
-						foreach($tmpName as $tmp){
-							if(!is_uploaded_file($tmp)){
-								return false;
-							}
-						}
-						return true;
-					}
-					
-					return is_uploaded_file($tmpName);
-				}, $errorMessage ?: "A file uploaded was not processed correctly");
-				
+			case "file":			
 				//Check File Errored
 				$this->addRule(function($value, &$message) {
 					$error = $value['error'];
-					$errorValidation = function($error){
+					$errorValidation = function($error) use (&$message){
 						switch($error){
 							case UPLOAD_ERR_OK:
 								return true;
@@ -153,6 +141,22 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 					
 					return $errorValidation($error);
 				});
+				
+				//Check File Validity
+				$this->addRule(function($value) {
+					$tmpName = $value['tmp_name'];
+					if(is_array($tmpName)){
+						foreach($tmpName as $tmp){
+							if(!is_uploaded_file($tmp)){
+								return false;
+							}
+						}
+						return true;
+					}
+					
+					return is_uploaded_file($tmpName);
+				}, $errorMessage ?: "A file uploaded was not processed correctly");
+				
 			break;
 		}
 

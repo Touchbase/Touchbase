@@ -66,6 +66,7 @@ class HTML extends \Touchbase\Core\Object
 		"BODY"=>["onafterprint","onbeforeprint","onbeforeonload","onhashchange","onload","onmessage","onoffline","ononline","onpagehide","onpageshow","onpopstate","onredo","onresize","onstorage","onundo"],
 		"IMG"=>["src","alt","height","ismap","usemap","width"],
 		"A"=>["href","hreflang","media","rel","target","type"],
+		"BASE"=>["href","target"],
 		"LINK"=>["href","hreflang","media","rel","sizes","type"],
 		"STYLE"=>["type","media","scoped"],
 		"SCRIPT"=>["async","defer","type","charset","src"],
@@ -285,7 +286,7 @@ class HTML extends \Touchbase\Core\Object
 		//This Checks whether attibutes are valid. -> also allowes data-*
 		foreach($this->attributes as $attrName => $attrValue){
 			if(!in_array($attrName, $this->validAttributes["GLOBAL"])
-			&& !in_array($attrName, $this->validAttributes[strtoupper($this->tag)])
+			&& (array_key_exists($tag = strtoupper($this->tag), $this->validAttributes) && !in_array($attrName, $this->validAttributes[$tag]))
 			&& strpos($attrName, "data-") !== 0) {
 				unset($this->attributes[$attrName]);
 			}
