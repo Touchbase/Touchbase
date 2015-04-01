@@ -74,6 +74,9 @@ class Assets extends \Touchbase\Core\Object
 		
 		$this->setConfig($config);
 		
+		//Set Default Title, if available...
+		$this->pushTitle($this->config("project")->get("name", null));
+		
 		//Include jQuery?
 		if($jqVersion = $this->config("assets")->get("jquery_version", false)){
 			//Load From Google 

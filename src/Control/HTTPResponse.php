@@ -116,20 +116,12 @@ class HTTPResponse extends HTTPHeaders
 		}
 	}
 	
-	public function setStatusCode($statusCode, $statusDescription = null){
-		if(isset($this->statusCodes[$statusCode])){
-			$this->statusCode = $statusCode;
-			$this->statusDescription = (!empty($statusDescription)?$statusDescription:$this->statusCodes[$statusCode]);
-		}
-		
-		return $this;
-	}
-	
-	public function getStatusCode(){
-		return $this->statusCode;
-	}
-	
-	public function output(){
+	/**
+	 *	Render
+	 *	Output the response
+	 *	@return VOID
+	 */
+	public function render(){
 		if(in_array($this->statusCode, $this->redirectCodes) && headers_sent($file, $line)) {
 			//We want to redirect, Unfortunatly the headers have already been sent.	
 			$url = $this->getHeader("Location");
@@ -149,43 +141,41 @@ class HTTPResponse extends HTTPHeaders
 					header($header, true, $this->statusCode);
 				}
 			}
-						
+			
+			
 			if(Router::isLive() && $this->isError() && !$this->body){
 				print "ERROR: ".$this->statusCode." -> ".$this->sanitize($this->statusDescription);
 			} else {
 				print $this->body;
 			}
 		}
-
 	}
 	
-	public function setBody($body){
-		if(!empty($body)){
-			if($body instanceof HTTPResponse){
-				$this->body = $body->getBody();
-			} else {
-				$this->body = $body;
-			}
-			
-			//There is an error in this. Could be todo with line endings
-			//$this->setHeader('Content-Length', /* (function_exists('mb_strlen') ? mb_strlen($this->body,'8bit') : strlen($this->body)) */strlen($this->body));
-		}
-		
-		return $this;
-	}
-	
-	public function getBody(){
-		return $this->body;
-	}
-	
+	/**
+	 *	Is Error
+	 *	Determine whether the response errored
+	 *	@return BOOL
+	 */
 	public function isError() {
 		return $this->statusCode && ($this->statusCode < 200 || $this->statusCode > 399);
 	}
 	
+	/**
+	 *	Has Finished
+	 *	Determine whether the response has completed
+	 *	@return BOOL
+	 */
 	public function hasFinished(){
 		return in_array($this->statusCode, array(301, 302, 401, 403));
 	}
 	
+	/**
+	 *	Redirect
+	 *	Redirect the response
+	 *	@param string $destinationUrl
+	 *	@param int $statusCode
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
 	public function redirect($destinationUrl, $statusCode = 302) {
 		
 		if(is_numeric($destinationUrl) && $destinationUrl < 0){
@@ -204,6 +194,13 @@ class HTTPResponse extends HTTPHeaders
 		return $this;
 	}
 	
+	/**
+	 *	With Errors
+	 *	Attach an error of errors to the response
+	 *	@param array $errors
+	 *	@param string $formName
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
 	public function withErrors(array $errors, $formName = 'global'){
 		$errors = Store::create()->set($formName, Store::create($errors));
 		SessionStore::flash("errors", SessionStore::get("errors")->set($errors));
@@ -211,11 +208,73 @@ class HTTPResponse extends HTTPHeaders
 		return $this;
 	}
 	
+	/**
+	 *	With Data
+	 *	Attach data to the response
+	 *	@param array $data
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
 	public function withData(array $data){
 		SessionStore::flash("post", SessionStore::get("post")->set($data));
 		
 		return $this;
 	}
+
+	/* Getters / Setters */
+	
+	/**
+	 *	Set body
+	 *	@param mixed $body
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
+	public function setBody($body){
+		if(!empty($body)){
+			if($body instanceof HTTPResponse){
+				$this->body = $body->body();
+			} else {
+				$this->body = $body;
+			}
+			
+			//There is an error in this. Could be todo with line endings
+			//$this->setHeader('Content-Length', /* (function_exists('mb_strlen') ? mb_strlen($this->body,'8bit') : strlen($this->body)) */strlen($this->body));
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 *	Body
+	 *	@return mixed
+	 */
+	public function body(){
+		return $this->body;
+	}
+	
+	/**
+	 *	Set Status Code
+	 *	If the status code is vaild, it will be set on the response. If supplied the description is also printed, otherwise a default will display
+	 *	@param int $statusCode
+	 *	@param string $statusDescription
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
+	public function setStatusCode($statusCode, $statusDescription = null){
+		if(isset($this->statusCodes[$statusCode])){
+			$this->statusCode = $statusCode;
+			$this->statusDescription = (!empty($statusDescription)?$statusDescription:$this->statusCodes[$statusCode]);
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 *	Status Code
+	 *	@return int
+	 */
+	public function statusCode(){
+		return $this->statusCode;
+	}
+		
+	/* Private Methods */
 	
 	private function sanitize($str){
 		return str_replace(array("\r","\n"), '', $str);

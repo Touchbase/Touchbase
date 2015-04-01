@@ -48,13 +48,15 @@ class HTTPResponseException extends \Exception
 			$this->setResponse(new HTTPResponse($body, $statusCode, $statusDescription));
 		}
 		
-		parent::__construct($this->getResponse()->getBody(), $this->getResponse()->getStatusCode());
+		parent::__construct($this->response()->body(), $this->response()->statusCode());
 	}
+	
+	/* Getters / Setters */
 	
 	/**
 	 *	@return HTTPResponse
 	 */
-	public function getResponse() {
+	public function response() {
 		return $this->_response;
 	}
 	

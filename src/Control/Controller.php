@@ -75,12 +75,6 @@ class Controller extends RequestHandler
 		$this->request = &$request;
 		$this->response = &$response;
 	
-		//Init Controllers
-		$this->init();
-		if(!$this->baseInitCalled){
-			user_error("init() method on class '$this' doesn't call Controller::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
-		}
-	
 		//If we had a redirection, cancel.
 		if($response->hasFinished()){
 			return $response;
@@ -108,10 +102,10 @@ class Controller extends RequestHandler
 		}
 		
 		//Check We Have Access
-		if(!$this->checkAccessAction($action) || in_array(strtolower($action), array('run','init'))){
+		if(!$this->checkAccessAction($action) || in_array(strtolower($action), ['run', 'init'])){
 			$this->throwHTTPError(403, "The action '".$action."' isn't allowed on class $this");
 		}
-
+		
 		return $this->{$action}($request);
 	}
 	

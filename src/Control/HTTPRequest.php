@@ -160,7 +160,15 @@ class HTTPRequest extends HTTPHeaders
 						if(!isset($this->urlSegments[$i])) return false;
 						$params[substr($part,1,-1)] = ($lastChar == '*')?implode("/", $this->urlSegments):$this->urlSegments[$i];
 					} else {
-						$params[substr($part,1)] = @$this->urlSegments[$i];
+						$params[substr($part,1)] = $this->urlSegment($i);
+					}
+					
+				// Match a specific segment
+				} else {
+					
+					//If the segment doesn't match, this is not the urlHandler to intercept.
+					if($this->urlSegment($i) !== $part){
+						return false;
 					}
 				}
 			}

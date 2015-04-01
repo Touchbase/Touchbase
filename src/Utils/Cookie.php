@@ -53,9 +53,7 @@ class Cookie extends \Touchbase\Core\Object {
 	 *	@return BOOL
 	 */
 	public static function set($name, $value, $expiry = self::ONE_YEAR, $path = '/', $domain = null, $httponly = false){
-		if(headers_sent()) return false;
-	
-		if(empty($name)) return false;
+		if(headers_sent() || empty($name)) return false;
 		
 		if(empty($value)){
 			$expiry = -1;
@@ -67,8 +65,12 @@ class Cookie extends \Touchbase\Core\Object {
 			}
 		}
 		
-		if(empty($domain) && isset($_SERVER['SERVER_NAME']) && strtolower($_SERVER['SERVER_NAME']) != 'localhost'){
-			$domain = '.' . preg_replace('#^www\.#', '', strtolower($_SERVER['SERVER_NAME']));
+		if(empty($domain) && isset($_SERVER['SERVER_NAME']) && strcasecmp($serverName = $_SERVER['SERVER_NAME'], 'localhost') !== 0){
+			if(filter_var($serverName, FILTER_VALIDATE_IP) !== false){
+				$domain = $serverName;
+			} else {
+				$domain = '.' . preg_replace('#^www\.#', '', $serverName);
+			}
 		}
 		
 		$secure = defined("SITE_PROTOCOL") && SITE_PROTOCOL == 'https://';

@@ -79,9 +79,9 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		// Pass back to the webserver for files that exist
-		if(!$this->isLive()){
+		if(php_sapi_name() == 'cli-server'){
 			$realFile = File::create([BASE_PATH, 'public_html', $url]);
-			if(php_sapi_name() == 'cli-server' && $realFile->isFile() && $realFile->exists()){
+			if($realFile->isFile() && $realFile->exists()){
 				//return false not working (PHP5.5.14), read file instead.
 				readfile($realFile->path);
 				return false;
@@ -94,8 +94,7 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		
-		
-		$request = HTTPRequest::create($requestMethod, $url, $_GET);
+		$request = $request ?: HTTPRequest::create($requestMethod, $url, $_GET);
 		
 		if(!$this->handleRequest($request, $response)){
 			
@@ -109,9 +108,15 @@ class Router extends \Touchbase\Core\Object
 			if(class_exists($dispatch)){
 				self::setRouteHistory(static::buildParams($request->url() ?: "/", $_GET));
 				
-				$dispatch::create()	->setConfig($this->config())
-									->init()
-									->handleRequest($request, $response);
+				try {
+				
+					$dispatch::create()	->setConfig($this->config())
+										->init()
+										->handleRequest($request, $response);
+										
+				} catch(HTTPResponseException $e){
+					$response = $e->response();
+				}
 			} else {
 				\pre_r("Could Not Load Project");
 			}
@@ -124,57 +129,67 @@ class Router extends \Touchbase\Core\Object
 	 *	@return mixed
 	 */
 	private function handleRequest(HTTPRequest $request, HTTPResponse &$response){
-						
-		//Have we mapped a path?
-		$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
-		if($assetFilePath){
-			$assetFile = File::create([
-				PROJECT_PATH,
-				$assetFilePath,
-				implode("/", $request->urlSegments(1)).'.'.$request->extension()
-			]);
+		
+		//TopSite Preview
+		if(isset($_SERVER["HTTP_X_PURPOSE"]) && $_SERVER["HTTP_X_PURPOSE"] == "preview"){
+			$assetFile = File::create([BASE_PATH, 'public_html', 'preview.html']);
 			
+		//Favicon
+		} else if($request->urlSegment() == "favicon"){
+			$assetFile = File::create([BASE_PATH, 'public_html', 'favicon.ico']);
+			if(!$assetFile->exists()){
+				//Write an empty favicon if one doesn't exist
+				$assetFile->write(base64_decode("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAFklEQVR42mNkoBAwjhowasCoAcPFAAAmmAARm5JBWgAAAABJRU5ErkJggg=="));
+			}
+			
+		//Asset Map
+		} else {
+			$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
+			if($assetFilePath){	
+				$assetFile = File::create([
+					PROJECT_PATH,
+					$assetFilePath,
+					implode("/", $request->urlSegments(1)).'.'.$request->extension()
+				]);
+			}
+		}
+		
+		if(isset($assetFile)){
 			$supportedAssets = [
 				"css" => "text/css; charset=utf-8",
 				"js" => "text/javascript; charset=utf-8",
+				"htc" => "text/x-component",
 				"png" => "image/png",
 				"jpg" => "image/jpg",
 				"gif" => "image/gif",
 				"svg" => "image/svg+xml",
-				"apk" => "application/vnd.android.package-archive",
-				"ipa" => "application/octet-stream",
-				"htc" => "text/x-component",
-				"svg" => "image/svg+xml",
+				"ico" => "image/x-icon",
 				"otf" => "application/font-otf",
 				"eot" => "application/vnd.ms-fontobject",
 				"ttf" => "application/font-ttf",
-				"woff"=> "application/font-woff"
+				"woff"=> "application/font-woff",
+				"apk" => "application/vnd.android.package-archive",
+				"ipa" => "application/octet-stream"
 			];
 			
 			if($assetFile->exists() && array_key_exists($assetFile->ext(), $supportedAssets)){
+				session_cache_limiter(false);
+				
 				$response->addHeader("Content-Type", $supportedAssets[$assetFile->ext()]);
 				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
 				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
 
-				if(function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules())){
+				if($this->config("assets")->get("x_sendfile", false) || (function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules()))){
 					$response->addHeader("X-Sendfile", $assetFile->path);
 				} else {
-					$result = $response->setBody($assetFile->read());
+					$response->setBody($assetFile->read());
 				}
+				
+				return true;
 			}
 		}
 		
-		//TopSite Preview
-		if(isset($_SERVER["HTTP_X_PURPOSE"]) && $_SERVER["HTTP_X_PURPOSE"] == "preview"){
-			$preview = File::create([BASE_PATH, 'public_html', 'preview.html']);
-			if($preview->exists()){
-				$response->addHeader("Content-Type", "text/html");
-				$response->addHeader('Content-Length', $preview->size()); //TODO: Should be done in response setBody!
-				$result = $response->setBody($preview->read());
-			}
-		}
-		
-		return (isset($result))?$result:false;
+		return false;
 	}
 
 //CONFIG OVERLOAD

@@ -53,7 +53,6 @@ class RequestHandler extends \Touchbase\Core\Object
 	//Default Action
 	protected $defaultAction = null;
 	
-	//AllowedActions Declare
 	protected $allowedActions = null;
 	
 	/**
@@ -86,55 +85,35 @@ class RequestHandler extends \Touchbase\Core\Object
 							$action = $params[substr($action, 1)];
 						}
 						
-						//TODO: MOVE THIS
-						$this->setParams($request->getUrlParams());
+						if(!$action){
+							user_error("Action not set; using default action method name 'index'", E_USER_NOTICE);
+							$action = 'index';
+						} else if(!is_string($action)){
+							user_error("Non-string method name: ".var_export($action, true), E_USER_ERROR);
+						}
 						
-						if($this->checkAccessAction($action)){
-							
-							if(!$action){
-								user_error("Action not set; using default action method name 'index'", E_USER_NOTICE);
-								$action = 'index';
-							} else if(!is_string($action)){
-								user_error("Non-string method name: ".var_export($action, true), E_USER_ERROR);
-							}
-							
-							try {
-								if(!$this->hasMethod($action)){
-									return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
-								}
-								
-								//Call Action
-								$result = $this->$action($request);
-							} catch (HTTPResponseException $responseException){
-								$result = $responseException->getResponse();
-							}
-							
-						} else {
+						if(!$this->hasMethod($action)){
+							return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
+						}
+						
+						if(!$this->checkAccessAction($action)){	
 							return $this->throwHTTPError(403, "Action '$action' isn't allowed on class $this");
 						}
-/*
-						//Check Response is Error
-						if($result instanceof HTTPResponse && $result->isError()){
-							debug()->setColor("red")->write("Rule resulted in HTTP error");
-							return $result;
-						}
 						
-						if($this !== $result && !$request->isEmptyPattern($rule) && is_object($result) && $result instanceof RequestHandler){
-							$return = $result->handleRequest($request, $model);	
-							
-							//Unsure What This Does!
-							if(is_array($return)){
-							//	$return = $this->customise($return);
-								debug()->setColor("red")->write(__METHOD__." got an array parsed");
-							}
-							
-							return $return;
-						}
-*/
-
 						if(!$request->allParsed()){
 							return $this->throwHTTPError(404, "I can't handle sub-URLs of a $this object");
 						}
+						
+						//Set Controller Vars and Call Action
+						$this->setParams($request->getUrlParams());
+						
+						//Call Controller Init
+						$this->init();
+						if(!$this->baseInitCalled){
+							user_error("init() method on class '$this' doesn't call Controller::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
+						}
+						
+						$result = $this->$action($request);
 						
 						return $result;
 					}
@@ -157,7 +136,7 @@ class RequestHandler extends \Touchbase\Core\Object
 	 */
 	protected function checkAccessAction($action){
 		//Always Allow Index!
-		if($action == 'index') return true;
+		if($action == 'index' || $action == 'handleAction') return true;
 
 		//Save original action
 		$action = strtolower($action);
@@ -210,7 +189,7 @@ class RequestHandler extends \Touchbase\Core\Object
 
 		if(is_array($allowedActions)){
 			$isKey = !is_numeric($action) && array_key_exists($action, $allowedActions);
-			$isValue = in_array($action, array_map('strtolower', $allowedActions));
+			$isValue = in_array($action, $allowedActions);
 			
 			if($isKey || $isValue){
 				return $this->hasMethod($action);
@@ -230,19 +209,15 @@ class RequestHandler extends \Touchbase\Core\Object
 
 		if(is_null($mergedAllowedActions)){		
 			$parent = "$this";
-			$subClasses = array();
-	
+			
 			while($parent != __CLASS__){
 				$parent = get_parent_class($parent);
-				$subClasses[] = $parent;
+				
+				$allowedActions = (array) get_class_vars($parent)['allowedActions'];
+				$this->allowedActions = array_merge((array)$this->allowedActions, $allowedActions);
 			}
-					
-			foreach($subClasses as $className){
-				$parentVar = get_class_vars($className);
-				if(!empty($parentVar['allowedActions']) && $parentVar['allowedActions'] != $this->allowedActions){
-					$this->allowedActions = array_merge((array)$this->allowedActions, (array)$parentVar['allowedActions']);
-				}
-			}
+			$this->allowedActions = array_map("strtolower", array_unique($this->allowedActions));
+			
 			$mergedAllowedActions = true;
 		}
 		
@@ -271,12 +246,10 @@ class RequestHandler extends \Touchbase\Core\Object
 	 *	@return VOID
 	 */
 	protected function throwHTTPError($errorCode, $errorMessage = null){
-		user_error("Exception: ".$errorMessage, E_USER_ERROR);
-	
-		$e = HTTPResponseException::create($errorMessage, $errorCode);
+		$e = new HTTPResponseException($errorMessage, $errorCode);
 		
 		//Error responses should be considered plain text for security reasons.
-		$e->getResponse()->setHeader('Content-Type', 'text/plain');
+		$e->response()->setHeader('Content-Type', 'text/plain');
 		
 		throw $e;
 	}

@@ -115,9 +115,6 @@ class Webpage extends \Touchbase\Core\Object
 		//ADD MODERNIZR
 		$this->assets->includeScript([BASE_SCRIPTS, 'modernizr.js'], true);
 		
-		//Set Default Title, if available...
-		$this->assets->pushTitle($this->controller->config("project")->get("name", null));
-		
 		$this->setLayout($this->layout);
 		
 		//HTML		
