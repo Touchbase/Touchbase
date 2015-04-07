@@ -94,7 +94,7 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		
-		$request = $request ?: HTTPRequest::create($requestMethod, $url, $_GET);
+		$request = $request ?: HTTPRequest::create($requestMethod, $url)->setMainRequest(true);
 		
 		if(!$this->handleRequest($request, $response)){
 			
@@ -106,14 +106,16 @@ class Router extends \Touchbase\Core\Object
 			}
 			
 			if(class_exists($dispatch)){
-				self::setRouteHistory(static::buildParams($request->url() ?: "/", $_GET));
+				if($request->isMainRequest() && !$request->isAjax()){
+					self::setRouteHistory(static::buildParams($request->url() ?: "/", $_GET));
+				}
 				
 				try {
 				
 					$dispatch::create()	->setConfig($this->config())
 										->init()
 										->handleRequest($request, $response);
-										
+					
 				} catch(HTTPResponseException $e){
 					$response = $e->response();
 				}

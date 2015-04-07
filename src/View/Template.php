@@ -135,12 +135,13 @@ class Template extends \Touchbase\Core\Object
 			
 			//This starts an output buffer that parses contents into a string
 			ob_start();
+				if(!class_exists("Auth")) class_alias("\Touchbase\Security\Auth", "Auth");
 				include($templateFile);
 				$fileContents = ob_get_contents();
 			ob_end_clean();
 			
 			//Run it through variable finder.
-			return $this->variableFinder($fileContents, $templateFile);	
+			return $this->variableFinder($fileContents, $templateFile);
 		}
 		return false;
 	}

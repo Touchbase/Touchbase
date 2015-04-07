@@ -55,7 +55,7 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 			throw new \InvalidArgumentException(sprintf("No argument was passed, %s does not contain a default value `static::__default`", get_class($this)));
 		}
 		
-		$this->enum = $enum?:static::__default;
+		$this->enum = isset($enum)?$enum:static::__default;
 	}
 	
 	public function __toString(){
@@ -111,12 +111,6 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	
 	/* JSON */
 	public function jsonSerialize(){
-		return (int)$this->__toString();
+		return (int)$this->enum;
 	}
-	
-	/* NoOp */
-	
-	final private function __clone(){}
-	final public function __sleep(){}
-	final public function __wakeup(){}
 }

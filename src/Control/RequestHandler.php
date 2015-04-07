@@ -92,7 +92,7 @@ class RequestHandler extends \Touchbase\Core\Object
 							user_error("Non-string method name: ".var_export($action, true), E_USER_ERROR);
 						}
 						
-						if(!$this->hasMethod($action)){
+						if(!$this->isAllowed() || !$this->hasMethod($action)){
 							return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
 						}
 						
@@ -105,7 +105,7 @@ class RequestHandler extends \Touchbase\Core\Object
 						}
 						
 						//Set Controller Vars and Call Action
-						$this->setParams($request->getUrlParams());
+						$this->setParams($request->urlParams());
 						
 						//Call Controller Init
 						$this->init();
@@ -186,7 +186,7 @@ class RequestHandler extends \Touchbase\Core\Object
 	protected function hasAction($action){
 		$action = strtolower($action);
 		$allowedActions = $this->getAllowedActions();
-
+		
 		if(is_array($allowedActions)){
 			$isKey = !is_numeric($action) && array_key_exists($action, $allowedActions);
 			$isValue = in_array($action, $allowedActions);
@@ -216,7 +216,7 @@ class RequestHandler extends \Touchbase\Core\Object
 				$allowedActions = (array) get_class_vars($parent)['allowedActions'];
 				$this->allowedActions = array_merge((array)$this->allowedActions, $allowedActions);
 			}
-			$this->allowedActions = array_map("strtolower", array_unique($this->allowedActions));
+			$this->allowedActions = array_map("strtolower", $this->allowedActions);
 			
 			$mergedAllowedActions = true;
 		}

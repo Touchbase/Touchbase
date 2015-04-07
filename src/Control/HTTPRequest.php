@@ -37,6 +37,17 @@ class HTTPRequest extends HTTPHeaders
 	protected $httpMethod;
 	
 	/**
+	 *	@var BOOL
+	 */
+	private $_mainRequest = false;
+
+	/**
+	 *	@var string
+	 */
+	protected $_url;
+	protected $_extension;
+	
+	/**
 	 *	@var array
 	 */
 	protected $_GET = [];
@@ -45,10 +56,6 @@ class HTTPRequest extends HTTPHeaders
 	 *	@var array
 	 */
 	protected $_POST = [];
-	
-	protected $url;
-	
-	protected $extension;
 	
 	/**
 	 *	@var array
@@ -71,14 +78,14 @@ class HTTPRequest extends HTTPHeaders
 	protected $allParams = [];
 	
 	/**
-	 * @var array $urlParams Contains an associative array of all
+	 * @var array $_urlParams Contains an associative array of all
 	 * arguments matched in the current call from {@link RequestHandler->handleRequest()},
 	 * as denoted with a "$"-prefix in the $url_handlers definitions.
 	 * Contains different states throughout its lifespan, so just useful
 	 * while processed in {@link RequestHandler} and to get the last
 	 * processes arguments.
 	 */
-	protected $urlParams = [];
+	protected $_urlParams = [];
 	
 	protected $unshiftedButParsedParts = 0;
 	
@@ -88,7 +95,7 @@ class HTTPRequest extends HTTPHeaders
 		$this->requestTime = time();
 	
 		$this->httpMethod = $httpMethod;
-		$this->setUrl($url);
+		$this->url = $url;
 		
 		$this->_GET = (array)$get?:$_GET;
 		$this->_POST = (array)$post?:array_merge_recursive($_POST, $_FILES);
@@ -98,42 +105,6 @@ class HTTPRequest extends HTTPHeaders
 		
 		//Set Headers
 		$this->addHeaders($this->parseRequestHeaders());
-	}
-	
-	/**
-	 *	Set URL
-	 *	@param string $url
-	 *	@return \Touchbase\Control\HTTPRequest
-	 */
-	public function setUrl($url) {
-		$this->url = $url;
-		
-		if(Router::isRelativeUrl($url)) {
-			$this->url = preg_replace(array('/\/+/', '/\/$/'), array('/',''), $this->url);
-		}
-		
-		if(preg_match('/^(.*)\.([A-Za-z][A-Za-z0-9]*)$/', $this->url, $matches)) {
-			$this->url = $matches[1];
-			$this->extension = $matches[2];
-		}
-		
-		if($this->url){
-			if(strpos($this->url, "/") === 0){
-				$this->urlSegments = explode("/", substr($this->url, 1));
-			} else {
-				$this->urlSegments = explode("/", $this->url);
-			}
-		}
-		
-		return $this;
-	}
-	
-	/**
-	 *	URL
-	 *	@return string
-	 */
-	public function url(){
-		return $this->url ?: "/";
 	}
 	
 	/**
@@ -173,7 +144,7 @@ class HTTPRequest extends HTTPHeaders
 				}
 			}
 			
-			$this->urlParams = $params;
+			$this->_urlParams = $params;
 		} 
 		
 		$this->shift($shiftCount);
@@ -236,23 +207,7 @@ class HTTPRequest extends HTTPHeaders
 	public function _VARS(){
 		return array_merge_recursive($this->_GET, $this->_POST);
 	}
-	
-	/**
-	 *	Get URL Params
-	 *	This method will return either all of the params or a single param
-	 *	@param string $paramName
-	 *	@return mixed
-	 */
-	public function getUrlParams($paramName = false){
-		if(!empty($paramName)){
-			if(isset($this->urlParams[$paramName])){
-				return $this->urlParams[$paramName];
-			}
-			return false;
-		}
-		return $this->urlParams;
-	}
-	
+		
 	/**
 	 *	URL Segment
 	 *	Use thie method to return a specific URL segment
@@ -281,15 +236,6 @@ class HTTPRequest extends HTTPHeaders
 	 */
 	public function remaining(){
 		return implode("/", $this->urlSegments);
-	}
-	
-	/**
-	 *	Extension
-	 *	Returns the extension used in the URL if one is present
-	 *	@return BOOL
-	 */
-	public function extension(){
-		return $this->extension;
 	}
 	
 	/**
@@ -336,7 +282,6 @@ class HTTPRequest extends HTTPHeaders
 	
 	/**
 	 *	Is Ajax
-	 * 
 	 *	@access public
 	 *	@return BOOL
 	 */
@@ -374,7 +319,7 @@ class HTTPRequest extends HTTPHeaders
 	 *	Returns the real IP address of the user
 	 *	@return (string)
 	 */
-	public function clientIp(){
+	public function clientIP(){
 		// If HTTP_CLIENT_IP is set, then give it priority
 		if (!empty($_SERVER["HTTP_CLIENT_IP"])) {
 			$ip = $_SERVER["HTTP_CLIENT_IP"];
@@ -405,6 +350,81 @@ class HTTPRequest extends HTTPHeaders
 		
 		// Return with the found IP or the remote address
 		return (!empty($ip) ? $ip : $_SERVER['REMOTE_ADDR']);
+	}
+	
+	/* Getters / Setters */
+	
+	/**
+	 *	Set URL
+	 *	@param string $url
+	 *	@return \Touchbase\Control\HTTPRequest
+	 */
+	protected function setUrl($url) {
+		$this->_url = $url;
+		
+		if(Router::isRelativeUrl($url)) {
+			$this->_url = preg_replace(array('/\/+/', '/\/$/'), array('/',''), $this->_url);
+		}
+		
+		if(preg_match('/^(.*)\.([A-Za-z][A-Za-z0-9]*)$/', $this->_url, $matches)) {
+			$this->_url = $matches[1];
+			$this->_extension = $matches[2];
+		}
+		
+		if($this->_url){
+			if(strpos($this->url, "/") === 0){
+				$this->urlSegments = explode("/", substr($this->_url, 1));
+			} else {
+				$this->urlSegments = explode("/", $this->_url);
+			}
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 *	Set Main Request
+	 *	@param BOOL $mainRequest
+	 *	@return \Touchbase\Control\HTTPRequest
+	 */
+	public function setMainRequest($mainRequest){
+		static $mainRequestSet = null;
+		if(is_null($mainRequestSet)){
+			$this->_mainRequest = $mainRequest;
+			$mainRequestSet = true;
+		}
+		
+		return $this;
+	}
+	
+	public function isMainRequest(){
+		return $this->_mainRequest;
+	}
+	
+	/**
+	 *	URL
+	 *	@return string
+	 */
+	public function url(){
+		return $this->_url ?: "/";
+	}
+	
+	/**
+	 *	Extension
+	 *	Returns the extension used in the URL if one is present
+	 *	@return BOOL
+	 */
+	public function extension(){
+		return $this->_extension;
+	}
+	
+	/**
+	 *	URL Params
+	 *	This method will return either all of the params
+	 *	@return array
+	 */
+	public function urlParams(){
+		return $this->_urlParams;
 	}
 	
 	/* Private Methods */

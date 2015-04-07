@@ -31,14 +31,21 @@ namespace Touchbase\Data;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorAggregate, \ArrayAccess, \JsonSerializable, \Countable
+class Store extends \ArrayObject implements StoreInterface
 {
 	const CHAIN_STORE = "touchbase.key.chain.store";
 	
 	/**
-	 *	In Memory Store
+	 *	Create
+	 *	Reflection helper to init a class
+	 *	@params (variable)
+	 *	@return (class)
 	 */
-	protected $_data = [];
+	public static function create(){
+		$args = func_get_args();		
+		$newClass = new \ReflectionClass(get_called_class());
+		return $newClass->newInstanceArgs($args);
+	}
 	
 	/**
 	 *	Construct
@@ -51,7 +58,7 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 	
 	//TODO: This is a temp function to show the error messages.
 	public function __toString(){
-		return implode("<br />", array_values($this->_data));
+		return implode("<br />", array_values((array)$this));
 	}
 	
 	/* Getter / Setters */
@@ -69,7 +76,7 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 	 
 	public function get($name, $default = self::CHAIN_STORE){
 		$default = ($default == self::CHAIN_STORE)?new Store():$default;
-		return $this->exists($name)?$this->_data[$name]:$default;
+		return $this->exists($name)?$this[$name]:$default;
 	}	
 	
 	/**
@@ -86,7 +93,7 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 	public function set($name, $value = null){
 		//Set Value
 		if(isset($value)){
-			$this->_data[$name] = $value;
+			$this[$name] = $value;
 			
 		} else if(is_array($name) || $name instanceof $this){
 			
@@ -95,8 +102,8 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 			}
 			
 		//Delete Value
-		} else if(isset($this->_data[$name])){
-			unset($this->_data[$name]);
+		} else if(isset($this[$name])){
+			unset($this[$name]);
 		}
 		
 		return $this;
@@ -159,7 +166,7 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 	}
 	 
 	public function exists($name){
-		return isset($this->_data[$name]);
+		return isset($this[$name]);
 	} 
 	
 	public function fromArray($array){
@@ -179,46 +186,5 @@ class Store extends \Touchbase\Core\Object implements StoreInterface, \IteratorA
 		
 		
 		return $this;
-	}
-
-	/**
-	 *	Array Access
-	 */
-	public function offsetSet($offset, $value) {
-		if (is_null($offset)) {
-			$this->_data[] = $value;
-		} else {
-			$this->_data[$offset] = $value;
-		}
-	}
-	public function offsetExists($offset) {
-		return isset($this->_data[$offset]);
-	}
-	public function offsetUnset($offset) {
-		unset($this->_data[$offset]);
-	}
-	public function offsetGet($offset) {
-		return isset($this->_data[$offset]) ? $this->_data[$offset] : null;
-	}
-	
-	/**
-	 *	Iterator Aggregate
-	 */
-	public function getIterator(){                                                                                                                                                                                               
-		return new \ArrayIterator($this->_data);
-	}
-	
-	/**
-	 *	Countable
-	 */
-	public function count(){
-		return count($this->_data);
-	}
-	
-	/**
-	 *	Json Serializable
-	 */
-	public function jsonSerialize(){
-		return $this->_data;
 	}
 }

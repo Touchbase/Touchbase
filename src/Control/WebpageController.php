@@ -47,6 +47,8 @@ class WebpageController extends Controller
 	private $_webpage;
 	protected $_errors;
 	
+	protected $allowedActions = [];
+	
 	/* Public Methods */
 	
 	/**
@@ -65,7 +67,7 @@ class WebpageController extends Controller
 		//Pass through to Controller
 		$body = parent::handleRequest($request, $response);
 		
-		if($request->isAjax()){
+		if($request->isAjax() || !$request->isMainRequest()){
 			return $body;
 		}
 			

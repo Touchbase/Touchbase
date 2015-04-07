@@ -68,6 +68,10 @@ class Controller extends RequestHandler
 		return $this;
 	}
 	
+	public function isAllowed(){
+		return true;
+	}
+	
 	//Calls this controll and returns a HTTPResponse Object
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
 	
