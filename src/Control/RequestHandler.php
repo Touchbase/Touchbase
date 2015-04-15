@@ -113,9 +113,7 @@ class RequestHandler extends \Touchbase\Core\Object
 							user_error("init() method on class '$this' doesn't call Controller::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
 						}
 						
-						$result = $this->$action($request);
-						
-						return $result;
+						return $this->$action($request);
 					}
 				}
 			}
@@ -135,8 +133,7 @@ class RequestHandler extends \Touchbase\Core\Object
 	 *	@return BOOL
 	 */
 	protected function checkAccessAction($action){
-		//Always Allow Index!
-		if($action == 'index' || $action == 'handleAction') return true;
+		if($action == 'handleAction') return true;
 
 		//Save original action
 		$action = strtolower($action);

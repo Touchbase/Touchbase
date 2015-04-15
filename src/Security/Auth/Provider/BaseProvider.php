@@ -84,7 +84,7 @@ abstract class BaseProvider implements AuthInterface
 		])));
 		
 		//Set Cookie;
-		if(!Cookie::set(self::LOGIN_COOKIE_KEY, $cookieData, Cookie::ONE_DAY, "/", null, true)){
+		if(!Cookie::set(self::LOGIN_COOKIE_KEY, $cookieData, Cookie::ONE_DAY, WORKING_DIR, null, true)){
 			\pre_r("Failed to set cookie");
 		}
 		

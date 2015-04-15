@@ -49,7 +49,8 @@ class PHPSessionProvider implements SessionInterface
 		ini_set('session.use_only_cookies', 1);
 		ini_set('session.use_trans_sid', 0);
 		ini_set('session.cookie_httponly', 1);
-
+		
+		session_set_cookie_params(0, WORKING_DIR);
 		session_start();
 		
 		if(!isset($_SESSION['touchbase'])){

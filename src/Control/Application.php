@@ -33,9 +33,11 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\View\Assets;
 use Touchbase\Filesystem\Filesystem;
+use Touchbase\Control\Exception\HTTPResponseException;
 
 class Application extends Controller
 {
+	protected $_application;
 	protected $_applicationNamespace;
 	
 	/**
@@ -80,6 +82,7 @@ class Application extends Controller
 		if($application = $this->handleApplication()){
 			
 			$application ->setConfig($this->config())
+						 ->setApplication($this)
 						 ->init()
 						 ->handleRequest($this->request, $response);
 			
@@ -101,6 +104,7 @@ class Application extends Controller
 				if(!defined("APPLICATION_TEMPLATES")) define("APPLICATION_TEMPLATES", Filesystem::buildPath(APPLICATION_PATH, $assetConfig->get("templates","Templates")));
 
 				$controller	->setConfig($this->config())
+							->setApplication($this)
 							->handleRequest($this->request, $response);
 			}
 		}
@@ -200,5 +204,26 @@ class Application extends Controller
 	public function defaultController(){
 		return NULL;
 	}
-
+	
+	/**
+	 *	Handle Exception
+	 *	By default this function will just print the error. Override this function to change the behaviour
+	 *	@return string
+	 */
+	public function handleException(HTTPResponseException $exception){
+		if(isset($this->_application)){
+			return 	$this->_application->handleException($exception);
+		}
+		
+		return $exception->getMessage();
+	}
+	
+	public function setApplication(Application $application){
+		$this->_application = $application;
+		return $this;
+	}
+	
+	public function application(){
+		return $this->_application;	
+	}
 }

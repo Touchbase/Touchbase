@@ -38,6 +38,7 @@ use Touchbase\Utils\Validation;
 use Touchbase\Data\Store;
 use Touchbase\Data\SessionStore;
 use Touchbase\Filesystem\File;
+use Touchbase\Control\Exception\HTTPResponseException;
 
 class WebpageController extends Controller
 {
@@ -45,7 +46,6 @@ class WebpageController extends Controller
 	 *	@var \Touchbase\View\Webpage
 	 */
 	private $_webpage;
-	protected $_errors;
 	
 	protected $allowedActions = [];
 	
@@ -65,13 +65,22 @@ class WebpageController extends Controller
 		}
 	
 		//Pass through to Controller
-		$body = parent::handleRequest($request, $response);
+		try {
+			$body = parent::handleRequest($request, $response);
+		} catch (HTTPResponseException $e){
+			$body = $this->handleException($e);
+			
+			//If handleException returns a redirect. Follow it.
+			if($body instanceof \Touchbase\Control\HTTPResponse){
+				if($body->hasFinished()){
+					$response = $body;
+					return $body;
+				}
+			}
+		}
+		
 		
 		if($request->isAjax() || !$request->isMainRequest()){
-			return $body;
-		}
-			
-		if($body instanceof \Touchbase\Control\HTTPResponse){
 			return $body;
 		}
 		
@@ -79,13 +88,17 @@ class WebpageController extends Controller
 			$this->webpage()->assets->pushTitle(static::$name);
 		}
 		
+		if($body instanceof \Touchbase\Control\HTTPResponse){
+			$body = $body->body();
+		}
+	
 		//Set Webpage Response
 		$this->webpage()->setBody($body);
 		
 		//Set Response
 		$htmlDocument = $this->webpage()->output();
 		$this->validateHtml($htmlDocument);
-		$this->response->setBody($htmlDocument);
+		$response->setBody($htmlDocument);
 		
 		return $body;
 	}
@@ -101,18 +114,6 @@ class WebpageController extends Controller
 		}
 		
 		return $this->_webpage;
-	}
-	
-	/**
-	 *	Errors
-	 *	@return \Touchbase\Data\Store
-	 */
-	public function errors($key = null){
-		$errors = SessionStore::get("errors", new Store());
-		if(isset($key)){
-			return $errors->get($key);
-		}
-		return $errors;
 	}
 	
 	/* Protected Methods */

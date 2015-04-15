@@ -31,6 +31,9 @@ namespace Touchbase\Control;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Filesystem\Filesystem;
+use Touchbase\Data\Store;
+use Touchbase\Data\SessionStore;
+use Touchbase\Control\Exception\HTTPResponseException;
 
 class Controller extends RequestHandler
 {	
@@ -58,7 +61,9 @@ class Controller extends RequestHandler
 	 *	@var string
 	 */
 	protected $_controllerName;
+	protected $_application;
 	protected $_applicationPath;
+	protected $_errors;
 	
 	//A Helper function to check if all Inits are called on child classes.
 	protected $baseInitCalled = false;
@@ -114,6 +119,27 @@ class Controller extends RequestHandler
 	}
 	
 	/**
+	 *	Handle Exception
+	 *	By default this function will just print the error. Override this function to change the behaviour
+	 *	@return string
+	 */
+	public function handleException(HTTPResponseException $exception){
+		return $this->application()->handleException($exception);
+	}
+	
+	/**
+	 *	Errors
+	 *	@return \Touchbase\Data\Store
+	 */
+	public function errors($key = null){
+		$errors = SessionStore::get("errors", new Store());
+		if(isset($key)){
+			return $errors->get($key);
+		}
+		return $errors;
+	}
+	
+	/**
 	 *	Template
 	 *	Helper function
 	 *	@return (\Touchbase\View\Template)
@@ -123,6 +149,15 @@ class Controller extends RequestHandler
 	}
 	
 	/* Getters / Setter */
+	
+	public function setApplication(Application $application){
+		$this->_application = $application;
+		return $this;
+	}
+	
+	public function application(){
+		return $this->_application;	
+	}
 	
 	public function setControllerName($controllerName){
 		$this->_controllerName = $controllerName;

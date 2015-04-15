@@ -76,6 +76,7 @@ class Template extends \Touchbase\Core\Object
 			$templateFile = Filesystem::buildPath($this->controller->applicationPath, $templatesPath, $templateFile);
 		}
 		
+		$this->assign("controller", $this->controller);
 		$this->assign("errors", $this->controller->errors);
 		
 		if($template = $this->readTemplate($templateFile)){

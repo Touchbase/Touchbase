@@ -32,7 +32,10 @@ namespace Touchbase\Control;
 defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Filesystem\File;
+
+use Touchbase\Data\StaticStore;
 use Touchbase\Core\Config\ConfigTrait;
+use Touchbase\Core\Config\Store as ConfigStore;
 
 use Touchbase\Security\Auth;
 use Touchbase\Security\Permission;
@@ -47,22 +50,24 @@ class Router extends \Touchbase\Core\Object
 {
 	const ROUTE_HISTORY_KEY = "touchbase.key.route_history";
 	
-	use ConfigTrait {
-		setConfig as traitSetConfig;
+	/**
+	 *	Config
+	 *	@return Touchbase\Core\Config\Store
+	 */
+	public static function config($section = null){		
+		$config = StaticStore::shared()->get(ConfigStore::CONFIG_KEY, false);
+		return $section ? $config->get($section) : $config;
 	}
-	
-	private $urlParams =[];
-	private static $developmentServers = [];
-	private static $testingServers = [];
-	
+
 	/**
 	 *	Route
 	 *	
-	 *	@param HTTPRequest $request
+	 *	@param HTTPRequest | string $request
 	 *	@param HTTPResponse $response
 	 *	@return VOID
 	 */
-	public function route(/*HTTPRequest*/ &$request, HTTPResponse &$response){
+	public static function route(/* HTTPRequest | string */ $request, HTTPResponse &$response = null){
+		
 		//GET / POST etc.
 		$requestMethod = (isset($_SERVER['X-HTTP-Method-Override'])) ? $_SERVER['X-HTTP-Method-Override'] : $_SERVER['REQUEST_METHOD'];
 		
@@ -82,9 +87,9 @@ class Router extends \Touchbase\Core\Object
 		if(php_sapi_name() == 'cli-server'){
 			$realFile = File::create([BASE_PATH, 'public_html', $url]);
 			if($realFile->isFile() && $realFile->exists()){
-				//return false not working (PHP5.5.14), read file instead.
+				//Can't return false this far up, read file instead.
 				readfile($realFile->path);
-				return false;
+				exit;
 			}
 		}
 		
@@ -93,13 +98,15 @@ class Router extends \Touchbase\Core\Object
 			$url = substr($url, strlen(BASE_PATH));
 		}
 		
+		$response = $response ?: HTTPResponse::create();
+		if(!($request instanceof HTTPRequest)){
+			$request = HTTPRequest::create($requestMethod, is_string($request) ? $request : $url)->setMainRequest(true);
+		}
 		
-		$request = $request ?: HTTPRequest::create($requestMethod, $url)->setMainRequest(true);
-		
-		if(!$this->handleRequest($request, $response)){
+		if(!static::handleRequest($request, $response)){
 			
 			//Get Dispatchable
-			$dispatchNamespace = $this->config()->get("project")->get("namespace", "");
+			$dispatchNamespace = static::config()->get("project")->get("namespace", "");
 			$dispatch = $dispatchNamespace.'\\'.$dispatchNamespace.'App';
 			if(substr($dispatch, 0, 1) != '\\'){
 				$dispatch = '\\' . $dispatch;
@@ -112,7 +119,7 @@ class Router extends \Touchbase\Core\Object
 				
 				try {
 				
-					$dispatch::create()	->setConfig($this->config())
+					$dispatch::create()	->setConfig(static::config())
 										->init()
 										->handleRequest($request, $response);
 					
@@ -123,6 +130,8 @@ class Router extends \Touchbase\Core\Object
 				\pre_r("Could Not Load Project");
 			}
 		}
+		
+		return $response;
 	}
 	
 	/**
@@ -130,8 +139,8 @@ class Router extends \Touchbase\Core\Object
 	 *	This method will attempt to load a real resource located on the server if one exists.
 	 *	@return mixed
 	 */
-	private function handleRequest(HTTPRequest $request, HTTPResponse &$response){
-		
+	private static function handleRequest(HTTPRequest $request, HTTPResponse &$response){
+
 		//TopSite Preview
 		if(isset($_SERVER["HTTP_X_PURPOSE"]) && $_SERVER["HTTP_X_PURPOSE"] == "preview"){
 			$assetFile = File::create([BASE_PATH, 'public_html', 'preview.html']);
@@ -143,7 +152,6 @@ class Router extends \Touchbase\Core\Object
 				//Write an empty favicon if one doesn't exist
 				$assetFile->write(base64_decode("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAFklEQVR42mNkoBAwjhowasCoAcPFAAAmmAARm5JBWgAAAABJRU5ErkJggg=="));
 			}
-			
 		//Asset Map
 		} else {
 			$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
@@ -181,7 +189,7 @@ class Router extends \Touchbase\Core\Object
 				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
 				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
 
-				if($this->config("assets")->get("x_sendfile", false) || (function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules()))){
+				if(static::config("assets")->get("x_sendfile", false) || (function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules()))){
 					$response->addHeader("X-Sendfile", $assetFile->path);
 				} else {
 					$response->setBody($assetFile->read());
@@ -193,22 +201,7 @@ class Router extends \Touchbase\Core\Object
 		
 		return false;
 	}
-
-//CONFIG OVERLOAD
-
-	/**
-	 *	Set Config
-	 *	@return \Touchbase\Control\Router
-	 */
-	public function setConfig(\Touchbase\Core\Config\Store $config){
 	
-		$servers = $config->get("servers");
-		static::$developmentServers = $servers->get("development", []);
-		static::$developmentServers = $servers->get("testing", []);
-		
-		return $this->traitSetConfig($config);
-	}
-
 //URL SETTINGS
 	
 	/**
@@ -400,7 +393,7 @@ class Router extends \Touchbase\Core\Object
 		
 		return SESSION::get("isDevelopment") 
 			|| TOUCHBASE_ENV == 'dev'
-			|| in_array(@$_SERVER['HTTP_HOST'], self::$developmentServers);
+			|| in_array(@$_SERVER['HTTP_HOST'], static::config()->get("servers")->get("development", []));
 	}
 	
 	/**
@@ -417,7 +410,7 @@ class Router extends \Touchbase\Core\Object
 		return !static::isDev() && (
 			SESSION::get("isTest")
 			|| TOUCHBASE_ENV == 'test'
-			|| in_array(@$_SERVER['HTTP_HOST'], self::$testingServers)
+			|| in_array(@$_SERVER['HTTP_HOST'], static::config()->get("servers")->get("testing", []))
 		);
 	}
 	

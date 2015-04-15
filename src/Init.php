@@ -48,6 +48,7 @@ defined('TOUCHBASE') or define('TOUCHBASE', true);
 error_reporting(E_ALL | E_STRICT);
 
 use Touchbase\Control\Router;
+use Touchbase\Control\HTTPResponse;
 use Touchbase\Filesystem\File;
 use Touchbase\Data\StaticStore;
 use Touchbase\Core\Config\Store as ConfigStore;
@@ -57,13 +58,16 @@ use Touchbase\Core\Config\Provider\IniConfigProvider;
 class Init
 {
 	use ConfigTrait;
-
+	
+	/**
+	 *	@var \Touchbase\Control\HTTPResponse
+	 */
 	protected $_autoLoader;
 	
-	protected $_request;
+	/**
+	 *	@var \Touchbase\Control\HTTPResponse
+	 */
 	protected $_response;
-	
-	protected $_router;
 	
 	public function __construct($autoLoader = null, $basePath = null){
 		$this->_autoLoader = $autoLoader;
@@ -143,19 +147,9 @@ class Init
 */
 	}
 	
-	public function request(){
-		if(empty($this->_request)){		
-			 $this->_router = \Touchbase\Control\Router::create()->setConfig($this->config())
-			 													 ->route($this->_request, $this->_response);
-		}
-		
-		return $this->_request;
-	}
-	
 	public function response(){
 		if(empty($this->_response)){
-			$this->_response = \Touchbase\Control\HTTPResponse::create();
-			$this->request();
+			$this->_response = Router::route(NULL);
 		}
 
 		return $this->_response;
@@ -179,26 +173,27 @@ class Init
 					foreach($files as $condition => $file){
 						
 						$extraConfigFile = File::create([$configFilePath, $file]);
-						
-						if($extraConfigFile->exists()){
-							$configurationData = IniConfigProvider::create()->parseIniFile($extraConfigFile);
-							//Not a domain, path or environment - load always
-							if(is_numeric($condition)){
+
+						//Not a domain, path or environment - load always
+						if(is_numeric($condition)){
+							if($extraConfigFile->exists()){
+								$configurationData = IniConfigProvider::create()->parseIniFile($extraConfigFile);
 								$config->addConfig($extraConfig = $configurationData->getConfiguration());
 								$loadExtraConfig($extraConfig->get("config")->get("files", ""), File::buildPath($configFilePath, dirname($file)));
-							
-							//We want to match a certain condition
-							} else {
-								if( //Do we match the conditions?
+							}
+						//We want to match a certain condition
+						} else {
+							if( ( //Do we match the conditions?
 									strpos($_SERVER['HTTP_HOST'], $condition) === 0 || //Are we a different domain?
 									strpos($_SERVER["REQUEST_URI"], $condition) === 0 || //Are we a different working dir?
 									strpos($_SERVER["SERVER_NAME"], $condition) === 0 || //Are we on a different server?
 									(strtoupper(substr(php_uname('s'), 0, 3)) === 'WIN' && $condition == "windows") || //Are we on a differnet os?
 									(defined("TOUCHBASE_ENV") && TOUCHBASE_ENV == $condition) // Are we on a different environment (dev/live)
-								){
-									$config->addConfig($extraConfig = $configurationData->getConfiguration());
-									$loadExtraConfig($extraConfig->get("config")->get("files", ""), File::buildPath($configFilePath, dirname($file)));
-								}
+								) && $extraConfigFile->exists()
+							){
+								$configurationData = IniConfigProvider::create()->parseIniFile($extraConfigFile);
+								$config->addConfig($extraConfig = $configurationData->getConfiguration());
+								$loadExtraConfig($extraConfig->get("config")->get("files", ""), File::buildPath($configFilePath, dirname($file)));
 							}
 						}
 					}

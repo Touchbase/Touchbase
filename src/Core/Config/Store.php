@@ -63,7 +63,7 @@ class Store extends \Touchbase\Data\Store
 				foreach($data as $key => $value){
 					$cfg = $this->get($group);
 					if($recursive && is_array($value) && $cfg->get($key)){
-						$cfg->set($key, array_merge_recursive($cfg->get($key), $value));
+						$cfg->set($key, array_merge_recursive((array)$cfg->get($key), $value));
 					} else {
 						$cfg->set($key, $value);
 					}
