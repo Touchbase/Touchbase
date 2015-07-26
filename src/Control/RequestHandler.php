@@ -92,11 +92,11 @@ class RequestHandler extends \Touchbase\Core\Object
 							user_error("Non-string method name: ".var_export($action, true), E_USER_ERROR);
 						}
 						
-						if(!$this->isAllowed() || !$this->hasMethod($action)){
+						if(!$this->hasMethod($action)){
 							return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
 						}
 						
-						if(!$this->checkAccessAction($action)){	
+						if(!$this->isAllowed() || !$this->checkAccessAction($action)){	
 							return $this->throwHTTPError(403, "Action '$action' isn't allowed on class $this");
 						}
 						
@@ -230,7 +230,7 @@ class RequestHandler extends \Touchbase\Core\Object
 	protected function setParams(array $params){
 		if(is_array($params)){
 			foreach($params as $paramName => $paramValue){
-				$this->$paramName = filter_var($paramValue, FILTER_SANITIZE_STRING);
+				$this->$paramName = urldecode(filter_var($paramValue, FILTER_SANITIZE_STRING));
 			}
 		}
 	}

@@ -77,10 +77,10 @@ class Webpage extends \Touchbase\Core\Object
 		//Add Defualt Meta
 		$this->assets->includeMeta(HTML::meta()->attr('charset','UTF-8'));
 		$this->assets->includeMeta(HTML::meta()->attr('http-equiv','Content-type')->attr('content', 'text/html; charset=utf-8'));
-		$this->assets->includeMeta('generator', 'Touchbase - http://touchbase.williamgeorge.co.uk');
+		$this->assets->includeMeta('generator', 'Touchbase - http://touchbase.io');
 		
 		//Include base url
-		$this->assets->includeExtra(HTML::base()->href(SITE_URL));
+		$this->assets->includeExtra(HTML::base()->href(Router::buildPath(SITE_ROOT, $_SERVER['REQUEST_URI'])));
 		
 		//WebApp
 		$this->assets->includeMeta('HandheldFriendly', 'true');
@@ -170,10 +170,11 @@ class Webpage extends \Touchbase\Core\Object
 	}
 	
 	/**
-	 *	Output Function
+	 *	Render
+	 *	Output layout as a string
 	 *	@return string
 	 */
-	public function output(){
+	public function render(){
 		return $this->constructLayout();
 	}
 	

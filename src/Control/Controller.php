@@ -78,6 +78,9 @@ class Controller extends RequestHandler
 	}
 	
 	//Calls this controll and returns a HTTPResponse Object
+	public function request(){
+		return $this->request;
+	}
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
 	
 		//Set Request/Response Into Var

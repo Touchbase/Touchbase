@@ -166,7 +166,7 @@ class Store extends \ArrayObject implements StoreInterface
 	}
 	 
 	public function exists($name){
-		return isset($this[$name]);
+		return $name && isset($this[$name]);
 	} 
 	
 	public function fromArray($array){

@@ -153,7 +153,7 @@ class Assets extends \Touchbase\Core\Object
 	 *	Construct Styles
 	 *	@return string
 	 */
-	public function styles(){		
+	public function styles(){
 		return @$this->documentAssets[self::ASSET_CSS]['head']?:[];
 	}
 	
@@ -295,9 +295,8 @@ class Assets extends \Touchbase\Core\Object
 	 *	@return string
 	 */
 	public static function urlForPath($path){
-	
-		if(substr($path, 0, strlen(PROJECT_PATH)) == PROJECT_PATH) {
-			$path = trim(substr($path, strlen(PROJECT_PATH)), "/");
+		if(substr($path, 0, strlen(BASE_PATH)) == BASE_PATH) {
+			$path = trim(substr($path, strlen(BASE_PATH)), "/");
 		}
 		
 		$assetMaps = StaticStore::shared()->get(ConfigStore::CONFIG_KEY)->get("assets")->get("asset_map")->getIterator();
@@ -341,16 +340,16 @@ class Assets extends \Touchbase\Core\Object
 	 */
 	public static function pathForAssetUrl($assetUrl){
 		if(Router::isSiteUrl($assetUrl)){
-			list($assetMapFragment, $assetUrl) = explode("/", Router::relativeUrl($assetUrl), 2);
+			list($assetMapFragment, $assetUrl) = array_pad(explode("/", Router::relativeUrl($assetUrl), 2), 2, null);
 			
 			//Does the file exist?
-			$file = File::create([PROJECT_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
+			$file = File::create([BASE_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
 			if($file->exists()){
 				return $file->path;	
 			}
 			
 			//Is it a folder?
-			$folder = Folder::create([PROJECT_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
+			$folder = Folder::create([BASE_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
 			if($folder->exists()){
 				return $folder->path;	
 			}
@@ -382,7 +381,6 @@ class Assets extends \Touchbase\Core\Object
 		if(is_string($file)){
 			if(!$this->isSnipit($assetType, $file)){
 				if(!static::pathForAssetUrl($file)) return;
-				
 				
 				switch($assetType){
 					case self::ASSET_CSS:

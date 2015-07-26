@@ -65,17 +65,22 @@ class Cookie extends \Touchbase\Core\Object {
 			}
 		}
 		
-		if(empty($domain) && isset($_SERVER['SERVER_NAME']) && strcasecmp($serverName = $_SERVER['SERVER_NAME'], 'localhost') !== 0){
-			if(filter_var($serverName, FILTER_VALIDATE_IP) !== false){
-				$domain = $serverName;
+		if(empty($domain) && isset($_SERVER['SERVER_NAME']) && strcasecmp($_SERVER['SERVER_NAME'], 'localhost') !== 0){
+			if(filter_var($host = parse_url(SITE_URL, PHP_URL_HOST), FILTER_VALIDATE_IP) !== false){
+				$domain = $host;				
 			} else {
-				$domain = '.' . preg_replace('#^www\.#', '', $serverName);
+				$domain = '.' . preg_replace('#^www\.#', '', $host);
 			}
 		}
 		
 		$secure = defined("SITE_PROTOCOL") && SITE_PROTOCOL == 'https://';
 		
-		return setcookie($name, $value, $expiry, $path, $domain, $secure, $httponly);
+		if(setcookie($name, $value, $expiry, $path, $domain, $secure, $httponly)){
+			$_COOKIE[$name] = $value;
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/**

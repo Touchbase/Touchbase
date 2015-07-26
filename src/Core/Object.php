@@ -33,6 +33,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 abstract class Object
 {
+	use SynthesizeTrait;
 	
 	/**
 	 *	Create
@@ -96,99 +97,6 @@ abstract class Object
 		}
 
 		return null; 
-	}
-	
-	/**
-	 *	Has Method
-	 *	@return BOOL
-	 */
-	public function hasMethod($method){
-		return method_exists($this, $method);
-	}
-	
-	/**
-	 *	Has Property
-	 *	@return BOOL
-	 */
-	public function hasProperty($property){
-		return property_exists($this, $property) || ($this->hasMethod($property) && property_exists($this, "_$property"));
-	}
-	
-	/**
-	 *	__isset
-	 *	Magic method to determine if a property has been set
-	 *	@return BOOL
-	 */
-	public function __isset($property){
-		return $this->hasProperty($property);
-	}
-
-	/**
-	 *	__set
-	 *	Magic method to run $this->property = "newValue" through a setter if exists
-	 *	@discussion If a variable of the same name prefixed with an underscore(_) exists on the class. We assume that the developer wants
-	 *	to take care of setting the property themselves. In this instance a getter must also be supplied to access the property externally.
-	 *	If no setter exists for an underscore(_) prefixed property we deem that the property is readonly and therfore trigger an error.
-	 *	If no properties exist on the class with the prefixed name, we use the return value of the setProperty method to set the variable.
-	 *	@param string $property
-	 *	@param mixed $value
-	 *	@return VOID
-	 */
-	public function __set($property, $value){
-		if($this->hasMethod($method = "set$property")) {
-			if(($value = $this->$method($value)) && !$this->hasProperty("_$property")){
-				$this->$property = $value;
-			}
-		} else if(!$this->hasProperty("_$property") && !$this->hasProperty("$property")){
-			$this->$property = $value;
-		} else if(property_exists($this, $property)){
-			$scope = (new \ReflectionProperty($this, $property))->isProtected()?"protected":"private";
-			trigger_error(sprintf("Cannot access %s property %s::$%s", $scope, get_class($this), $property), E_USER_ERROR);
-		} else {
-			trigger_error(sprintf("Assignment to readonly property %s::$%s", get_class($this), $property), E_USER_ERROR);
-		}
-	}
-	
-	/**
-	 *	__get
-	 *	Magic method to get a value from a getter if exists
-	 *	@param string $property
-	 *	@return mixed
-	 */
-	public function __get($property){
-		if($this->hasMethod($method = "$property") && $this->hasProperty("_$property")) {
-			return $this->$method();
-		} else if(property_exists($this, $property)){
-			$scope = (new \ReflectionProperty($this, $property))->isProtected()?"protected":"private";
-			trigger_error(sprintf("Cannot access %s property %s::$%s", $scope, get_class($this), $property), E_USER_ERROR);
-		} else if(isset($this->$property)){
-			return $this->$property;
-		}
-		
-		trigger_error(sprintf("Undefined property: %s::$%s", get_class($this), $property), E_USER_NOTICE);
-	}
-	
-	/**
-	 *	__call
-	 *	Magic method to get or set a property
-	 *	@return mixed
-	 */
-	public function __call($method, array $arguments){
-		if($this->hasProperty($property = "$method")){
-			$propertyReflection = new \ReflectionProperty($this, $property);
-			if(!$propertyReflection->isPublic()){
-				$scope = $propertyReflection->isProtected()?"protected":"private";
-				trigger_error(sprintf("Cannot access %s property %s::$%s", $scope, get_class($this), $property), E_USER_ERROR);
-			}
-			
-			return $this->$property;
-		} else if(substr($method, 0, 3) === "set" && !empty($arguments)){
-			$property = lcfirst(substr($method, 3));
-			$this->$property = $arguments[0];
-			return $this;
-		}
-		
-		trigger_error(sprintf("Call to undefined function %s()", $method), E_USER_NOTICE);
 	}
 	
 	/**

@@ -63,6 +63,12 @@ class Application extends Controller
 		return $this;
 	}
 	
+	/**
+	 *	Handle Request
+	 *	@param \Touchbase\Control\HTTPRequest &$request
+	 *	@param \Touchbase\Control\HTTPResponse &$response
+	 *	@return string - The outgoing HTML
+	 */
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
 		//Set Request/Response Into Var
 		$this->request = &$request;
@@ -174,15 +180,16 @@ class Application extends Controller
 	}
 	
 	/**
-	 *	Get Application Controller
-	 *	This function will attempt to load a controller with the same name as the application.
-	 *	@return \Touchbase\Control\Controller
+	 *	Handle Exception
+	 *	By default this function will just print the error. Override this function to change the behaviour
+	 *	@return string
 	 */
-	private function getApplicationController($controllerName){
-		$controllerClass = $this->_applicationNamespace.'\Controllers\\'.$controllerName."Controller";
-		if(class_exists($controllerClass) && is_subclass_of($controllerClass, '\Touchbase\Control\Controller')){
-			return $controllerClass::create()->setControllerName($controllerName);
+	public function handleException(HTTPResponseException $exception){
+		if(isset($this->_application)){
+			return 	$this->_application->handleException($exception);
 		}
+		
+		return $exception->getMessage();
 	}
 	
 	/**
@@ -205,25 +212,37 @@ class Application extends Controller
 		return NULL;
 	}
 	
+	/* Getters / Setters */
+	
 	/**
-	 *	Handle Exception
-	 *	By default this function will just print the error. Override this function to change the behaviour
-	 *	@return string
+	 *	Application
+	 *	@return \Touchbase\Control\Application
 	 */
-	public function handleException(HTTPResponseException $exception){
-		if(isset($this->_application)){
-			return 	$this->_application->handleException($exception);
-		}
-		
-		return $exception->getMessage();
+	public function application(){
+		return $this->_application;	
 	}
 	
+	/**
+	 *	Set Application
+	 *	@param \Touchbase\Control\Application $application
+	 *	@return \Touchbase\Control\Controller self
+	 */
 	public function setApplication(Application $application){
 		$this->_application = $application;
 		return $this;
 	}
 	
-	public function application(){
-		return $this->_application;	
+	/* Private Methods */
+	
+	/**
+	 *	Get Application Controller
+	 *	This function will attempt to load a controller with the same name as the application.
+	 *	@return \Touchbase\Control\Controller
+	 */
+	private function getApplicationController($controllerName){
+		$controllerClass = $this->_applicationNamespace.'\Controllers\\'.$controllerName."Controller";
+		if(class_exists($controllerClass) && is_subclass_of($controllerClass, '\Touchbase\Control\Controller')){
+			return $controllerClass::create()->setControllerName($controllerName);
+		}
 	}
 }

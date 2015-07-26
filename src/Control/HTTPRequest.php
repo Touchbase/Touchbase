@@ -125,15 +125,24 @@ class HTTPRequest extends HTTPHeaders
 				$part = trim($part);
 				
 				// Match a variable
-				if(isset($part[0]) && $part[0] == '$'){
+				if(isset($part[0]) && ($part[0] == '$' || $part[0] == '*')){
 					$lastChar = substr($part,-1);
-					if($lastChar == '!' || $lastChar == '*'){
+					if($lastChar == '!'){
+						
+						//This segment is required, if it doesn't returning false will throw a 404
 						if(!isset($this->urlSegments[$i])) return false;
-						$params[substr($part,1,-1)] = ($lastChar == '*')?implode("/", $this->urlSegments):$this->urlSegments[$i];
-					} else {
+						$params[substr($part,1,-1)] = $this->urlSegments[$i];
+						
+					} else if($lastChar == "*"){
+						if((strlen($part) > 1 && $part[0] != '$')) return false;
+					
+						$params[substr($part,1,-1) ?: "*"] = implode("/", $remainingSegments = $this->urlSegments($i));
+						if(isset($remainingSegments)) $this->unshiftedButParsedParts = count($remainingSegments);
+						
+					} else if($part[0] == '$'){
 						$params[substr($part,1)] = $this->urlSegment($i);
 					}
-					
+				
 				// Match a specific segment
 				} else {
 					
@@ -150,7 +159,7 @@ class HTTPRequest extends HTTPHeaders
 		$this->shift($shiftCount);
 		// We keep track of pattern parts that we looked at but didn't shift off.
 		// This lets us say that we have *parsed* the whole URL even when we haven't *shifted* it all
-		$this->unshiftedButParsedParts = ($this->unshiftedButParsedParts > 0)?$this->unshiftedButParsedParts:0;
+		$this->unshiftedButParsedParts = max($this->unshiftedButParsedParts, 0);
 		
 		// Load the arguments that actually have a value into $this->allParams
 		// This ensures that previous values aren't overridden with blanks
@@ -186,11 +195,15 @@ class HTTPRequest extends HTTPHeaders
 				return $post;
 			}
 			
-			return filter_var($post, FILTER_SANITIZE_STRING);
+			if(is_scalar($post)){
+				return filter_var($post, FILTER_SANITIZE_STRING);
+			}
+			
+			return $post;
 		}
 		
 		if(isset($this->_GET[$name]) && !empty($get = $this->_GET[$name])){
-			return filter_var($get, FILTER_SANITIZE_STRING);
+			return urldecode(filter_var($get, FILTER_SANITIZE_STRING));
 		}
 		
 		return null;

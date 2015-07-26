@@ -51,6 +51,12 @@ class Router extends \Touchbase\Core\Object
 	const ROUTE_HISTORY_KEY = "touchbase.key.route_history";
 	
 	/**
+	 *	Dispatch
+	 *	@var \Touchbase\Control\Application
+	 */
+	private static $dispatch;
+	
+	/**
 	 *	Config
 	 *	@return Touchbase\Core\Config\Store
 	 */
@@ -76,7 +82,7 @@ class Router extends \Touchbase\Core\Object
 			$_SERVER['REQUEST_URI'] = $_SERVER['HTTP_X_ORIGINAL_URL'];
 		}
 		
-		$url = preg_replace("/^\/".str_replace("/", "\/?", WORKING_DIR)."/", '', $_SERVER["REQUEST_URI"]);
+		$url = is_string($request) ? $request : preg_replace("/^\/".str_replace("/", "\/?", WORKING_DIR)."/", '', $_SERVER["REQUEST_URI"]);
 		if(strpos($url, '?') !== false) {
 			list($url, $query) = explode('?', $url, 2);
 			parse_str($query, $_GET);
@@ -100,34 +106,41 @@ class Router extends \Touchbase\Core\Object
 		
 		$response = $response ?: HTTPResponse::create();
 		if(!($request instanceof HTTPRequest)){
-			$request = HTTPRequest::create($requestMethod, is_string($request) ? $request : $url)->setMainRequest(true);
+			$request = HTTPRequest::create($requestMethod, $url)->setMainRequest(true);
 		}
 		
 		if(!static::handleRequest($request, $response)){
-			
-			//Get Dispatchable
-			$dispatchNamespace = static::config()->get("project")->get("namespace", "");
-			$dispatch = $dispatchNamespace.'\\'.$dispatchNamespace.'App';
-			if(substr($dispatch, 0, 1) != '\\'){
-				$dispatch = '\\' . $dispatch;
-			}
-			
-			if(class_exists($dispatch)){
+			try {			
+				//Get Dispatchable
+				if(!static::$dispatch){
+					$dispatchNamespace = static::config()->get("project")->get("namespace", "");
+					$dispatch = $dispatchNamespace.'\\'.$dispatchNamespace.'App';
+					if(substr($dispatch, 0, 1) != '\\'){
+						$dispatch = '\\' . $dispatch;
+					}
+				
+					if(class_exists($dispatch)){
+						if(!static::$dispatch){
+							static::$dispatch = $dispatch::create()	->setConfig(static::config())
+																	->init();
+						}
+					} else {
+						$e = new HTTPResponseException("Could not load project", 404);
+	
+						//Error responses should be considered plain text for security reasons.
+						$e->response()->setHeader('Content-Type', 'text/plain');
+				 
+						throw $e;
+					}
+				}
+				
 				if($request->isMainRequest() && !$request->isAjax()){
 					self::setRouteHistory(static::buildParams($request->url() ?: "/", $_GET));
 				}
-				
-				try {
-				
-					$dispatch::create()	->setConfig(static::config())
-										->init()
-										->handleRequest($request, $response);
-					
-				} catch(HTTPResponseException $e){
-					$response = $e->response();
-				}
-			} else {
-				\pre_r("Could Not Load Project");
+			
+				static::$dispatch->handleRequest($request, $response);
+			} catch(HTTPResponseException $e){
+				$response = $e->response();
 			}
 		}
 		
@@ -157,7 +170,7 @@ class Router extends \Touchbase\Core\Object
 			$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
 			if($assetFilePath){	
 				$assetFile = File::create([
-					PROJECT_PATH,
+					BASE_PATH,
 					$assetFilePath,
 					implode("/", $request->urlSegments(1)).'.'.$request->extension()
 				]);
@@ -216,7 +229,7 @@ class Router extends \Touchbase\Core\Object
 			$url = dirname($_SERVER['REQUEST_URI'] . 'x') . '/' . $url;
 		}
 		
-	 	if(strpos($url, "http") !== 0 && strpos($url, "//") !== 0){
+	 	if(strpos($url, "//") !== 0 && strpos(strtolower($url), "http") !== 0){
 	 		if(strpos($url, WORKING_DIR) === 0){
 	 			//Remove WORKING_DIR and add SITE_URL
 	 			$url = static::buildPath(SITE_URL, substr($url, strlen(WORKING_DIR)));

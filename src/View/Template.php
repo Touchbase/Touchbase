@@ -31,7 +31,6 @@ namespace Touchbase\View;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\Control\Router;
 use Touchbase\Filesystem\Filesystem;
 
 class Template extends \Touchbase\Core\Object
@@ -77,6 +76,7 @@ class Template extends \Touchbase\Core\Object
 		}
 		
 		$this->assign("controller", $this->controller);
+		$this->assign("request", $this->controller->request());
 		$this->assign("errors", $this->controller->errors);
 		
 		if($template = $this->readTemplate($templateFile)){
@@ -91,10 +91,10 @@ class Template extends \Touchbase\Core\Object
 				$controllerName = strtolower($this->controller->controllerName);
 				
 				//CSS autoloader
-				Assets::shared()->includeStyle(Router::buildPath(APPLICATION_STYLES, $controllerName . ".css"));
+				Assets::shared()->includeStyle([APPLICATION_STYLES, $controllerName . ".css"]);
 				
 				//JS autoloader
-				Assets::shared()->includeScript(Router::buildPath(APPLICATION_SCRIPTS, $controllerName . ".js"));
+				Assets::shared()->includeScript([APPLICATION_SCRIPTS, $controllerName . ".js"]);
 			}
 			
 			return $template;
@@ -201,16 +201,27 @@ class Template extends \Touchbase\Core\Object
 				if(strpos($var, ".") !== false){
 					$varParts = explode(".", $var);
 					
-					if(empty($varParts[0])){
-						unset($varParts[0]);
+					if(!in_array($varParts[0], ["SESSION", "COOKIE", "REQUEST"])){
 						
-						$property = $this->controller;
+						if(!empty($varParts[0])){
+							$property = $this->vars[$varParts[0]];
+						} else {
+							$property = $this->controller;
+						}
+						
+						unset($varParts[0]);
 						while($part = array_shift($varParts)){
-							if(isset($property->$part)){
+							if(method_exists($property, $part)){
+								$property = $property->$part();
+							} else if(isset($property->$part)){
 								$property = $property->$part;
 							} else {
-								trigger_error(sprintf("Trying to get property $%s of non-object", $part), E_USER_NOTICE);
+								if(!method_exists($property, "__get")){
+									trigger_error(sprintf("Trying to get property $%s of non-object", $part), E_USER_NOTICE);
+								}
+								
 								$property = null;
+								break;
 							}
 						}
 						

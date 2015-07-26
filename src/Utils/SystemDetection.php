@@ -169,23 +169,24 @@ class SystemDetection extends \Touchbase\Core\Object
 				}
 				
 				//Mac OS Name
-				if(stripos($osversion, '10_3') !== false){
-					$os = 'panther';
-				}else if(stripos($osversion, '10_4') !== false){
-					$os = 'tiger';
-				}else if(stripos($osversion, '10_5') !== false){
-					$os = 'leopard';
-				}else if(stripos($osversion, '10_6') !== false){
-					$os = 'snowLeopard';
-				}else if(stripos($osversion, '10_7') !== false){
-					$os = 'lion';
-				}else if(stripos($osversion, '10_8') !== false){
-					$os = 'mountainLion';
-				}else if(stripos($osversion, '10_9') !== false){
-					$os = 'mavericks';
-				}else if(stripos($osversion, '10_10') !== false){
+				if(stripos($osversion, '10_10') !== false){
 					$os = 'yosemite';
+				} else if(stripos($osversion, '10_9') !== false){
+					$os = 'mavericks';
+				} else if(stripos($osversion, '10_8') !== false){
+					$os = 'mountainLion';
+				} else if(stripos($osversion, '10_7') !== false){
+					$os = 'lion';
+				} else if(stripos($osversion, '10_6') !== false){
+					$os = 'snowLeopard';
+				} else if(stripos($osversion, '10_5') !== false){
+					$os = 'leopard';
+				} else if(stripos($osversion, '10_4') !== false){
+					$os = 'tiger';
+				} else if(stripos($osversion, '10_3') !== false){
+					$os = 'panther';
 				}
+				
 			} elseif( stripos($userAgent, 'android') !== false ) {
 				$platform = 'android';
 				$os = "android";

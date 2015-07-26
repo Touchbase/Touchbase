@@ -93,11 +93,11 @@ class WebpageController extends Controller
 		}
 	
 		//Set Webpage Response
+		$this->validateHtml($body);
 		$this->webpage()->setBody($body);
 		
 		//Set Response
-		$htmlDocument = $this->webpage()->output();
-		$this->validateHtml($htmlDocument);
+		$htmlDocument = $this->webpage()->render();
 		$response->setBody($htmlDocument);
 		
 		return $body;
@@ -118,6 +118,15 @@ class WebpageController extends Controller
 	
 	/* Protected Methods */
 	
+	/**
+	 *	Validate Post Request
+	 *	This method adds default validation to input fields based on the served HTML.
+	 *	If any errors are found, the redirect will be made on the response object with the errors.
+	 *	@param \Touchbase\Control\HTTPRequest $request
+	 *	@param \Touchbase\Control\HTTPResponse &$response
+	 *	@param \Touchbase\Utils\Validation &$validation
+	 *	@return VOID
+	 */
 	protected function validatePostRequest($request, &$response, &$validation){
 		
 		$data = $request->_VARS();
@@ -261,57 +270,71 @@ class WebpageController extends Controller
 		}
 	}
 	
+	/* Private Methods */
+	
+	/**
+	 *	Validate Html
+	 *	This method scans the outgoing HTML for any forms, if found it will save the form to the session in order to validate.
+	 *	If any errors previously existed in the session, this method will apply `bootstrap` style css error classes.
+	 *	@pararm string &$htmlDocument - The outgoing HTML string
+	 *	@return VOID
+	 */
 	private function validateHtml(&$htmlDocument){
-		libxml_use_internal_errors(true);
-		$dom = new \DOMDocument;
-		$dom->loadHtml($htmlDocument, LIBXML_NOWARNING | LIBXML_NOERROR);
-		foreach($dom->getElementsByTagName('form') as $form){
+		
+		if(!empty($htmlDocument)){
 			
-			if($formAction = $form->getAttribute("action")){
-				if(!Router::isSiteUrl($formAction)){
+			libxml_use_internal_errors(true);
+			$dom = new \DOMDocument;
+			$dom->recover = false;
+			$dom->loadHtml($htmlDocument, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOENT);
+			
+			foreach($dom->getElementsByTagName('form') as $form){
+				
+				if($formAction = $form->getAttribute("action")){
+					if(!Router::isSiteUrl($formAction)){
+						continue;
+					}
+				}
+				if($form->hasAttribute("novalidate")){
 					continue;
 				}
-			}
-			if($form->hasAttribute("novalidate")){
-				continue;
-			}
-			
-			
-			$formName = $form->getAttribute("name");
-			
-			$savedom = new \DOMDocument;
-			foreach(["input", "textarea", "select"] as $tag){
-				foreach($form->getElementsByTagName($tag) as $input){ 
-					//Populate form with previous data
-					if($newValue = SessionStore::get("post", new Store())->get($input->getAttribute("name"), false)){
-						if(is_scalar($newValue)){
-							$input->setAttribute('value', $newValue);
-						}
-					}
-					
-					//Populate errors
-					if($errorMessage = $this->errors($formName)->get($input->getAttribute("name"), false)){
-						$currentClasses = explode(" ", $input->parentNode->getAttribute("class"));
-						foreach(["has-feedback", "has-error"] as $class){
-							if(!in_array($class, $currentClasses)){
-								$currentClasses[] = $class;
+				
+				$formName = $form->getAttribute("name");
+				
+				$savedom = new \DOMDocument;
+				foreach(["input", "textarea", "select"] as $tag){
+					foreach($form->getElementsByTagName($tag) as $input){ 
+						//Populate form with previous data
+						if($newValue = SessionStore::get("post", new Store())->get($input->getAttribute("name"), false)){
+							if(is_scalar($newValue)){
+								$input->setAttribute('value', $newValue);
 							}
 						}
 						
-						$input->parentNode->setAttribute('class', implode(" ", $currentClasses));
-						$input->setAttribute("data-error", $errorMessage);
+						//Populate errors
+						if($errorMessage = $this->errors($formName)->get($input->getAttribute("name"), false)){
+							$currentClasses = explode(" ", $input->parentNode->getAttribute("class"));
+							foreach(["has-feedback", "has-error"] as $class){
+								if(!in_array($class, $currentClasses)){
+									$currentClasses[] = $class;
+								}
+							}
+							
+							$input->parentNode->setAttribute('class', implode(" ", $currentClasses));
+							$input->setAttribute("data-error", $errorMessage);
+						}
+						
+						$savenode = $savedom->importNode($input->cloneNode(false), true);
+						$savenode->removeAttribute("class");
+						$savenode->removeAttribute("data-error");
+						$savedom->appendChild($savenode);
 					}
-					
-					$savenode = $savedom->importNode($input->cloneNode(false), true);
-					$savenode->removeAttribute("class");
-					$savenode->removeAttribute("data-error");
-					$savedom->appendChild($savenode);
 				}
+				
+				SessionStore::flash($formName, base64_encode(gzdeflate($savedom->saveHTML(), 9)));
 			}
 			
-			SessionStore::flash($formName, base64_encode(gzdeflate($savedom->saveHTML(), 9)));
+			$htmlDocument = utf8_decode($dom->saveHTML($dom->documentElement));
 		}
-		
-		$htmlDocument = $dom->saveHTML();
 	}
 }

@@ -99,8 +99,8 @@ abstract class BaseProvider implements AuthInterface
 		if(!Cookie::exists(self::LOGIN_COOKIE_KEY)) return NULL;
 		
 		try{
-			list($username, $data) = explode('|', Encryption::decrypt(base64_decode(Cookie::get(self::LOGIN_COOKIE_KEY))), 2);
-			list($id, $security, $userInfo) = explode('|', Encryption::decrypt($data), 3);
+			list($username, $data) = array_pad(explode('|', Encryption::decrypt(base64_decode(Cookie::get(self::LOGIN_COOKIE_KEY))), 2), 2, null);
+			list($id, $security, $userInfo) = array_pad(explode('|', Encryption::decrypt($data), 3), 3, null);
 			
 			$userInfo = json_decode($userInfo);
 			$user = new StdAuthedUser($id, $username, $userInfo);

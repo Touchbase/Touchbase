@@ -33,6 +33,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\API\Client\ClientInterface;
 
+use Touchbase\Control\Router;
 use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Core\Config\Store as ConfigStore;
 
@@ -81,11 +82,13 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 		
 		$this->addHeaders($requestHeaders);
 		
-		ob_start();
-			\pre_r($requestMethod, $requestEndpoint, $requestBody, $this->getAllHeaders());
-			$apiLog = ob_get_contents();
-		ob_end_clean();
-		error_log($apiLog);
+		if(Router::isDev()){
+			ob_start();
+				\pre_r($requestMethod, $requestEndpoint, $requestBody, $this->getAllHeaders());
+				$apiLog = ob_get_contents();
+			ob_end_clean();
+			error_log($apiLog);
+		}
 		
 		$c = curl_init();
 		curl_setopt($c, CURLOPT_URL, $requestEndpoint);
