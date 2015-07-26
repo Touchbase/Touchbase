@@ -69,6 +69,13 @@ class Init
 	 */
 	protected $_response;
 	
+	/* Public Methods */
+	
+	/**
+	 *	__construct
+	 *	@param object $autoLoader - Autoloader instance
+	 *	@param string $basePath
+	 */
 	public function __construct($autoLoader = null, $basePath = null){
 		$this->_autoLoader = $autoLoader;
 				
@@ -149,6 +156,10 @@ class Init
 */
 	}
 	
+	/**
+	 *	Response
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
 	public function response(){
 		if(empty($this->_response)){
 			$this->_response = Router::route(NULL);
@@ -157,6 +168,13 @@ class Init
 		return $this->_response;
 	}
 	
+	/* Private Methods */
+	
+	/**
+	 *	_configure
+	 *	@param \Touchbase\Core\Config\Store
+	 *	@return Touchbase\Core\Config\Store
+	 */
 	private function _configure(ConfigStore $config){
 		
 		$ns = $src = "";

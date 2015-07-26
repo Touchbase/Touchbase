@@ -38,8 +38,14 @@ class RequestHandler extends \Touchbase\Core\Object
 {
 	use ConfigTrait;
 
-	//Current Request
+	/**
+	 *	@var \Touchbase\Control\HTTPResponse
+	 */
 	protected $response = null;
+	
+	/**
+	 *	@var \Touchbase\Control\HTTPRequest
+	 */
 	protected $request = null;	
 	
 	/**
@@ -50,10 +56,17 @@ class RequestHandler extends \Touchbase\Core\Object
 		'$Action' => '$Action'
 	);
 	
-	//Default Action
+	/**
+	 *	@var string | null
+	 */
 	protected $defaultAction = null;
 	
+	/**
+	 *	@var array  | null
+	 */
 	protected $allowedActions = null;
+	
+	/* Public Methods */
 	
 	/**
 	 *	Handle Request
@@ -125,6 +138,8 @@ class RequestHandler extends \Touchbase\Core\Object
 		//Nothing matches.
 		return $this;
 	}
+	
+	/* Protected Methods */
 	
 	/**
 	 *	Check Access Action

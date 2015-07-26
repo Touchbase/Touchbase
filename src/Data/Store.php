@@ -35,6 +35,8 @@ class Store extends \ArrayObject implements StoreInterface
 {
 	const CHAIN_STORE = "touchbase.key.chain.store";
 	
+	/* Public Methods */
+	
 	/**
 	 *	Create
 	 *	Reflection helper to init a class
@@ -49,6 +51,7 @@ class Store extends \ArrayObject implements StoreInterface
 	
 	/**
 	 *	Construct
+	 *	@param array $data
 	 */
 	public function __construct($data = null){
 		if($data){
@@ -56,7 +59,11 @@ class Store extends \ArrayObject implements StoreInterface
 		}
 	}
 	
-	//TODO: This is a temp function to show the error messages.
+	/**
+	 * __toString
+	 *	TODO: This is a temp function to show the error messages.
+	 *	@return string
+	 */
 	public function __toString(){
 		return implode("<br />", array_values((array)$this));
 	}
@@ -114,6 +121,7 @@ class Store extends \ArrayObject implements StoreInterface
 	 *	Removes an element from the array and returns it
 	 *	@param string $property
 	 *	@param mixed $default
+	 *	@throws \InvalidArgumentException if the value of the key `$property` is not an array
 	 *	@return mixed
 	 */
 	public function pop($property, $default = null){
@@ -132,7 +140,7 @@ class Store extends \ArrayObject implements StoreInterface
 	 *	Push
 	 *	Pushes arbitrary variables to the array
 	 *	@param string $name
-	 *	@return mixed
+	 *	@return array
 	 */
 	public function push($name /*, ...$values */){
 		$array = $this->get($name, []);
@@ -159,16 +167,29 @@ class Store extends \ArrayObject implements StoreInterface
 	}
 	
 	/**
-	 *	Helper Methods
+	 *	__isset
+	 *	@param string $name
+	 *	@return BOOL
 	 */
 	public function __isset($name){
 		return $this->exists($name);
 	}
 	 
+	/**
+	 *	Exists
+	 *	@param string $name
+	 *	@return BOOL
+	 */
 	public function exists($name){
 		return $name && isset($this[$name]);
 	} 
 	
+	/**
+	 *	From Array
+	 *	@param array $array
+	 *	@throws \InvalidArgumentException if a traverable object is not passed
+	 *	@return \Touchbase\Data\Store - self
+	 */
 	public function fromArray($array){
 		
 		if(!is_array($array) && !is_object($array)){

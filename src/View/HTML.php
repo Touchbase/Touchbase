@@ -34,18 +34,39 @@ defined('TOUCHBASE') or die("Access Denied.");
 class HTML extends \Touchbase\Core\Object
 {
 	/**
-	 *	Properties
+	 *	@var BOOL
 	 */
 	public static $allowInvalidTags = false;
+	
+	/**
+	 *	@var BOOL
+	 */
 	public static $allowInvalidAttributes = false;
+	
+	/**
+	 *	@var BOOL
+	 */
 	public static $closeVoidTags = true;
 
-	//Options
+	/**
+	 *	@var string
+	 */
 	protected $tag;
-	protected $attributes= [];
+	
+	/**
+	 *	@var array
+	 */
+	protected $attributes = [];
+	
+	/**
+	 *	@var string
+	 */
 	protected $content;
-
-	//HTML5 All Tags
+	
+	/**
+	 *	HTML5 All Tags
+	 *	@var array
+	 */
 	private $validTags = ["a","abbr","address","area","article","aside","audio","b","base","bdi","bdo","blockquote",
 			"body","br","button","canvas","caption","cite","code","col","colgroup","command","datalist",
 			"dd","del","details","dfn","div","dl","dt","em","embed","fieldset","figcaption","figure",
@@ -56,10 +77,16 @@ class HTML extends \Touchbase\Core\Object
 			"sub","summary","sup","table","tbody","td","textarea","tfoot","th","thead","time","title","tr","track",
 			"u","ul","var","video","wbr"];
 
-	//HTML5 Void Tags
+	/**
+	 *	HTML5 VOID Tags
+	 *	@var array
+	 */
 	private $voidTags = ["area","base","br","col","command","embed","hr","img","input","keygen","link","meta","param","source","track","wbr"];
 
-	//HTML5 Global Attributes
+	/**
+	 *	HTML5 Global Attributes
+	 *	@var array
+	 */
 	private $validAttributes = [
 		"GLOBAL"=>["accesskey","class","contenteditable","contextmenu","dir","draggable","dropzone","hidden","id","lang","spellcheck","style","tabindex","title","onblur","onchange","oncontextmenu","onfocus","onformchange","onforminput","oninput","oninvalid","onselect","onsubmit","onkeydown","onkeypress","onkeyup","onclick","ondblclick","ondrag","ondragend","ondragenter","ondragleave","ondragover","ondragstart","ondrop","onmousedown","onmousemove","onmouseout","onmouseup","onwheel","onscroll","onabort","oncanplay","oncanplaythrough","ondurationchange","onemptied","onended","onerror","onloadeddata","onloadedmetadata","onloadstart","onpause","onplay","onplaying","onprogress","onratechange","onreadystatechange","onseeked","onseeking","onstalled","onsuspened","ontimeupdate","onvolumechange","onwaiting"],
 		"HTML"=>["manifest","xmlns"],
@@ -82,6 +109,12 @@ class HTML extends \Touchbase\Core\Object
 	
 	/* Public Methods */
 	
+	/**
+	 *	__construct
+	 *	@param string $tag
+	 *	@param string $content
+	 *	@param array $attributes
+	 */
 	public function __construct($tag, $content = false, $attributes = []) {
 		if(!static::$allowInvalidTags && !in_array($tag, $this->validTags)){
 			return;

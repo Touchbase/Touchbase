@@ -33,11 +33,17 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 trait ConfigTrait
 {
+	
+	/**
+	 *	@var \Touchbase\Core\Config\Store
+	 */
 	protected $_config;
+	
+	/* Public Methods */
 	
 	/**
 	 *	Set Config
-	 *	@param \Touchbase\Core\Config\Store - Config
+	 *	@param \Touchbase\Core\Config\Store $config
 	 *	@return Object
 	 */
 	public function setConfig(Store $config = null){

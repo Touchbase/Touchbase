@@ -36,8 +36,10 @@ use Touchbase\Data\SessionStore;
 
 class HTTPResponse extends HTTPHeaders
 {
-
-	//All Valid Headers
+	/**
+	 *	All Valid Headers
+	 *	@var array
+	 */
 	protected $statusCodes = array (
 		100 => 'Continue',
 		101 => 'Switching Protocols',
@@ -91,7 +93,10 @@ class HTTPResponse extends HTTPHeaders
 		510 => 'Not Extended'
 	);
 	
-	//Redirect Codes    
+	/**
+	 *	Redirect Codes
+	 *	@var array
+	 */
 	protected $redirectCodes = array(
 		301,
 		302,
@@ -101,10 +106,19 @@ class HTTPResponse extends HTTPHeaders
 		307
 	);
 	
+	/**
+	 *	@var integer
+	 */
 	protected $statusCode = 200;
 	
+	/**
+	 *	@var string
+	 */
 	protected $statusDescription = "OK";
 	
+	/**
+	 *	@var string
+	 */
 	protected $body = null;
 	
 	/* Public Functions */
@@ -276,6 +290,11 @@ class HTTPResponse extends HTTPHeaders
 		
 	/* Private Methods */
 	
+	/**
+	 *	Sanitize
+	 *	@param string $str
+	 *	@return string
+	 */
 	private function sanitize($str){
 		return str_replace(array("\r","\n"), '', $str);
 	}

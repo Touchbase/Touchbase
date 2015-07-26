@@ -39,6 +39,8 @@ class Permission
 {
 	const PERMISSION_KEY = 'touchbase.key.permission';
 	
+	/* Public Methods */
+	
 	/** 
 	 *	Shared
 	 *	@return \Touchbase\Security\Permission

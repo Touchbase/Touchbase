@@ -31,16 +31,47 @@ namespace Touchbase\Filesystem;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class File extends Filesystem {
-
+class File extends Filesystem
+{
+	
+	/**
+	 *	@var string
+	 */
 	public $path = null;
+	
+	/**
+	 *	@var string
+	 */
 	public $name = null;
+	
+	/**
+	 *	@var string
+	 */
 	public $folder = null;
+	
+	/**
+	 *	@var array
+	 */
 	public $info = null;
 	
+	/**
+	 *	@var resource
+	 */	
 	public $handle = null;
+	
+	/**
+	 *	@var string
+	 */
 	protected $lock = null;
 	
+	/* Public Methods */
+	
+	/**
+	 *	__construct
+	 *	@param string $path
+	 *	@param BOOL $create
+	 *	@param string $mode
+	 */
 	public function __construct($path, $create = null, $mode = null){
 		if(!empty($path)){
 			if(is_array($path)){
@@ -62,11 +93,21 @@ class File extends Filesystem {
 		}
 	}
 	
+	/**
+	 *	__destruct
+	 *	Close file handle on exit
+	 *	@return VOID
+	 */
 	public function __destruct(){
 		$this->close();
 	}
 	
-	//FILE MANIPULATION
+	/**
+	 *	Open
+	 *	@param string $mode
+	 *	@param BOOL $force
+	 *	@return BOOL
+	 */
 	public function open($mode = 'r', $force = false){
 		if(!$force && is_resource($this->handle)){
 			return true;
@@ -84,7 +125,12 @@ class File extends Filesystem {
 		}
 		return false;
 	}
-
+	
+	/**
+	 *	Touch
+	 *	Creates a new file
+	 *	@return BOOL
+	 */
 	public function touch(){
 		if($this->folder->exists() && $this->folder->writeable() && !$this->exists()){
 			$old = umask(0);
@@ -96,6 +142,13 @@ class File extends Filesystem {
 		return false;
 	}
 	
+	/**
+	 *	Read
+	 *	@param string $bytes
+	 *	@param string $mode
+	 *	@param BOOL $force
+	 *	@return mixed
+	 */
 	public function read($bytes = false, $mode = 'rb', $force = false){
 		if($this->exists()){
 			if($bytes === false && $this->lock === null){
@@ -128,6 +181,12 @@ class File extends Filesystem {
 		return false;
 	}
 	
+	/**
+	 *	Excerpt
+	 *	@param integer $line
+	 *	@param integer $context - The surrounding line count
+	 *	@return string
+	 */
 	public function excerpt($line, $context = 2) {
 		$lines = array();
 		
@@ -187,9 +246,16 @@ class File extends Filesystem {
 		return $lines;
 	}
 
-	
+	/**
+	 *	Write
+	 *	@param string $data
+	 *	@param string $mode
+	 *	@param BOOL $force
+	 *	@return BOOL
+	 */	
 	public function write($data, $mode = 'w', $force = false){
 		$success = false;
+		
 		if($this->open($mode, $force) === true){
 			if($this->lock !== null){
 				if(flock($this->handle, LOCK_EX) === false){
@@ -204,39 +270,71 @@ class File extends Filesystem {
 				flock($this->handle, LOCK_UN);
 			}
 		}
+		
 		return $success;
 	}
 	
+	/**
+	 *	Append
+	 *	@param string $data
+	 *	@param BOOL $force
+	 *	@return BOOL
+	 */
 	public function append($data, $force = false) {
 		return $this->write($data, 'a', $force);
 	}
 	
+	/**
+	 *	Copy
+	 *	@param string $dest
+	 *	@param BOOL $overwrite
+	 *	@return BOOL
+	 */
 	public function copy($dest, $overwrite = true){
 		if(!$this->exists() || is_file($dest) && !$overwrite){
 			return false;
 		}
+		
 		return copy($this->path, $dest);
 	}
 	
+	/**
+	 *	Delete
+	 *	@return BOOL
+	 */
 	public function delete(){
 		clearstatcache();
+		
 		if(is_resource($this->handle)){
 			fclose($this->handle);
 			$this->handle = null;
 		}
+		
 		if($this->exists()){
 			return unlink($this->path);
 		}
+		
 		return false;
 	}
 	
+	/**
+	 *	Close
+	 *	@return BOOL
+	 */
 	public function close(){
 		if(!is_resource($this->handle)){
 			return true;
 		}
+		
 		return fclose($this->handle);
 	}
 	
+	/**
+	 *	Offset
+	 *	@param integer $offset
+	 *	@param integer $seek
+	 *	@return integer | false
+	 */
 	public function offset($offset = false, $seek = SEEK_SET){
 		if($offset === false){
 			if(is_resource($this->handle)){
@@ -245,10 +343,15 @@ class File extends Filesystem {
 		} elseif($this->open() === true){
 			return fseek($this->handle, $offset, $seek) === 0;
 		}
+		
 		return false;
 	}
 	
-	//FILE HELPERS
+	/**
+	 *	Info
+	 *	Gathers information about the file
+	 *	@return array
+	 */
 	public function info(){
 		if ($this->info == null) {
 			$this->info = pathinfo($this->path);
@@ -262,55 +365,94 @@ class File extends Filesystem {
 		if (!isset($this->info['mime'])) {
 			$this->info['mime'] = $this->mime();
 		}
+		
 		return $this->info;
 	}
-
+	
+	/**
+	 *	Executable
+	 *	@return BOOL
+	 */
 	public function executable(){
 		return is_executable($this->path);
 	}
 
+	/**
+	 *	Owner
+	 *	@return BOOL
+	 */
 	public function owner(){
 		if($this->exists()){
 			return fileowner($this->path);
 		}
+		
 		return false;
 	}
-
+	
+	/**
+	 *	Group
+	 *	@return integer | false
+	 */
 	public function group(){
 		if($this->exists()){
 			return filegroup($this->path);
 		}
+		
 		return false;
 	}
 	
+	/**
+	 *	Size
+	 *	@return integer | false
+	 */
 	public function size(){
 		if($this->exists()){
 			return filesize($this->path);
 		}
+		
 		return false;
 	}
 
+	/**
+	 *	Last Accessed
+	 *	@return integer | false
+	 */
 	public function lastAccessed(){
 		if($this->exists()){
 			return fileatime($this->path);
 		}
+		
 		return false;
 	}
-
+	
+	/**
+	 *	Last Changed
+	 *	@return integer | false
+	 */
 	public function lastChanged() {
 		if($this->exists()){
 			return filemtime($this->path);
 		}
+		
 		return false;
 	}
 	
+	/**
+	 *	Perms
+	 *	@return integer | false
+	 */
 	public function perms(){
 		if($this->exists()){
 			return substr(sprintf('%o', fileperms($this->path)), -4);
 		}
+		
 		return false;
 	}
 	
+	/**
+	 *	Ext
+	 *	@return string | false
+	 */
 	public function ext(){
 		if(!isset($this->info['extension'])){
 			//
@@ -332,6 +474,10 @@ class File extends Filesystem {
 		return $this->info['extension'];
 	}
 	
+	/**
+	 *	Mime
+	 *	@return string
+	 */
 	public function mime(){
 		if($this->exists() && $this->isFile()){
 			if(function_exists('finfo_open')){
@@ -354,9 +500,15 @@ class File extends Filesystem {
 				} 
 			}
 		}
+		
 		return false;
 	}
 	
+	/**
+	 *	MD5
+	 *	@param integer $maxsize
+	 *	@return string | false
+	 */
 	public function md5($maxsize = 5) {
 		if($maxsize === true){
 			return md5_file($this->path);

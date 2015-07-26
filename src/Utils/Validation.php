@@ -34,20 +34,40 @@ defined('TOUCHBASE') or die("Access Denied.");
 class Validation extends \Touchbase\Core\Object implements \Countable
 {
 	/**
-	 * Public Properties
+	 *	@var string
 	 */
 	protected $_ruleset;
+	
+	/**
+	 *	@var array
+	 */
 	protected $rules;
+	
+	/**
+	 *	@var array
+	 */
 	public $errors = [];
 
 	/* Public Methods */
+	
+	/**
+	 *	__construct
+	 *	@param string $ruleset
+	 *	@param array $rules
+	 */
 	public function __construct($ruleset = null, array $rules = []) {
 		$this->_ruleset = $ruleset;
 		foreach($rules as $rule){
 			$this->addRule($rule);
 		}
 	}
-
+	
+	/**
+	 *	Add Rule
+	 *	@param Closure | \Touchbase\Utils\Validation $rule
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function addRule($rule, $errorMessage = null) {
 		if ($rule instanceof \Closure) {
 			$this->rules[] = [$rule, $errorMessage];
@@ -59,7 +79,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		
 		return $this;
 	}
-
+	
+	/**
+	 *	Validate
+	 *	@param array $input - The post array
+	 *	@return BOOL
+	 */
 	public function validate($input) {
 		
 		foreach ($this->rules as $rule) {
@@ -87,6 +112,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 
 	/* Validation Helpers */
 	
+	/**
+	 *	Type
+	 *	@param string $type
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function type($type, $errorMessage = null){
 		
 		switch($type){
@@ -162,7 +193,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 
 		return $this;
 	}
-
+	
+	/**
+	 *	Required
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function required($errorMessage = null) {
 		$this->addRule(function($value) {
 			return !empty($value);
@@ -170,7 +206,13 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 
 		return $this;
 	}
-
+	
+	/**
+	 *	Readonly
+	 *	@param string $initalValue
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function readonly($initialValue, $errorMessage = null) {
 		$this->addRule(function($value) use ($initialValue) {
 			return $value === $initialValue;
@@ -179,6 +221,11 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 
+	/**
+	 *	Disabled
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function disabled($errorMessage = null) {
 		$this->addRule(function($value) {
 			return is_null($value);
@@ -187,6 +234,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 
+	/**
+	 *	Max Length
+	 *	@param integer $maxLength
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function maxLength($maxLength, $errorMessage = null) {
 		$this->addRule(function($value) {
 			return strlen($value) <= $maxLength;
@@ -195,6 +248,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 
+	/**
+	 *	Min
+	 *	@param integer $min
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function min($min, $errorMessage = null) {
 		$this->addRule(function($value) {
 			switch ($this->type) {
@@ -215,6 +274,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 
+	/**
+	 *	Max
+	 *	@param integer $max
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function max($max, $errorMessage = null) {
 		$this->addRule(function($value) {
 			switch ($this->type) {
@@ -235,6 +300,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 
+	/**
+	 *	Pattern
+	 *	@param string $type - A regex pattern
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function pattern($pattern, $errorMessage = null) {
 		$this->addRule(function($value) {
 			return preg_match($pattern, $value);
@@ -243,6 +314,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 
+	/**
+	 *	Equals
+	 *	@param string $equals
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function equals($equals, $errorMessage = null) {
 		$this->addRule(function($value) use ($equals) {
 			return $value === $equals;
@@ -251,6 +328,12 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		return $this;
 	}
 	
+	/**
+	 *	In
+	 *	@param array $in
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
 	public function in(array $in, $errorMessage = null) {
 		$this->addRule(function($value) use ($in) {
 			return in_array($value, $in);
@@ -261,12 +344,20 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 
 	/* Getters / Setters */
 
+	/**
+	 *	Ruleset
+	 *	@return string
+	 */
 	public function ruleset() {
 		return $this->_ruleset;
 	}
 
 	/* Countable */
-
+	
+	/**
+	 *	Count
+	 *	@return integer
+	 */
 	public function count() {
 		return count($this->rules);
 	}

@@ -33,15 +33,18 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 interface AuthedUserInterface 
 {
+	
+	/* Public Methods */
+	
 	/**
 	 *	ID
-	 *	@return (String)
+	 *	@return string
 	 */
 	public function ID();
 	
 	/**
 	 *	Username
-	 *	@return (String)
+	 *	@return string
 	 */
 	public function username();
 

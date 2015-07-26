@@ -33,11 +33,18 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 class Transliterator extends \Touchbase\Core\Object
 {
-
+	/**
+	 *	@var BOOL
+	 */
 	protected static $useIconv = false;
+	
+	/* Public Methods */
 		
 	/**
-	 * Convert the given utf8 string to a safe ASCII source
+	 *	TO ASCII
+	 *	Convert the given utf8 string to a safe ASCII source
+	 *	@param string $source
+	 *	@return string
 	 */
 	public static function toASCII($source) {
 		if(function_exists('iconv') && self::$useIconv){
@@ -48,7 +55,10 @@ class Transliterator extends \Touchbase\Core\Object
 	}
 
 	/**
-	 * Transliteration using strtr() and a lookup table
+	 *	Use Str Tr
+	 *	Transliteration using strtr() and a lookup table
+	 *	@param string $source
+	 *	@return string
 	 */
 	protected static function useStrTr($source) {
 		$table = array(

@@ -33,17 +33,20 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 interface EncryptionInterface 
 {
+	
+	/* Public Methods */
+	
 	/**
 	 *	Encrypt
-	 *	@param $string - input string
-	 *	@return STRING
+	 *	@param string $string
+	 *	@return string
 	 */
 	public function encrypt($string);
 	
 	/**
 	 *	Decrypt
-	 *	@param $string - input string
-	 *	@return STRING
+	 *	@param string $string
+	 *	@return string
 	 */
 	public function decrypt($string);
 }

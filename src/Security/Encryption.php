@@ -39,6 +39,8 @@ class Encryption
 {
 	const ENCRYPTION_KEY = 'touchbase.key.encryption';
 	
+	/* Public Methods */
+	
 	/** 
 	 *	Shared
 	 *	@return \Touchbase\Security\Encryption
@@ -74,8 +76,8 @@ class Encryption
 
 	/**
 	 *	Encrypt
-	 *	@param $string - input string
-	 *	@return STRING
+	 *	@param string $string
+	 *	@return string
 	 */
 	public static function encrypt($string){
 		 return self::shared()->encrypt($string);
@@ -83,8 +85,8 @@ class Encryption
 	
 	/**
 	 *	Decrypt
-	 *	@param $string - input string
-	 *	@return STRING
+	 *	@param string $string
+	 *	@return string
 	 */
 	public static function decrypt($string){
 		return self::shared()->decrypt($string);

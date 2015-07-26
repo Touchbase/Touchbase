@@ -35,23 +35,54 @@ class Folder extends Filesystem {
 
 	const FOLDERS = 0;
 	const FILES = 1;
-
+	
+	/**
+	 *	@var string
+	 */
 	public $path = null;
+	
+	/**
+	 *	@var BOOL
+	 */
 	public $sort = false;
 	
 	/**
 	 *	Ignore Files
+	 *	@var array
 	 */
 	public $ignore = [
 		'.svn',
 		'.DS_Store'
 	];
 
-	protected $_messages = array();
-	protected $_errors = array();
+	/**
+	 *	@var array
+	 */
+	protected $_messages = [];
+	
+	/**
+	 *	@var array
+	 */
+	protected $_errors = [];
+	
+	/**
+	 *	@var array
+	 */
 	protected $_directories;
+	
+	/**
+	 *	@var array
+	 */
 	protected $_files;
 
+	/* Public Methods */
+
+	/**
+	 *	__construct
+	 *	@param string $path
+	 *	@param BOOL $create
+	 *	@param string $mode
+	 */
 	public function __construct($path, $create = null, $mode = null) {
 		
 		if($mode){
@@ -77,8 +108,8 @@ class Folder extends Filesystem {
 
 	/**
 	 *	Change Directory
-	 *	@param String - $path
-	 *	@return (SELF)
+	 *	@param string $path
+	 *	@return \Touchbase\Filesystem\Folder
 	 */
 	public function cd($path){
 		$path = realpath($path).DIRECTORY_SEPARATOR;
@@ -92,11 +123,11 @@ class Folder extends Filesystem {
 		
 	/**
 	 *	Find Files
-	 *	@param (String) $regexpPattern - .*\.(jpg|jpeg|png|gif) -> Search For Images
-	 *	@param (BOOL) $fullPath
-	 *	@param (BOOL) $sort
-	 *	@param (BOOL) $recursive
-	 *	@return Array
+	 *	@param string $regexpPattern - .*\.(jpg|jpeg|png|gif) -> Search For Images
+	 *	@param BOOL $fullPath
+	 *	@param BOOL $sort
+	 *	@param BOOL $recursive
+	 *	@return array
 	 */
 	public function findRecursive($regexpPattern = '.*', $fullPath = true, $sort = false){
 		return $this->find($regexpPattern, $fullPath, $sort, true);
@@ -130,12 +161,12 @@ class Folder extends Filesystem {
 		
 	/**
 	 *	Read Directory
-	 *	@param (BOOL) $sort
-	 *	@param (BOOL) $fullPath
-	 *	@param (Array) $ignore
+	 *	@param BOOL $sort
+	 *	@param BOOL $fullPath
+	 *	@param array $ignore
 	 *	@return ([directories, files])
 	 */
-	public function read($sort = true, $fullPath = false, $ignore = array()){
+	public function read($sort = true, $fullPath = false, $ignore = []){
 		$dirs = $files = array();
 				
 		if($this->path){
@@ -183,10 +214,10 @@ class Folder extends Filesystem {
 	
 	/**
 	 *	Tree
-	 *	@param (Array) $ignore
-	 *	@return Array
+	 *	@param array $ignore
+	 *	@return array
 	 */
-	public function tree($ignore = array()){
+	public function tree($ignore = []){
 		$dirs = $files = array();
 		
 		if(is_array($exceptions)){
@@ -242,7 +273,14 @@ class Folder extends Filesystem {
 	}
 */
 
-	public function chmod($mode = false, $recursive = true, $exceptions = array()) {
+	/**
+	 *	CHMOD
+	 *	@param string $mode
+	 *	@param BOOL $recursive
+	 *	@param array $exceptions
+	 *	@return BOOL
+	 */
+	public function chmod($mode = false, $recursive = true, $exceptions = []) {
 		//Revert to default if empty!
 		$mode = ($mode)?$mode:$this->folderChmod;
 
@@ -283,7 +321,12 @@ class Folder extends Filesystem {
 		return false;
 	}
 	
-	public function copy($options = array()){
+	/**
+	 *	Copy
+	 *	@param array $options
+	 *	@return BOOL
+	 */
+	public function copy($options = []){
 		if(!$this->path){
 			return false;
 		}
@@ -361,9 +404,15 @@ class Folder extends Filesystem {
 		if (!empty($this->_errors)) {
 			return false;
 		}
+		
 		return true;
 	}
-
+	
+	/**
+	 *	Move
+	 *	@param array $options
+	 *	@return BOOL
+	 */
 	public function move($options){
 		$to = null;
 		if(is_string($options)){
@@ -388,15 +437,19 @@ class Folder extends Filesystem {
 		
 		return false;
 	}
-	
-	/**
-	 *	Helper Methods
-	 */
 
+	/**
+	 *	Messages
+	 *	@return array
+	 */
 	public function messages() {
 		return $this->_messages;
 	}
 
+	/**
+	 *	Errors
+	 *	@return array
+	 */
 	public function errors() {
 		return $this->_errors;
 	}

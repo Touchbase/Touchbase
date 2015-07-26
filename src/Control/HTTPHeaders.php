@@ -33,12 +33,19 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 class HTTPHeaders extends \Touchbase\Core\Object
 {
-
+	/**
+	 *	@var array
+	 */
 	protected $headers = array(
 		"Content-Type" => "text/html; charset=utf-8",
 	);
 	
-	//Header Actions	
+	/* Public Methods */
+	
+	/**
+	 *	Get All Headers
+	 *	@return array
+	 */	
 	public function getAllHeaders() {
 		$headers = [];
 		foreach($this->manipulateHeaders() as $header => $value) {
@@ -48,11 +55,21 @@ class HTTPHeaders extends \Touchbase\Core\Object
 		return $headers;
 	}
 	
+	/**
+	 *	Get Header
+	 *	@param string $header
+	 *	@return string
+	 */
 	public function getHeader($header) {
 		return $this->manipulateHeaders($header);			
 	}
 	
-	public function addheaders($headers){
+	/**
+	 *	Add Headers
+	 *	@param array $headers
+	 *	@return BOOL
+	 */
+	public function addHeaders($headers){
 		if(is_array($headers)){
 			foreach($headers as $k => $v){
 				$this->manipulateHeaders($k, $v);
@@ -62,14 +79,34 @@ class HTTPHeaders extends \Touchbase\Core\Object
 		return false;
 	}
 	
+	/**
+	 *	Add Header
+	 *	@param string $header
+	 *	@param string $value
+	 *	@return \Touchbase\Control\HTTPHeaders
+	 */
 	public function addHeader($header, $value){
 		return $this->manipulateHeaders($header, $value);
 	}
 	
+	/**
+	 *	Remove Header
+	 *	@param string $header
+	 *	@return BOOL
+	 */
 	public function removeHeader($header) {
 		return $this->manipulateHeaders($header, "remove");
 	}
 	
+	/* Private Methods */
+	
+	/**
+	 *	Manipulate Headers
+	 *	This is the interal method that handles the header configuration
+	 *	@param array | string $name 
+	 *	@param string | false $set
+	 *	@return mixed
+	 */
 	private function manipulateHeaders($name = false, $set = false){
 		if(!empty($name) && !empty($set)){
 			//Set or Delete
@@ -80,11 +117,13 @@ class HTTPHeaders extends \Touchbase\Core\Object
 			} else {
 				$this->headers[$name] = $set;
 			}
+			
 			return $this;
 		} else if(!empty($name)){
 			//Get one
 			return (isset($this->headers[$name])) ? $this->headers[$name] : false;
 		}
+		
 		return $this->headers;
 	}
 

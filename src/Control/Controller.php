@@ -61,26 +61,55 @@ class Controller extends RequestHandler
 	 *	@var string
 	 */
 	protected $_controllerName;
+	
+	/**
+	 *	@var \Touchbase\Control\application
+	 */
 	protected $_application;
+	
+	/**
+	 *	@var string
+	 */
 	protected $_applicationPath;
+	
+	/**
+	 *	@var array
+	 */
 	protected $_errors;
 	
-	//A Helper function to check if all Inits are called on child classes.
+	/**
+	 *	A Helper function to check if all Inits are called on child classes.
+	 *	@var BOOL
+	 */
 	protected $baseInitCalled = false;
-	protected function init(){
-		$this->baseInitCalled = true;
-		
-		return $this;
-	}
 	
+	/* Public Methods */
+	
+	/**
+	 *	Is Allowed
+	 *	This is a skeleton method that can be overriden by children to protect an entire class.
+	 *	NB. Returning false for this function will throw a HTTP 403 error.
+	 *	@return BOOL
+	 */
 	public function isAllowed(){
 		return true;
 	}
 	
-	//Calls this controll and returns a HTTPResponse Object
+	/**
+	 *	Request
+	 *	@return \Touchbase\Control\HTTPRequest
+	 */
 	public function request(){
 		return $this->request;
 	}
+	
+	/**
+	 *	Handle Request
+	 *	Calls this controller and returns a HTTPResponse Object
+	 *	@param \Touchbase\Control\HTTPRequest &$request
+	 *	@param \Touchbase\Control\HTTPResponse &$response
+	 *	@return string - The outgoing HTML
+	 */
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
 	
 		//Set Request/Response Into Var
@@ -102,23 +131,6 @@ class Controller extends RequestHandler
 		}
 		
 		return $body;
-	}
-	
-	//Proesses $Action and call the corosponding method if exists.
-	protected function handleAction(HTTPRequest $request){
-		$action = !empty($this->Action)?str_replace("-", "_", $this->Action):'index';
-		
-		//Check the action Exists
-		if(!$this->hasAction($action)){
-			$this->throwHTTPError(404, "The action '".$action."' does not exist in class $this");
-		}
-		
-		//Check We Have Access
-		if(!$this->checkAccessAction($action) || in_array(strtolower($action), ['run', 'init'])){
-			$this->throwHTTPError(403, "The action '".$action."' isn't allowed on class $this");
-		}
-		
-		return $this->{$action}($request);
 	}
 	
 	/**
@@ -153,20 +165,39 @@ class Controller extends RequestHandler
 	
 	/* Getters / Setter */
 	
+	/**
+	 *	Set Application
+	 *	@param \Touchbase\Control\Application $application
+	 *	@return \Touchbase\Control\Controller self
+	 */
 	public function setApplication(Application $application){
 		$this->_application = $application;
 		return $this;
 	}
 	
+	/**
+	 *	Application
+	 *	@return \Touchbase\Control\Application
+	 */
 	public function application(){
 		return $this->_application;	
 	}
 	
+	/**
+	 *	Set Controller Name
+	 *	This method provides the ability to set the controller name meaning reflection can be skipped.
+	 *	@param string $controllerName
+	 *	@return \Touchbase\Control\Controller self
+	 */
 	public function setControllerName($controllerName){
 		$this->_controllerName = $controllerName;
 		return $this;
 	}
 	
+	/**
+	 *	Controller Name
+	 *	@return string - The name of the current controller
+	 */
 	public function controllerName(){
 		if(isset($this->_controllerName)){
 			return $this->_controllerName;
@@ -182,6 +213,10 @@ class Controller extends RequestHandler
 		return $this->_controllerName = $controllerName;
 	}
 	
+	/**
+	 *	Application Path
+	 *	@return string - The filepath to the current application directory
+	 */
 	public function applicationPath(){
 		if(isset($this->_applicationPath)){
 			return $this->_applicationPath;
@@ -193,6 +228,42 @@ class Controller extends RequestHandler
 		
 		$applicationNamespace = str_replace("\\Controllers", "", $controllerNamespace);
 		return $this->_applicationPath = Filesystem::buildPath(PROJECT_PATH, str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace));
+	}
+	
+	/* Protected Methods */
+	
+	/**
+	 *	Init
+	 *	This method will be called after the class initialises.
+	 *	NB. If super isn't called on subsequent child methods, an error will be thrown.
+	 *	@return \Touchbase\Control\Controller self
+	 */
+	protected function init(){
+		$this->baseInitCalled = true;
+		
+		return $this;
+	}
+	
+	/**
+	 *	Handle Action
+	 *	Proesses $Action and call the corosponding method if exists.
+	 *	@param \Touchbase\Control\HTTPRequest $request
+	 *	@return mixed
+	 */
+	protected function handleAction(HTTPRequest $request){
+		$action = !empty($this->Action)?str_replace("-", "_", $this->Action):'index';
+		
+		//Check the action Exists
+		if(!$this->hasAction($action)){
+			$this->throwHTTPError(404, "The action '".$action."' does not exist in class $this");
+		}
+		
+		//Check We Have Access
+		if(!$this->checkAccessAction($action) || in_array(strtolower($action), ['run', 'init'])){
+			$this->throwHTTPError(403, "The action '".$action."' isn't allowed on class $this");
+		}
+		
+		return $this->{$action}($request);
 	}
 }
 

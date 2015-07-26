@@ -38,6 +38,9 @@ use Touchbase\Control\Session;
 
 class CookieProvider extends BaseProvider 
 {
+	
+	/* Public Methods */
+	
 	/**
 	 *	Store User
 	 *	@param AuthedUserInterface
@@ -67,7 +70,7 @@ class CookieProvider extends BaseProvider
 	
 	/**
 	 *	Cookie Hash
-	 *	@return (String)
+	 *	@return string
 	 */
 	public function cookieHash(AuthedUserInterface $user){
 		$salt = $this->config()->get("auth")->get("cookie_hash", "8)pu1j[Juogi5263N6sS5s+fE5V/kw");

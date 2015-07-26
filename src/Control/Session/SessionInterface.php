@@ -34,61 +34,66 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 interface SessionInterface
 {	
+	
+	/* Public Methods */
+	
 	/**
+	 *	Init
 	 *	@return $this
 	 */
 	public function init();
 	
 	/**
 	 *	Session ID
-	 *
 	 *	@return mixed
 	 */
 	public function ID();
 	
 	/**
+	 * 	Set
 	 *	@param string $key
 	 *	@param mixed  $data
-	 *
 	 *	@return $this
 	 */
 	public function set($key, $data);
 	
 	/**
+	 *	Flash
 	 *	@param string $key
 	 *	@param mixed  $data
-	 *
 	 *	@return $this
 	 */
 	public function flash($key, $data);
 	
 	/**
+	 *	Get
 	 *	@param string $key
-	 *
 	 *	@return mixed|null
 	 */
 	public function get($key, $default = null);
 	
 	/**
+	 *	Delete
 	 *	@param string $key
-	 *
 	 *	@return $this
 	 */
 	public function delete($key);
 	
 	/**
+	 *	Exists
 	 *	@param string $key
-	 *
 	 *	@return bool
 	 */
 	public function exists($key);
 	
 	/**
+	 *	Destroy
 	 *	@return $this
 	 */
 	public function destroy();
 	
 	/**
+	 *	Regenerate ID
 	 *	@return $this
 	 */
 	public function regenerateID();

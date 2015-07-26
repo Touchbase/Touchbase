@@ -47,6 +47,10 @@ class Template extends \Touchbase\Core\Object
 	
 	/* Public Methods */
 	
+	/**
+	 *	__construct
+	 *	@param array $vars
+	 */
 	public function __construct($vars = false){
 		//Add variables to template.
 		$this->assign($vars);
@@ -121,7 +125,7 @@ class Template extends \Touchbase\Core\Object
 		}
 	}
 	
-#praga mark - Internal Methods
+	/* Private Methods */
 	
 	/**
 	 *	Read Template

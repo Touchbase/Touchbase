@@ -37,6 +37,8 @@ use Touchbase\Core\Config\Store as ConfigStore;
 class AccessAllAreasProvider implements PermissionInterface 
 {
 	
+	/* Public Methods */
+	
 	/**
 	 *	Configure
 	 *	@param ConfigStore

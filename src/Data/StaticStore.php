@@ -35,8 +35,11 @@ final class StaticStore
 {
 	/**
 	 *	Static In Memory Store
+	 *	@var \Touchbase\Data\StaticStore	
 	 */
 	private static $instance;
+	
+	/* Public Methods */
 	
 	/**
 	 *	Shared

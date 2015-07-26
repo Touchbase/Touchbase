@@ -37,29 +37,31 @@ class SystemDetection extends \Touchbase\Core\Object
 {
 	/**
 	 *	Browser Information
-	 *	@var (String) - browser
-	 *	@var (String) - browserVersion
+	 *	@var string - browser
+	 *	@var string - browserVersion
 	 */
 	public $browser;
 	public $browserVersion;
 	
 	/**
 	 *	OS Information
-	 *	@var (String) - os
-	 *	@var (String) - osVersion
+	 *	@var string - os
+	 *	@var string - osVersion
 	 */
 	public $os;
 	public $osVersion;
 	
 	/**
 	 *	Browser Information
-	 *	@var (String) - platform
-	 *	@var (String) - device
+	 *	@var string - platform
+	 *	@var string - device
 	 */
 	public $platform;
 	public $device;
 	
 	const DETECTION_KEY = 'touchbase.key.systemdetection';
+	
+	/* Public Methods */
 	
 	/** 
 	 *	Shared
@@ -76,32 +78,13 @@ class SystemDetection extends \Touchbase\Core\Object
 		return $instance;
 	}
 	
-/*
-	public function compareBrowserInformation($check, $version, $operator = false){
-		$browser = $this->findBrowserInformation();
+	/* Private Methods */
 
-		if(isset($browser[$check])){
-			if(strpos($check, "version") !== false){
-				return version_compare($browser[$check], $version, $operator);
-			} else {
-				switch($operator){
-					case "!=":
-					case "<>":
-					case "ne":
-						return $browser[$check] != $version;
-					break;
-					case "==":
-					case "=":
-					case "eq":
-					default:
-						return $browser[$check] == $version;
-					break;
-				}
-			}
-		}
-	}
-*/
-
+	/**
+	 *	Find Browser Information
+	 *	This method populates the class variables with infomration about the browser and platform
+	 *	@return VOID
+	 */
 	private function findBrowserInformation(){
 		$browser = $version = $platform = $os = $osversion = $device = '';
 		$userAgent = isset($_SERVER['HTTP_USER_AGENT'])?$_SERVER['HTTP_USER_AGENT']:"";

@@ -33,6 +33,9 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 trait SynthesizeTrait
 {	
+	
+	/* Public Methods */
+	
 	/**
 	 *	Has Method
 	 *	@return BOOL

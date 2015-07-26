@@ -41,17 +41,30 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 {
 	use ConfigTrait;
 	
+	/**
+	 *	@var array
+	 */
 	protected $headers = [
 		'Content-Type' => 'application/x-www-form-urlencoded'	
 	];
-
+	
+	/**
+	 *	@var mixed
+	 */
 	protected $_lastResponse;
+	
+	/**
+	 *	@var integer
+	 */
 	protected $_lastResponseStatus;
+	
+	/**
+	 *	@var string
+	 */
 	protected $_lastResponseContentType;
 	
-	public function __construct(){
-		
-	}
+	
+	/* Public Methods */
 	
 	/**
 	 *	Configure
@@ -62,10 +75,13 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 		$this->setConfig($config);
 	}
 	
+	/**
+	 *	Content Type
+	 *	@return string
+	 */
 	public function contentType(){
 		return $this->_lastResponseContentType;
 	}
-	
 	
 	/**
 	 *	Request
@@ -140,11 +156,6 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 	public function lastResponseContentType(){
 		return $this->_lastResponseContentType;
 	}
-	
-	#pragma mark -
-	
-	
-	#pragma mark - Auth Headers
 
 	/**
 	 *  Set Authorization Header With Username And Password
@@ -157,7 +168,6 @@ class CurlClientProvider extends \Touchbase\Control\HTTPHeaders implements Clien
 		return $this;
 	} 	
 	
-
 	/**
 	 *  Set Authorization Header With Token
 	 *  This function will set a token in the header

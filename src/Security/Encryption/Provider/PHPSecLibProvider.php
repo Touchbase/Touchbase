@@ -36,8 +36,19 @@ use Touchbase\Core\Config\Store as ConfigStore;
 
 class PHPSecLibProvider implements EncryptionInterface 
 {
+	/**
+	 *	@var \Touchbase\Core\Config\Store
+	 */
 	protected $_encryption;
 	
+	/* Public Methods */
+	
+	/**
+	 *	Configure
+	 *	@param \Touchbase\Core\Config\Store $config
+	 *	@throws \RuntimeException - If the encyption library doesn't exist
+	 *	@return VOID
+	 */
 	public function configure(ConfigStore $config){
 		$encryptionLibrary = $config->get("encryption")->get("library", "phpseclib\Crypt\AES");
 		
@@ -53,8 +64,8 @@ class PHPSecLibProvider implements EncryptionInterface
 
 	/**
 	 *	Encrypt
-	 *	@param $string - input string
-	 *	@return STRING
+	 *	@param string $string
+	 *	@return string
 	 */
 	public function encrypt($string){
 		return $this->_encryption->encrypt($string);
@@ -62,8 +73,8 @@ class PHPSecLibProvider implements EncryptionInterface
 	
 	/**
 	 *	Decrypt
-	 *	@param $string - input string
-	 *	@return STRING
+	 *	@param string $string
+	 *	@return string
 	 */
 	public function decrypt($string){
 		return $this->_encryption->decrypt($string);

@@ -60,13 +60,21 @@ class Webpage extends \Touchbase\Core\Object
 	public $assets;
 	
 	/**
-	 *	@var string
+	 *	@var \Touchbase\View\HTML
 	 */
 	private $_htmlTag = null;
+	
+	/**
+	 *	@var \Touchbase\View\HTML
+	 */
 	private $_bodyTag = null;
 	
 	/* Public Methods */
 
+	/**
+	 *	__construct
+	 *	@param \Touchbase\Control\WebpageController $controller
+	 */
 	public function __construct(WebpageController $controller){
 		
 		$this->controller = $controller;
@@ -124,9 +132,8 @@ class Webpage extends \Touchbase\Core\Object
 	
 	/**
 	 * 	Set Body
-	 * 
-	 * 	@access public
 	 *	@param string $body
+	 * 	@access public
 	 *	@return VOID
 	 */
 	public function setBody($body){
@@ -137,9 +144,8 @@ class Webpage extends \Touchbase\Core\Object
 	
 	/**
 	 *	Set Layout
-	 * 
-	 *	@access public
 	 *	@param string $layout
+	 *	@access public
 	 *	@return VOID
 	 */
 	public function setLayout($layout){
@@ -161,10 +167,18 @@ class Webpage extends \Touchbase\Core\Object
 		throw new \Exception("Layout Template Doesn't Exist: $filename");
 	}
 	
+	/**
+	 *	HTML Tag
+	 *	@return \Touchbase\View\HTML
+	 */
 	public function htmlTag(){
 		return $this->_htmlTag;
 	}
 	
+	/**
+	 *	Body Tag
+	 *	@return \Touchbase\View\HTML
+	 */
 	public function bodyTag(){
 		return $this->_bodyTag;
 	}

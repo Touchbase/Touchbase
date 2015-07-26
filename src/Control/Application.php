@@ -37,8 +37,17 @@ use Touchbase\Control\Exception\HTTPResponseException;
 
 class Application extends Controller
 {
+	/**
+	 *	@var \Touchbase\Control\Application
+	 */
 	protected $_application;
+	
+	/**
+	 *	@var string
+	 */
 	protected $_applicationNamespace;
+	
+	/* Public Methods */
 	
 	/**
 	 *	Init
@@ -117,6 +126,61 @@ class Application extends Controller
 	}
 	
 	/**
+	 *	Handle Exception
+	 *	By default this function will just print the error. Override this function to change the behaviour
+	 *	@return string
+	 */
+	public function handleException(HTTPResponseException $exception){
+		if(isset($this->_application)){
+			return 	$this->_application->handleException($exception);
+		}
+		
+		return $exception->getMessage();
+	}
+	
+	/**
+	 *	Default Application
+	 *	If no application is defined in the URL - This application will load
+	 *	NB. this should be overridden in the parent class
+	 *	@return \Touchbase\Control\Application 
+	 */
+	public function defaultApplication(){
+		return NULL;
+	}
+	
+	/**
+	 *	Default Controller
+	 *	If no controller is defined in the URL - This application will load
+	 *	NB. this should be overridden in the parent class
+	 *	@return \Touchbase\Control\Controller 
+	 */
+	public function defaultController(){
+		return NULL;
+	}
+	
+	/* Getters / Setters */
+	
+	/**
+	 *	Application
+	 *	@return \Touchbase\Control\Application
+	 */
+	public function application(){
+		return $this->_application;	
+	}
+	
+	/**
+	 *	Set Application
+	 *	@param \Touchbase\Control\Application $application
+	 *	@return \Touchbase\Control\Controller self
+	 */
+	public function setApplication(Application $application){
+		$this->_application = $application;
+		return $this;
+	}
+
+	/* Protected Methods */
+	
+	/**
 	 *	Handle Application
 	 *	Determines the application that should be loaded if available.
 	 *	@return \Touchbase\Control\Application
@@ -177,59 +241,6 @@ class Application extends Controller
 		}
 		
 		return $controller;
-	}
-	
-	/**
-	 *	Handle Exception
-	 *	By default this function will just print the error. Override this function to change the behaviour
-	 *	@return string
-	 */
-	public function handleException(HTTPResponseException $exception){
-		if(isset($this->_application)){
-			return 	$this->_application->handleException($exception);
-		}
-		
-		return $exception->getMessage();
-	}
-	
-	/**
-	 *	Default Application
-	 *	If no application is defined in the URL - This application will load
-	 *	NB. this should be overridden in the parent class
-	 *	@return \Touchbase\Control\Application 
-	 */
-	public function defaultApplication(){
-		return NULL;
-	}
-	
-	/**
-	 *	Default Controller
-	 *	If no controller is defined in the URL - This application will load
-	 *	NB. this should be overridden in the parent class
-	 *	@return \Touchbase\Control\Controller 
-	 */
-	public function defaultController(){
-		return NULL;
-	}
-	
-	/* Getters / Setters */
-	
-	/**
-	 *	Application
-	 *	@return \Touchbase\Control\Application
-	 */
-	public function application(){
-		return $this->_application;	
-	}
-	
-	/**
-	 *	Set Application
-	 *	@param \Touchbase\Control\Application $application
-	 *	@return \Touchbase\Control\Controller self
-	 */
-	public function setApplication(Application $application){
-		$this->_application = $application;
-		return $this;
 	}
 	
 	/* Private Methods */

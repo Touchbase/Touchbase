@@ -31,20 +31,17 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\Filesystem\File;
-
+use Touchbase\View\Assets;
 use Touchbase\Data\StaticStore;
-use Touchbase\Core\Config\ConfigTrait;
-use Touchbase\Core\Config\Store as ConfigStore;
-
+use Touchbase\Data\SessionStore;
+use Touchbase\Filesystem\File;
 use Touchbase\Security\Auth;
 use Touchbase\Security\Permission;
 use Touchbase\Control\Session;
 use Touchbase\Control\HTTPRequest;
 use Touchbase\Control\Exception\HTTPResponseException;
-use Touchbase\View\Assets;
-
-use Touchbase\Data\SessionStore;
+use Touchbase\Core\Config\ConfigTrait;
+use Touchbase\Core\Config\Store as ConfigStore;
 
 class Router extends \Touchbase\Core\Object
 {
@@ -56,8 +53,11 @@ class Router extends \Touchbase\Core\Object
 	 */
 	private static $dispatch;
 	
+	/* Public Methods */
+	
 	/**
 	 *	Config
+	 *	@param string $section
 	 *	@return Touchbase\Core\Config\Store
 	 */
 	public static function config($section = null){		
@@ -67,7 +67,6 @@ class Router extends \Touchbase\Core\Object
 
 	/**
 	 *	Route
-	 *	
 	 *	@param HTTPRequest | string $request
 	 *	@param HTTPResponse $response
 	 *	@return VOID
@@ -146,80 +145,14 @@ class Router extends \Touchbase\Core\Object
 		
 		return $response;
 	}
-	
-	/**
-	 *	Handle Request
-	 *	This method will attempt to load a real resource located on the server if one exists.
-	 *	@return mixed
-	 */
-	private static function handleRequest(HTTPRequest $request, HTTPResponse &$response){
-
-		//TopSite Preview
-		if(isset($_SERVER["HTTP_X_PURPOSE"]) && $_SERVER["HTTP_X_PURPOSE"] == "preview"){
-			$assetFile = File::create([BASE_PATH, 'public_html', 'preview.html']);
-			
-		//Favicon
-		} else if($request->urlSegment() == "favicon"){
-			$assetFile = File::create([BASE_PATH, 'public_html', 'favicon.ico']);
-			if(!$assetFile->exists()){
-				//Write an empty favicon if one doesn't exist
-				$assetFile->write(base64_decode("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAFklEQVR42mNkoBAwjhowasCoAcPFAAAmmAARm5JBWgAAAABJRU5ErkJggg=="));
-			}
-		//Asset Map
-		} else {
-			$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
-			if($assetFilePath){	
-				$assetFile = File::create([
-					BASE_PATH,
-					$assetFilePath,
-					implode("/", $request->urlSegments(1)).'.'.$request->extension()
-				]);
-			}
-		}
 		
-		if(isset($assetFile)){
-			$supportedAssets = [
-				"css" => "text/css; charset=utf-8",
-				"js" => "text/javascript; charset=utf-8",
-				"htc" => "text/x-component",
-				"png" => "image/png",
-				"jpg" => "image/jpg",
-				"gif" => "image/gif",
-				"svg" => "image/svg+xml",
-				"ico" => "image/x-icon",
-				"otf" => "application/font-otf",
-				"eot" => "application/vnd.ms-fontobject",
-				"ttf" => "application/font-ttf",
-				"woff"=> "application/font-woff",
-				"apk" => "application/vnd.android.package-archive",
-				"ipa" => "application/octet-stream"
-			];
-			
-			if($assetFile->exists() && array_key_exists($assetFile->ext(), $supportedAssets)){
-				session_cache_limiter(false);
-				
-				$response->addHeader("Content-Type", $supportedAssets[$assetFile->ext()]);
-				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
-				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
-
-				if(static::config("assets")->get("x_sendfile", false) || (function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules()))){
-					$response->addHeader("X-Sendfile", $assetFile->path);
-				} else {
-					$response->setBody($assetFile->read());
-				}
-				
-				return true;
-			}
-		}
-		
-		return false;
-	}
-	
 //URL SETTINGS
 	
 	/**
 	 *	Absolute URL
 	 *	Given a relative URL this method will convert it to an absolute URL based on the current host
+	 *	@param string $url
+	 *	@param BOOL $relativeToSiteBase
 	 *	@return string
 	 */
 	public static function absoluteURL($url, $relativeToSiteBase = false) {
@@ -244,6 +177,7 @@ class Router extends \Touchbase\Core\Object
 	/**
 	 *	Relative URL
 	 *	This method will take an absolute URL and return a relative one. (ie. strip the host)
+	 *	@param string $url
 	 *	@return string
 	 */
 	public static function relativeUrl($url) {
@@ -276,6 +210,7 @@ class Router extends \Touchbase\Core\Object
 	/**
 	 *	Is Absolute URL
 	 *	This method will determine whether the passed url is absolute (eg. https://foo.com/bar/baz)
+	 *	@param string $url
 	 *	@return BOOL
 	 */
 	public static function isAbsoluteUrl($url) {
@@ -301,6 +236,7 @@ class Router extends \Touchbase\Core\Object
 	/**
 	 *	Is Relative URL
 	 *	This method will determine whether the passed url is relative (eg. /foo/bar/baz)
+	 *	@param string $url
 	 *	@return BOOL
 	 */
 	public static function isRelativeUrl($url) {
@@ -310,6 +246,7 @@ class Router extends \Touchbase\Core\Object
 	/**
 	 *	Is Site URL
 	 *	This method will determine whether the passed url belongs to the current site
+	 *	@param string $url
 	 *	@return BOOL
 	 */
 	public static function isSiteUrl($url) {
@@ -324,6 +261,7 @@ class Router extends \Touchbase\Core\Object
 	
 	/**
 	 *	Build Url
+	 *	@param array $parsedUrl
 	 *	@return string
 	 */
 	public static function buildUrl($parsedUrl){
@@ -427,10 +365,27 @@ class Router extends \Touchbase\Core\Object
 		);
 	}
 	
-	/* Getters / Setters */
+	/**
+	 *	Route History
+	 *	@return string
+	 */
+	public static function routeHistory(){
+		return SessionStore::get(self::ROUTE_HISTORY_KEY, []);
+	}
+	
+	/**
+	 *	Clear Route History
+	 *	@return VOID
+	 */
+	public static function clearRouteHistory(){
+		SessionStore::delete(self::ROUTE_HISTORY_KEY);
+	}
+	
+	/* Protected Methods */
 	
 	/**
 	 *	Set Route History
+	 *	@param string route
 	 *	@return \Touchbase\Control\Router
 	 */
 	protected static function setRouteHistory($route){
@@ -441,11 +396,74 @@ class Router extends \Touchbase\Core\Object
 		}
 	}
 	
-	public static function routeHistory(){
-		return SessionStore::get(self::ROUTE_HISTORY_KEY, []);
+	/**
+	 *	Handle Request
+	 *	This method will attempt to load a real resource located on the server if one exists.
+	 *	@param \Touchbase\Control\HTTPRequest $request
+	 *	@param \Touchbase\Control\HTTPResponse &$response
+	 *	@return mixed
+	 */
+	private static function handleRequest(HTTPRequest $request, HTTPResponse &$response){
+
+		//TopSite Preview
+		if(isset($_SERVER["HTTP_X_PURPOSE"]) && $_SERVER["HTTP_X_PURPOSE"] == "preview"){
+			$assetFile = File::create([BASE_PATH, 'public_html', 'preview.html']);
+			
+		//Favicon
+		} else if($request->urlSegment() == "favicon"){
+			$assetFile = File::create([BASE_PATH, 'public_html', 'favicon.ico']);
+			if(!$assetFile->exists()){
+				//Write an empty favicon if one doesn't exist
+				$assetFile->write(base64_decode("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAFklEQVR42mNkoBAwjhowasCoAcPFAAAmmAARm5JBWgAAAABJRU5ErkJggg=="));
+			}
+		//Asset Map
+		} else {
+			$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
+			if($assetFilePath){	
+				$assetFile = File::create([
+					BASE_PATH,
+					$assetFilePath,
+					implode("/", $request->urlSegments(1)).'.'.$request->extension()
+				]);
+			}
+		}
+		
+		if(isset($assetFile)){
+			$supportedAssets = [
+				"css" => "text/css; charset=utf-8",
+				"js" => "text/javascript; charset=utf-8",
+				"htc" => "text/x-component",
+				"png" => "image/png",
+				"jpg" => "image/jpg",
+				"gif" => "image/gif",
+				"svg" => "image/svg+xml",
+				"ico" => "image/x-icon",
+				"otf" => "application/font-otf",
+				"eot" => "application/vnd.ms-fontobject",
+				"ttf" => "application/font-ttf",
+				"woff"=> "application/font-woff",
+				"apk" => "application/vnd.android.package-archive",
+				"ipa" => "application/octet-stream"
+			];
+			
+			if($assetFile->exists() && array_key_exists($assetFile->ext(), $supportedAssets)){
+				session_cache_limiter(false);
+				
+				$response->addHeader("Content-Type", $supportedAssets[$assetFile->ext()]);
+				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
+				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
+
+				if(static::config("assets")->get("x_sendfile", false) || (function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules()))){
+					$response->addHeader("X-Sendfile", $assetFile->path);
+				} else {
+					$response->setBody($assetFile->read());
+				}
+				
+				return true;
+			}
+		}
+		
+		return false;
 	}
-	
-	public static function clearRouteHistory(){
-		SessionStore::delete(self::ROUTE_HISTORY_KEY);
-	}
+
 }

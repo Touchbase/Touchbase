@@ -33,15 +33,36 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 interface StoreInterface
 {
+	
+	/* Public Methods */
+	
 	/**
-	 *	Getter/Setter Methods
+	 *	Get
+	 *	@param string $name
+	 *	@param mixed $default
+	 *	@return mixed
 	 */
 	public function get($name, $default = null);
+	
+	/**
+	 *	Set
+	 *	@param string $name
+	 *	@param mixed $value
+	 *	@return \Touchbase\Data\Store
+	 */
 	public function set($name, $value = null);
 	
 	/**
-	 *	Helper Methods
+	 *	Exists
+	 *	@param string $name
+	 *	@return BOOL
 	 */
 	public function exists($name);
+	
+	/**
+	 *	From Array
+	 *	@param array $array
+	 *	@return \Touchbase\Data\Store
+	 */
 	public function fromArray($array);
 }

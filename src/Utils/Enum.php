@@ -44,7 +44,12 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	protected static $constantsCache = [];
 	
 	/* Public Methods */
-
+	
+	/**
+	 *	__construct
+	 *	@param integer $enum
+	 *	@param BOOL $strict
+	 */
 	public function __construct($enum = null, $strict = false){
 		
 		if(!in_array($enum, $this->getConstantsList())) {
@@ -58,6 +63,10 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 		$this->enum = isset($enum)?$enum:static::__default;
 	}
 	
+	/**
+	 *	__toString
+	 *	@return string
+	 */
 	public function __toString(){
 		return (string)$this->enum;
 	}
@@ -73,11 +82,10 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 
 	/**
 	 *	__callStatic function.
-	 * 
-	 *	@access public
-	 *	@static
 	 *	@param string $name
 	 *	@param mixed $arguments
+	 *	@access public
+	 *	@static
 	 *	@return 
 	 */
 	public static function __callStatic($name, $arguments){
@@ -87,7 +95,6 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	/**
 	 *	Get Const List
 	 *	\SplEnum getter to return all constants
-	 *
 	 *	@access public
 	 *	@return array
 	 */
@@ -105,11 +112,21 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	}
 	
 	/* IteratorAggregate */
+	
+	/**
+	 *	Get Iterator
+	 *	@return  \ArrayIterator
+	 */
 	public function getIterator(){
 		return new \ArrayIterator($this->getConstantsList());
 	}
 	
 	/* JSON */
+	
+	/**
+	 *	JSON Serialize
+	 *	@return integer
+	 */
 	public function jsonSerialize(){
 		return (int)$this->enum;
 	}

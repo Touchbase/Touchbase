@@ -36,9 +36,20 @@ use Touchbase\Control\Router;
 class Sanitizer extends \Touchbase\Core\Object
 {
 	
-	//Transliterator converts non-standard chars into ASCII
+	/**
+	 *	Transliterator converts non-standard chars into ASCII
+	 *	@var \Touchbase\Utils\Sanitizer
+	 */
 	protected static $transliterator;
 	
+	/* Public Methods */
+	
+	/**
+	 *	String
+	 *	@param string $str
+	 *	@param BOOL $allowed
+	 *	@return string
+	 */
 	public static function string($str, $allowed = null) {
 		$allow = null;
 		if (!empty($allowed)) {
@@ -51,7 +62,7 @@ class Sanitizer extends \Touchbase\Core\Object
 				$str[$key] = $this->string($val, $allowed);
 			}
 		} else {
-			$transliterator = self::getTransliterator();
+			$transliterator = static::transliterator();
 			if($transliterator){
 				$str = $transliterator::toASCII($str);
 			}
@@ -61,7 +72,13 @@ class Sanitizer extends \Touchbase\Core\Object
 		return self::trimWhitespace($str);
 	}
 	
-	public static function html($str, $options = array()) {
+	/**
+	 *	HTML
+	 *	@oaram string $str
+	 *	@param array $options
+	 *	@return string
+	 */
+	public static function html($str, $options = []) {
 
 		if(!is_array($options)){
 			//Array merge needs $options to be an array | Lets ignore this users input.
@@ -82,11 +99,22 @@ class Sanitizer extends \Touchbase\Core\Object
 		return htmlentities($str, $options['quotes'], $options['charset'], $options['double']);
 	}
 		
+	/**
+	 *	Trim Whitespace
+	 *	@oaram string $str
+	 *	@return string
+	 */
 	public static function trimWhitespace($str) {
 		$r = preg_replace('/[\n\r\t]+/', '', $str);
 		return preg_replace('/\s{2,}/u', ' ', $r);
 	}
 	
+	/**
+	 *	Strip Specific Tags
+	 *	@oaram string $str
+	 *	@param string ...$tags
+	 *	@return string
+	 */
 	public static function stripSpecificTags($str) {
 		$params = func_get_args();
 
@@ -97,6 +125,11 @@ class Sanitizer extends \Touchbase\Core\Object
 		return $str;
 	}	
 	
+	/**
+	 *	Strip All Tags
+	 *	@oaram string $str
+	 *	@return string
+	 */
 	public static function stripAllTags($str){
 		$str = preg_replace(
 			array(
@@ -128,11 +161,22 @@ class Sanitizer extends \Touchbase\Core\Object
 		return strip_tags($str);
 	}
 	
+	/**
+	 *	Url
+	 *	@oaram string $url
+	 *	@return string
+	 */
 	public static function url($url){
 		return strtolower(self::string($url, "-._~:/?#[]@!$&'()*+,;="));
 	}
 	
-	public static function stripUrlParameters($url, $excludedParams = array()){
+	/**
+	 *	Strip Url Parameters
+	 *	@oaram string $urk
+	 *	@param array $excludedParams
+	 *	@return string
+	 */
+	public static function stripUrlParameters($url, $excludedParams = []){
 		$parsedUrl = @parse_url($url);
 		if(!empty($parsedUrl)){
 			if(!empty($parsedUrl['host'])){
@@ -159,15 +203,22 @@ class Sanitizer extends \Touchbase\Core\Object
 		return Router::buildUrl($parsedUrl);
 	}
 	
-	//TRANSLITERATOR SETTINGS	
-	private static function getTransliterator(){
+	/**
+	 *	Transliterator
+	 *	@return \Touchbase\Utils\Transliterator
+	 */
+	public static function transliterator(){
 		if(self::$transliterator === null){
 			self::$transliterator = Transliterator::create();
 		} 
 		return self::$transliterator;
 	}
 	
-	public function setTransliterator($t) {
+	/**
+	 *	Set Transliterator
+	 *	@return VOID
+	 */
+	public static function setTransliterator($t) {
 		self::$transliterator = $t;
 	}
 }

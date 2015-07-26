@@ -40,8 +40,11 @@ final class SessionStore
 	
 	/**
 	 *	Determine if new request.
+	 *	@var BOOL
 	 */
 	private static $flushFlash = true;
+	
+	/* Public Methods */
 	
 	/**
 	 *	Shared
@@ -74,9 +77,12 @@ final class SessionStore
 		}
 	}
 	
-	
-	/* Public Methods */
-	
+	/**
+	 *	Flash
+	 *	@param string $key
+	 *	@param mixed $value
+	 *	@return VOID
+	 */
 	public static function flash($key, $value){
 		static::shared()->set($key, $value);
 		static::shared()->push(self::FLASH_KEY, $key);
@@ -84,16 +90,30 @@ final class SessionStore
 		static::shared()->set(self::FLASH_KEY.".aged", array_diff(static::shared()->get(self::FLASH_KEY.".aged", []), [$key]));
 	}
 	
+	/**
+	 *	Reflash
+	 *	NB. Currently not implemented
+	 *	@return VOID
+	 */
 	public static function reflash(){
 		//TODO: reflash sounds like a good idea.	
 	}
 	
+	/**
+	 *	Flush
+	 *	@return VOID
+	 */
 	public static function flush(){
 		static::shared()->delete(self::STORE_SESSION_KEY);
 	}
 	
 	/* Private Methods */
 	
+	/**
+	 *	Age Flashed Data
+	 *	@param \Touchbase\Data\Store $store
+	 *	@return VOID
+	 */
 	private static function ageFlashedData(Store $store){
 		
 		foreach($store->get(self::FLASH_KEY.".aged") as $flashKey){
@@ -102,7 +122,6 @@ final class SessionStore
 		
 		$store->set(self::FLASH_KEY.".aged", $store->get(self::FLASH_KEY, []));
 		$store->set(self::FLASH_KEY, []);
-
 	}	
 	
 	/**

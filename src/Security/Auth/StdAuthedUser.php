@@ -39,10 +39,29 @@ class StdAuthedUser extends \Touchbase\Core\Object implements AuthedUserInterfac
 {
 	use PermissionTrait;
 	
+	/**
+	 *	@var string
+	 */
 	protected $_ID;
+	
+	/**
+	 *	@var string
+	 */
 	protected $_username;
+	
+	/**
+	 *	@var array
+	 */
 	protected $_userInfo;
 	
+	/* Public Methods */
+	
+	/**
+	 *	__construct
+	 *	@param string $ID
+	 *	@param string $username
+	 *	@param array $userInfo
+	 */
 	public function __construct($ID = null, $username = null, $userInfo = null){
 		$this->_ID = $ID;
 	    $this->_username = $username;
@@ -59,7 +78,7 @@ class StdAuthedUser extends \Touchbase\Core\Object implements AuthedUserInterfac
 
 	/**
 	 *	ID
-	 *	@return (String)
+	 *	@return string
 	 */
 	public function ID(){
 		return $this->_ID;
@@ -67,7 +86,7 @@ class StdAuthedUser extends \Touchbase\Core\Object implements AuthedUserInterfac
 	
 	/**
 	 *	Username
-	 *	@return (String)
+	 *	@return string
 	 */
 	public function username(){
 		return $this->_username;

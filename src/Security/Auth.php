@@ -42,6 +42,8 @@ class Auth
 	const AUTH_KEY = 'touchbase.key.auth';
 	const AUTH_SESSION_KEY = 'touchbase.key.auth.session';
 	
+	/* Public Methods */
+	
 	/** 
 	 *	Shared
 	 *	@return \Touchbase\Security\Auth
@@ -75,6 +77,10 @@ class Auth
 		return $instance;
 	}
 	
+	/**
+	 *	Current User
+	 *	@return \Touchbase\Security\Auth\AuthedUserInterface
+	 */
 	public static function currentUser(){
 		
 		if(!$currentUserCookie = self::shared()->retrieveUserFromCookie()){
@@ -88,7 +94,11 @@ class Auth
 		
 		return $currentUser;
 	}
-
+	
+	/**
+	 *	Is Authenticated
+	 *	@return BOOL
+	 */
 	public static function isAuthenticated(){
 		$user = self::currentUser();
 		if($user !== null){
@@ -98,6 +108,11 @@ class Auth
 		return false;
 	}
 	
+	/**
+	 *	Authenticate User
+	 *	@param \Touchbase\Security\Auth\AuthedUserInterface $user
+	 *	@return BOOL
+	 */
 	public static function authenticateUser(AuthedUserInterface $user){
 		Session::regenerateID();
 		
@@ -109,6 +124,10 @@ class Auth
 		return false;
 	}
 	
+	/**
+	 *	Logout
+	 *	@return BOOL
+	 */
 	public static function logout(){
 		Session::destroy();
 		return self::shared()->logout();

@@ -35,6 +35,9 @@ use Touchbase\Security\Auth\AuthedUserInterface;
 
 interface AuthInterface 
 {
+	
+	/* Public Methods */
+	
 	/**
 	 *	Store User
 	 *	@param AuthedUserInterface
@@ -56,7 +59,7 @@ interface AuthInterface
 	
 	/**
 	 *	Cookie Hash
-	 *	@return (String)
+	 *	@return string
 	 */
 	public function cookieHash(AuthedUserInterface $user);
 }

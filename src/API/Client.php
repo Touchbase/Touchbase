@@ -54,6 +54,8 @@ class Client extends \Touchbase\Core\Object
 	 *	@var array
 	 */
 	public static $acceptableStatusCodes = null;
+	
+	/* Public Methods */
 		
 	/** 
 	 *	Shared
@@ -97,7 +99,7 @@ class Client extends \Touchbase\Core\Object
 	 *	@static
 	 *	@return mixed
 	 */	
-	static public function request($requestMethod, $requestEndpoint, $requestBody = NULL, $requestHeaders = []){
+	public static function request($requestMethod, $requestEndpoint, $requestBody = NULL, $requestHeaders = []){
 		
 		$response = self::shared()->request($requestMethod, $requestEndpoint, $requestBody, $requestHeaders);
 		
@@ -121,10 +123,18 @@ class Client extends \Touchbase\Core\Object
 		return $response;
 	}
 	
+	/**
+	 *	Cancel
+	 *	@return BOOL
+	 */
 	public static function cancel(){
 		return self::shared()->cancel();
 	}
 	
+	/**
+	 *	Cancel All
+	 *	@return BOOL
+	 */
 	public static function cancelAll(){
 		return self::shared()->cancelAll();
 	}
@@ -182,6 +192,8 @@ class Client extends \Touchbase\Core\Object
 	public static function lastResponseContentType(){
 		return self::shared()->lastResponseContentType();
 	}
+	
+	/* Private Methods */
 	
 	/**
 	 *  Print Acceptable Status Codes

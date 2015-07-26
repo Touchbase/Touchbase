@@ -35,8 +35,12 @@ use Touchbase\Control\HTTPResponse;
 
 class HTTPResponseException extends \Exception
 {
-	
+	/**
+	 *	@var \Touchbase\Control\HTTPResponse
+	 */
 	protected $_response;
+	
+	/* Public Methods */
 	
 	/**
 	 *	@see HTTPResponse::__construct();
@@ -54,6 +58,7 @@ class HTTPResponseException extends \Exception
 	/* Getters / Setters */
 	
 	/**
+	 *	Response
 	 *	@return HTTPResponse
 	 */
 	public function response() {
@@ -61,6 +66,7 @@ class HTTPResponseException extends \Exception
 	}
 	
 	/**
+	 *	Set Response
 	 *	@param HTTPResponse $response
 	 */
 	public function setResponse(HTTPResponse $response) {

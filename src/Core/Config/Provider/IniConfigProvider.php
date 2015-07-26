@@ -33,25 +33,27 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 class IniConfigProvider extends \Touchbase\Core\Object
 {
-
+	/**
+	 *	@var array
+	 */
 	protected $_iniFileData = array();
 	
+	/* Public Methods */
+	
 	/**
-	 * Get Configuration
-	 * 
-	 * @access public
-	 * @return void
+	 *	Get Configuration
+	 *	@access public
+	 *	@return void
 	 */
 	public function getConfiguration(){
 		return \Touchbase\Data\Store::create()->fromArray($this->_iniFileData);
 	}
 	
 	/**
-	 * Parse Ini File
-	 * 
-	 * @access public
-	 * @param \Touchbase\Filesystem\File $file
-	 * @return void
+	 *	Parse Ini File
+	 *	@access public
+	 *	@param \Touchbase\Filesystem\File $file
+	 *	@return VOID
 	 */
 	public function parseIniFile(\Touchbase\Filesystem\File $file){
 		if(!$file->exists()){

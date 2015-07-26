@@ -53,7 +53,9 @@ abstract class BaseProvider implements AuthInterface
 	/**
 	 *	@var AuthedUserInterface
 	 */
-	protected $_user;	
+	protected $_user;
+	
+	/* Public Methods */
 
 	/**
 	 *	Configure

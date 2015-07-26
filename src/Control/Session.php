@@ -39,6 +39,8 @@ class Session
 {
 	const SESSION_KEY = 'touchbase.key.session';
 	
+	/* Public Methods */
+	
 	/** 
 	 *	Shared
 	 *	@return \Touchbase\Security\Session
@@ -71,6 +73,12 @@ class Session
 		return $instance;
 	}
 	
+	/**
+	 *	__callStatic
+	 *	@param string $name
+	 *	@param mixed $arguments
+	 *	@return mixed
+	 */
 	public static function __callStatic($name, $arguments){
 		if(method_exists(static::shared(), $name)){
 			return call_user_func_array([static::shared(), $name], $arguments);

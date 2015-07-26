@@ -49,8 +49,17 @@ class Assets extends \Touchbase\Core\Object
 	const ASSET_META = 'meta';
 	const ASSET_OTHER = 'other';
 	
-	protected $documentTitle = [];	
+	/**
+	 *	@var array
+	 */
+	protected $documentTitle = [];
+	
+	/**
+	 *	@var array
+	 */
 	protected $documentAssets = [];
+	
+	/* Public Methods */
 		
 	/** 
 	 *	Shared
@@ -69,7 +78,10 @@ class Assets extends \Touchbase\Core\Object
 		return $instance;
 	}
 	
-	//Default Requirements
+	/**
+	 *	__construct
+	 *	@param \Touchbase\Core\Config\Store $config
+	 */
 	public function __construct(ConfigStore $config = null){
 		
 		$this->setConfig($config);
@@ -332,7 +344,6 @@ class Assets extends \Touchbase\Core\Object
 		return StaticStore::shared()->get(ConfigStore::CONFIG_KEY)->get("assets")->get("asset_map")->get($assetMap, null);
 	}
 	
-	
 	/**
 	 *	Path For Asset Url
 	 *	@param string assetUrl
@@ -359,6 +370,8 @@ class Assets extends \Touchbase\Core\Object
 		
 		return $assetUrl;
 	}
+	
+	/* Private Methods */
 	
 	/**
 	 *	Include Asset

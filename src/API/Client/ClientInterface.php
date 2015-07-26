@@ -34,7 +34,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 interface ClientInterface
 {
 	
-	public function __construct();
+	/* Public Methods */
 	
 	public function request($requestMethod, $requestEndpoint, $requestBody = NULL, $requestHeaders = []);
 	

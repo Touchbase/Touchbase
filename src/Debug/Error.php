@@ -102,6 +102,7 @@ class Error extends \Touchbase\Core\Object
 	 *	Trigger
 	 *	@param string $message
 	 *	@param int $code
+	 *	@return VOID
 	 */
 	public static function trigger($message = null, $code = E_USER_NOTICE){
 		//You have to pass a user error value to `trigger_error`, lets make sure of it.

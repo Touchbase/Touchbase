@@ -31,13 +31,13 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\View\Webpage;
-use Touchbase\Control\Router;
-use Touchbase\Control\Session;
-use Touchbase\Utils\Validation;
 use Touchbase\Data\Store;
 use Touchbase\Data\SessionStore;
+use Touchbase\View\Webpage;
 use Touchbase\Filesystem\File;
+use Touchbase\Utils\Validation;
+use Touchbase\Control\Router;
+use Touchbase\Control\Session;
 use Touchbase\Control\Exception\HTTPResponseException;
 
 class WebpageController extends Controller
@@ -47,6 +47,9 @@ class WebpageController extends Controller
 	 */
 	private $_webpage;
 	
+	/**
+	 *	@var array
+	 */
 	protected $allowedActions = [];
 	
 	/* Public Methods */

@@ -32,15 +32,23 @@ namespace Touchbase\Filesystem;
 defined('TOUCHBASE') or die("Access Denied.");
 
 abstract class Filesystem extends \Touchbase\Core\Object {
-
+	
+	/**
+	 *	@var integer
+	 */
 	public $fileChmod = 02775;
 	
+	/**
+	 *	@var integer
+	 */
 	public $folderChmod = 02775;
+	
+	/* Public Methods */
 	
 	/**
 	 *	Make Dir
-	 *	@param string - $folder
-	 *	@param BOOL - $recursive
+	 *	@param string $folder
+	 *	@param BOOL $recursive
 	 *	@return BOOL
 	 */
 	public function makeDir($folder, $recursive = true){
@@ -53,8 +61,8 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 
 	/**
 	 *	Remove Dir 
-	 *	@param string - $folder
-	 *	@param BOOL - $contentsOnly
+	 *	@param string $folder
+	 *	@param BOOL $contentsOnly
 	 *	@return VOID
 	 */
 	public function removeDir($folder, $contentsOnly = false) {
@@ -79,8 +87,8 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Dir Modified Time 
-	 *	@param string - $folder
-	 *	@param array - $extensionList
+	 *	@param string $folder
+	 *	@param array $extensionList
 	 *	@return int
 	 */
 	public function dirModifiedTime($folder, $extensionList = null) {		
@@ -108,7 +116,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Dir Size 
-	 *	@param string - $folder
+	 *	@param string $folder
 	 *	@return int
 	 */
 	public function dirSize($folder){
@@ -125,7 +133,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Format Size 
-	 *	@param int - $size
+	 *	@param int $size
 	 *	@return string
 	 */
 	public function formatSize($size) {
@@ -136,7 +144,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	 
 	/**
 	 *	Print Working Directory 
-	 *	@param BOOL - $fullPath
+	 *	@param BOOL $fullPath
 	 *	@return string
 	 */
 	public function pwd($fullPath = false){
@@ -145,7 +153,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	 
 	/**
 	 *	Path Exists
-	 *	@param string - $path
+	 *	@param string $path
 	 *	@return BOOL
 	 */
 	public function exists($path = null){
@@ -155,7 +163,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Is File
-	 *	@param string - $path
+	 *	@param string $path
 	 *	@return BOOL
 	 */
 	public function isFile($path = null){
@@ -164,7 +172,7 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 	
 	/**
 	 *	Is Dir
-	 *	@param string - $path
+	 *	@param string $path
 	 *	@return BOOL
 	 */
 	public function isDir($path = null){

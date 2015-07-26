@@ -34,6 +34,8 @@ defined('TOUCHBASE') or die("Access Denied.");
 trait PermissionTrait
 {
 	
+	/* Public Methods */
+	
 	/**
 	 *	Can
 	 *	@param $permission

@@ -35,11 +35,14 @@ abstract class Object
 {
 	use SynthesizeTrait;
 	
+	/* Public Methods */
+	
 	/**
 	 *	Create
 	 *	Reflection helper to init a class
-	 *	@params (variable)
-	 *	@return (class)
+	 *	@params string $className
+	 *	@params mixed ...$params
+	 *	@return class
 	 */
 	public static function create(){
 		$args = func_get_args();
@@ -56,7 +59,7 @@ abstract class Object
 	/**
 	 *	To String
 	 *	Magic method to get the class name
-	 *	@return (string) - class name
+	 *	@return string - class name
 	 */
 	public function __toString(){
 		return get_class($this);
@@ -64,7 +67,7 @@ abstract class Object
 	
 	/**
 	 *	Get Parent Class
-	 *	@return (string) - parent class name
+	 *	@return string - parent class name
 	 */
 	public function getParentClass(){
 		return get_parent_class($this);
@@ -72,7 +75,7 @@ abstract class Object
 	
 	/**
 	 *	Get Subclasses
-	 *	@return (Array) - Returns a list of inherited classes
+	 *	@return array - Returns a list of inherited classes
 	 */
 	public function getSubclasses(){
 		$classes = array();
@@ -87,7 +90,7 @@ abstract class Object
 
 	/**
 	 *	Get Caller Method
-	 *	@return (string) - Name of the function calling this method
+	 *	@return string - Name of the function calling this method
 	 */
 	public function getCallerMethod(){
 		$traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);

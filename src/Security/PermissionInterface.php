@@ -33,6 +33,9 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 interface PermissionInterface 
 {
+	
+	/* Public Methods */
+	
 	/**
 	 *	Can
 	 *	@param $permission

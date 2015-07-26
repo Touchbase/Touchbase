@@ -33,7 +33,9 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 class HTTPRequest extends HTTPHeaders
 {
-	
+	/**
+	 *	@var string
+	 */
 	protected $httpMethod;
 	
 	/**
@@ -45,6 +47,10 @@ class HTTPRequest extends HTTPHeaders
 	 *	@var string
 	 */
 	protected $_url;
+	
+	/**
+	 *	@var string
+	 */
 	protected $_extension;
 	
 	/**
@@ -62,6 +68,9 @@ class HTTPRequest extends HTTPHeaders
 	 */
 	protected $urlSegments = [];
 	
+	/**
+	 *	@var mixed
+	 */
 	protected $data;
 	
 	/**
@@ -87,9 +96,12 @@ class HTTPRequest extends HTTPHeaders
 	 */
 	protected $_urlParams = [];
 	
+	/**
+	 *	@var integer
+	 */
 	protected $unshiftedButParsedParts = 0;
 	
-	/* Public Functions */
+	/* Public Methods */
 	
 	public function __construct($httpMethod, $url, $get = null, $post = null, $data = null) {
 		$this->requestTime = time();
@@ -110,6 +122,7 @@ class HTTPRequest extends HTTPHeaders
 	/**
 	 *	Match
 	 *	Given the url pattern (eg. $Action/$ID/$OtherID) this method will attempt to match the variable to the segment in the URL
+	 *	@param string $pattern
 	 *	@return array
 	 */
 	public function match($pattern){
@@ -188,6 +201,12 @@ class HTTPRequest extends HTTPHeaders
 		trigger_error(sprintf("%s, use `_VAR` instead.", __METHOD__), E_USER_DEPRECATED);
 		return $this->_VAR($name);
 	}
+	
+	/**
+	 *	_VAR
+	 *	@param string - $name
+	 *	@return string
+	 */
 	public function _VAR($name){
 		
 		if(isset($this->_POST[$name]) && !empty($post = $this->_POST[$name])){
@@ -217,6 +236,11 @@ class HTTPRequest extends HTTPHeaders
 		trigger_error(sprintf("%s, use `_VARS` instead.", __METHOD__), E_USER_DEPRECATED);
 		return $this->_VARS($name);
 	}
+	
+	/**
+	 *	_VARS
+	 *	@return array
+	 */
 	public function _VARS(){
 		return array_merge_recursive($this->_GET, $this->_POST);
 	}
@@ -273,22 +297,43 @@ class HTTPRequest extends HTTPHeaders
 	}
 	
 	//Check HTTP Method
+	
+	/**
+	 *	Is Get
+	 *	@return BOOL
+	 */
 	public function isGET() {
 		return $this->httpMethod == 'GET';
 	}
 	
+	/**
+	 *	Is Post
+	 *	@return BOOL
+	 */
 	public function isPOST() {
 		return $this->httpMethod == 'POST';
 	}
 	
+	/**
+	 *	Is Put
+	 *	@return BOOL
+	 */
 	public function isPUT() {
 		return $this->httpMethod == 'PUT';
 	}
-
+	
+	/**
+	 *	Is Delete
+	 *	@return BOOL
+	 */
 	public function isDELETE() {
 		return $this->httpMethod == 'DELETE';
 	}	
-
+	
+	/**
+	 *	Is Head
+	 *	@return BOOL
+	 */
 	public function isHEAD() {
 		return $this->httpMethod == 'HEAD';
 	}
@@ -307,7 +352,7 @@ class HTTPRequest extends HTTPHeaders
 	 *	This function shifts url segments off the array
 	 *	@param int $count
 	 *	@param array $array
-	 *	@return (array)
+	 *	@return array
 	 */
 	public function shift($count = 1, &$array = null) {		
 		if(is_null($array)) $array = &$this->urlSegments;
@@ -330,7 +375,7 @@ class HTTPRequest extends HTTPHeaders
 	/**
 	 *	Client IP
 	 *	Returns the real IP address of the user
-	 *	@return (string)
+	 *	@return string
 	 */
 	public function clientIP(){
 		// If HTTP_CLIENT_IP is set, then give it priority
@@ -410,6 +455,11 @@ class HTTPRequest extends HTTPHeaders
 		return $this;
 	}
 	
+	/**
+	 *	Is Main Request
+	 *	Use this method to determine whether the request originated from `Router::route()`
+	 *	@return BOOL
+	 */
 	public function isMainRequest(){
 		return $this->_mainRequest;
 	}

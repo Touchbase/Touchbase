@@ -33,6 +33,9 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 class FileNameSanitizer extends \Touchbase\Utils\Sanitizer {
 	
+	/**
+	 *	@var array
+	 */
 	protected $defaultReplacements = array(
 		'/\s/' => '_', // remove whitespace
 		'/-/' => '_', // dashes to underscores
@@ -40,11 +43,19 @@ class FileNameSanitizer extends \Touchbase\Utils\Sanitizer {
 		'/[\_]{2,}/' => '-', // remove duplicate underscores
 		'/^[\.\-_]/' => '', // Remove all leading dots, dashes or underscores
 	);
-
-	function filter($name, $replacements = array()) {
+	
+	/* Public Methods */
+	
+	/**
+	 *	Filter
+	 *	@param string $name
+	 *	@param array $replacements
+	 *	@return 
+	 */
+	public function filter($name, $replacements = array()) {
 		$ext = pathinfo($name, PATHINFO_EXTENSION);
 		
-		$transliterator = $this->getTransliterator();
+		$transliterator = static::transliterator();
 		if($transliterator){
 			$name = $transliterator->toASCII($name);
 		}
@@ -66,7 +77,11 @@ class FileNameSanitizer extends \Touchbase\Utils\Sanitizer {
 		return $name;
 	}
 	
-	function getDefaultName() {
+	/**
+	 *	Get Default Name
+	 *	@return string
+	 */
+	public function getDefaultName() {
 		return (string)uniqid();
 	}
 }

@@ -35,11 +35,12 @@ class Store extends \Touchbase\Data\Store
 {
 	const CONFIG_KEY = 'touchbase.key.config';
 	
+	/* Public Methods */
+	
 	/**
 	 * Add Config
-	 * 
-	 * @access public
 	 * @param \Touchbase\Data\Store $configData
+	 * @access public
 	 * @return VOID
 	 */
 	public function addConfig(\Touchbase\Data\Store $configData){
@@ -49,10 +50,9 @@ class Store extends \Touchbase\Data\Store
 	 
 	/**
 	 * _Merge
-	 * 
-	 * @access public
 	 * @param \Touchbase\Data\Store $replacements
 	 * @param bool $recursive (default: true)
+	 * @access public
 	 * @return void
 	 */
 	public function _merge(\Touchbase\Data\Store $replacements, $recursive = true){

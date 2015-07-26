@@ -37,11 +37,20 @@ use Touchbase\Core\Config\Store as ConfigStore;
 
 class PHPSessionProvider implements SessionInterface
 {
+	
+	/* Public Methods */
+	
+	/**
+	 *	Configure
+	 *	@param \Touchbase\Core\Config\Store $config
+	 *	@return VOID
+	 */
 	public function configure(ConfigStore $config){
 		$this->init();
 	}
 
 	/**
+	 *	Init
 	 *	@return $this
 	 */
 	public function init(){
@@ -69,6 +78,7 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Regenerate ID
 	 *	@return $this
 	 */
 	public function regenerateID(){
@@ -78,8 +88,8 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Get
 	 *	@param string $key
-	 *
 	 *	@return mixed|null
 	 */
 	public function get($key, $default = null){
@@ -87,9 +97,9 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Set
 	 *	@param string $key
 	 *	@param mixed  $data
-	 *
 	 *	@return $this
 	 */
 	public function set($key, $data){
@@ -99,9 +109,9 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Flash
 	 *	@param string $key
 	 *	@param mixed  $data
-	 *
 	 *	@return $this
 	 */
 	public function flash($key, $data){
@@ -111,8 +121,8 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Delete
 	 *	@param string $key
-	 *
 	 *	@return $this
 	 */
 	public function delete($key){
@@ -122,8 +132,8 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Exists
 	 *	@param string $key
-	 *
 	 *	@return bool
 	 */
 	public function exists($key){
@@ -131,6 +141,7 @@ class PHPSessionProvider implements SessionInterface
 	}
 	
 	/**
+	 *	Destroy
 	 *	@return $this
 	 */
 	public function destroy(){
