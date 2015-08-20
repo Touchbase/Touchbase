@@ -31,6 +31,7 @@ namespace Touchbase\View;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Filesystem\File;
 use Touchbase\Filesystem\Filesystem;
 
 class Template extends \Touchbase\Core\Object
@@ -72,24 +73,27 @@ class Template extends \Touchbase\Core\Object
 			$templateFile = call_user_func_array("Touchbase\Filesystem\Filesystem::buildPath", $templateFile); 
 		}
 		
-		$assetConfig = $this->controller->config("assets");
-		
-		if(!realpath($templateFile)){
-			$templatesPath = $assetConfig->get("templates", "Templates/");
-			$templateFile = Filesystem::buildPath($this->controller->applicationPath, $templatesPath, $templateFile);
+		foreach($this->controller->templateSearchPaths() as $path){
+			$templateFileObj = File::create([$path, $templateFile]);
+			if($templateFileObj->exists()){
+				$templateFilePath = $templateFileObj->path;
+				break;
+			}
 		}
+		
+		if(!isset($templateFilePath)) return false;
 		
 		$this->assign("controller", $this->controller);
 		$this->assign("request", $this->controller->request());
 		$this->assign("errors", $this->controller->errors);
 		
-		if($template = $this->readTemplate($templateFile)){
+		if($template = $this->readTemplate($templateFilePath)){
 			/**
 			 *	Auto CSS / JS include
 			 */
 			 
 			//Find Filename
-			$fileParts = pathinfo($templateFile);
+			$fileParts = pathinfo($templateFilePath);
 			
 			if(isset($this->controller)){
 				$controllerName = strtolower($this->controller->controllerName);
@@ -104,7 +108,7 @@ class Template extends \Touchbase\Core\Object
 			return $template;
 		}
 	
-		return false;		
+		return false;
 	}
 	
 	/**
@@ -133,7 +137,7 @@ class Template extends \Touchbase\Core\Object
 	 *	@return string - Template
 	 */
 	private function readTemplate($templateFile){
-		if(file_exists($templateFile)){			
+		if(file_exists($templateFile)){
 			//extract any variables to be used in the included template
 			if(isset($GLOBALS['TemplateVars'])) extract($GLOBALS['TemplateVars']);
 			if($this->vars) extract($this->vars);

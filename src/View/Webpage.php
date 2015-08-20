@@ -100,7 +100,7 @@ class Webpage extends \Touchbase\Core\Object
 		$this->assets->includeMeta('apple-mobile-web-app-title', $this->controller->config("project")->get("name", null));
 		$this->assets->includeMeta('mobile-web-app-capable', 'yes');
 		
-				
+		
 		//WebAppIcons
 		$manifest = File::create([Assets::pathForAssetUrl(BASE_IMAGES), 'icons', 'manifest.json']);
 		if($manifest->exists()){
@@ -155,9 +155,9 @@ class Webpage extends \Touchbase\Core\Object
 		
 		$ext = pathinfo($layout)['extension'];
 		$filename = $layout.(empty($ext)?".tpl.php":"");
-			
-		foreach([$filename, File::buildPath(APPLICATION_TEMPLATES, $filename), File::buildPath(BASE_TEMPLATES, $filename)] as $path){
-			$layoutFile = File::create($path);
+					
+		foreach($this->controller->templateSearchPaths() as $path){
+			$layoutFile = File::create([$path, $filename]);
 			if($layoutFile->exists()){
 				$this->layout = $layoutFile->path;
 				return;

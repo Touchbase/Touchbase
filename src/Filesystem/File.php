@@ -81,7 +81,6 @@ class File extends Filesystem
 			if(!is_dir($path)){
 				$this->folder = Folder::create(dirname($path), $create, $mode);
 				$this->name = basename($path);
-
 				$this->path = $this->folder->path.$this->name;
 					
 				if($create && !$this->exists()){

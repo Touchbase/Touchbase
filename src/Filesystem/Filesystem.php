@@ -207,12 +207,12 @@ abstract class Filesystem extends \Touchbase\Core\Object {
 		return call_user_func_array("self::buildPath", func_get_args());
 	}
 	public static function buildPath(){
-		$paths = func_get_args();
+		$paths = array_filter(func_get_args());
 		
-		$count = $totalArgs = func_num_args();
-		return implode(DIRECTORY_SEPARATOR, array_filter(array_map(function($component) use (&$count, $totalArgs){
+		$count = $totalArgs = count($paths);
+		return implode(DIRECTORY_SEPARATOR, array_map(function($component) use (&$count, $totalArgs){
 			$func = ($count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
 			return $func($component, " \t\n\r\0\x0B/");
-		}, $paths)));
+		}, $paths));
 	}
 }

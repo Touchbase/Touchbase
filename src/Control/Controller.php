@@ -78,6 +78,11 @@ class Controller extends RequestHandler
 	protected $_errors;
 	
 	/**
+	 *	@var string
+	 */
+	protected static $_theme;
+	
+	/**
 	 *	A Helper function to check if all Inits are called on child classes.
 	 *	@var BOOL
 	 */
@@ -163,6 +168,36 @@ class Controller extends RequestHandler
 		return \Touchbase\View\Template::create($templateArgs)->setController($this);
 	}
 	
+	/**
+	 *	Template Search Paths
+	 *	@return Generator<string> - The filepath to the current application directory
+	 */
+	public function templateSearchPaths(){
+		//Search order
+		// - Application/Templates/Theme
+		// - Base/Templates/Theme/Application
+		// - Application/Templates 
+		// - Application/
+		// - Base/Templates/Theme
+		// - Base/Templates/
+		
+		$assetConfig = $this->config("assets");
+		$templatesPath = $assetConfig->get("templates", "Templates/");
+
+		
+		$searchPaths[] = null; //This allows the use of an absolute path to be used when merging paths.
+		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme());
+		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath));
+		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath);
+		$searchPaths[] = Filesystem::buildPath($this->applicationPath);
+		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme());
+		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath);
+		
+		foreach($searchPaths as $searchPath){
+			yield $searchPath;
+		}
+	}
+	
 	/* Getters / Setter */
 	
 	/**
@@ -214,10 +249,30 @@ class Controller extends RequestHandler
 	}
 	
 	/**
+	 *	Set Theme
+	 *	This method provides the ability to set the theme, this is used when choosing which templates to load.
+	 *	@param string $theme
+	 *	@return \Touchbase\Control\Controller self
+	 */
+	public function setTheme($theme){
+		static::$_theme = $theme;
+		return $this;
+	}
+	
+	/**
+	 *	Theme
+	 *	@return string - The name of the theme thats loaded
+	 */
+	public function theme(){
+		return static::$_theme;
+	}
+	
+	/**
 	 *	Application Path
 	 *	@return string - The filepath to the current application directory
 	 */
 	public function applicationPath(){
+
 		if(isset($this->_applicationPath)){
 			return $this->_applicationPath;
 		}

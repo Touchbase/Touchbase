@@ -70,7 +70,13 @@ class WebpageController extends Controller
 		//Pass through to Controller
 		try {
 			$body = parent::handleRequest($request, $response);
-		} catch (HTTPResponseException $e){
+		} catch (\Exception $e){
+			if(!$e instanceof HTTPResponseException){
+				error_log(print_r($e, true));
+				$e = new HTTPResponseException($e->getMessage(), 500);
+				$e->response()->setHeader('Content-Type', 'text/plain');
+			}
+			
 			$body = $this->handleException($e);
 			
 			//If handleException returns a redirect. Follow it.
@@ -80,8 +86,8 @@ class WebpageController extends Controller
 					return $body;
 				}
 			}
+			
 		}
-		
 		
 		if($request->isAjax() || !$request->isMainRequest()){
 			return $body;
