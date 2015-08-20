@@ -62,8 +62,9 @@ class Store extends \Touchbase\Data\Store
 			} else {
 				foreach($data as $key => $value){
 					$cfg = $this->get($group);
-					if($recursive && is_array($value) && $cfg->get($key)){
-						$cfg->set($key, array_merge_recursive((array)$cfg->get($key), $value));
+					if($recursive && is_array($value) && $current = $cfg->get($key)){
+						if(!is_array($current)) $current = []; //Override existing non-array value
+						$cfg->set($key, array_merge_recursive($current, $value));
 					} else {
 						$cfg->set($key, $value);
 					}
