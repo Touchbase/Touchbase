@@ -85,11 +85,7 @@ class Application extends Controller
 		if(!$this->baseInitCalled){
 			user_error("init() method on class '$this' doesn't call Application::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
 		}
-		
-		if(!$this->isAllowed()){
-			$this->throwHTTPError(404);
-		}
-		
+				
 		if($request->isMainRequest() && isset(static::$name)){
 			Assets::shared()->pushTitle(static::$name);
 		}
@@ -120,7 +116,7 @@ class Application extends Controller
 
 				$controller	->setConfig($this->config())
 							->setApplication($this)
-							->handleRequest($this->request, $response);
+							->handleRequest($this->request, $response);	
 			}
 		}
 	}

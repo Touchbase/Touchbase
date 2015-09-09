@@ -105,11 +105,11 @@ class RequestHandler extends \Touchbase\Core\Object
 							user_error("Non-string method name: ".var_export($action, true), E_USER_ERROR);
 						}
 						
-						if(!$this->hasMethod($action)){
+						if(!$this->hasMethod($action) || !$this->isEnabled() || !$this->application()->isEnabled()){
 							return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
 						}
 						
-						if(!$this->isAllowed() || !$this->checkAccessAction($action)){	
+						if(!$this->isAllowed() || !$this->application()->isAllowed() || !$this->checkAccessAction($action)){
 							return $this->throwHTTPError(403, "Action '$action' isn't allowed on class $this");
 						}
 						

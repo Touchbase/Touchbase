@@ -101,6 +101,16 @@ class Controller extends RequestHandler
 	}
 	
 	/**
+	 *	Is Enabled
+	 *	This is a skeleton method that can be overriden by children to protect an entire class.
+	 *	NB. Returning false for this function will throw a HTTP 404 error.
+	 *	@return BOOL
+	 */
+	public function isEnabled(){
+		return true;
+	}
+	
+	/**
 	 *	Request
 	 *	@return \Touchbase\Control\HTTPRequest
 	 */

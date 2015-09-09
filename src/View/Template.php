@@ -136,7 +136,7 @@ class Template extends \Touchbase\Core\Object
 	 *	@param string $templateFile - file location of template
 	 *	@return string - Template
 	 */
-	private function readTemplate($templateFile){
+	private function readTemplate($templateFile, $replace = true){
 		if(file_exists($templateFile)){
 			//extract any variables to be used in the included template
 			if(isset($GLOBALS['TemplateVars'])) extract($GLOBALS['TemplateVars']);
@@ -145,13 +145,15 @@ class Template extends \Touchbase\Core\Object
 			//This starts an output buffer that parses contents into a string
 			ob_start();
 				if(!class_exists("Auth")) class_alias("\Touchbase\Security\Auth", "Auth");
+				if(!class_exists("Assets")) class_alias("\Touchbase\View\Assets", "Assets");
 				include($templateFile);
 				$fileContents = ob_get_contents();
 			ob_end_clean();
 			
 			//Run it through variable finder.
-			return $this->variableFinder($fileContents, $templateFile);
+			return $replace ? $this->variableFinder($fileContents, $templateFile) : $fileContents;
 		}
+		
 		return false;
 	}
 	
@@ -177,6 +179,21 @@ class Template extends \Touchbase\Core\Object
 				$haystack = str_replace($needle, $replacement, $haystack);
 			};
 			
+			// Import all templates first, this is so the variables don't leak scope
+			$importedTemplate = false;
+			foreach($templateVars[1] as $k => $var) {
+				$typevar = $type = false;
+				
+				//Template Finder
+				preg_match("/(.*)[\[]{1}(.*)[\]]{1}$/i", $var, $type);
+				if(is_array($type) && count($type) > 1) {
+					$replaceVar($templateVars[0][$k], $this->readTemplate(Filesystem::buildPath(dirname($templateFile), $type[2] . ".tpl.php"), false), $contents);
+					$importedTemplate = true;
+				}
+			}
+			
+			if($importedTemplate) return $this->variableFinder($contents, $templateFile);
+			
 			foreach($templateVars[1] as $k => $var) {
 				$typevar = $type = false;
 				
@@ -199,6 +216,7 @@ class Template extends \Touchbase\Core\Object
 					continue;
 				} else if(array_key_exists($var, $GLOBALS['TemplateVars'])){
 					$replaceVar($templateVars[0][$k], $GLOBALS['TemplateVars'][$var], $contents);
+					unset($GLOBALS['TemplateVars'][$var]);
 					continue;
 				} else if(array_key_exists($var, $GLOBALS)){
 					$replaceVar($templateVars[0][$k], $GLOBALS[$var], $contents);
@@ -252,13 +270,6 @@ class Template extends \Touchbase\Core\Object
 							continue;
 						}
 					}
-				}
-				
-				//Template Finder
-				preg_match("/(.*)[\[]{1}(.*)[\]]{1}$/i", $var, $type);
-				if(is_array($type) && count($type) > 1) {
-					$moreContents = (new Template($this->vars))->setController($this->controller);
-					$contents = str_replace($templateVars[0][$k], $moreContents->renderWith(Filesystem::buildPath(dirname($templateFile), $type[2] . ".tpl.php")), $contents);
 				}
 				
 				//Replace Unfound Vars
