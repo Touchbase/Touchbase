@@ -134,19 +134,21 @@ class Webpage extends \Touchbase\Core\Object
 	 * 	Set Body
 	 *	@param string $body
 	 * 	@access public
-	 *	@return VOID
+	 *	@return \Touchbase\View\Webpage
 	 */
 	public function setBody($body){
 		$this->body = Template::create(array(
 			"BODY" => $body
 		))->setController($this->controller)->renderWith($this->layout);
+		
+		return $this;
 	}
 	
 	/**
 	 *	Set Layout
 	 *	@param string $layout
 	 *	@access public
-	 *	@return VOID
+	 *	@return \Touchbase\View\Webpage
 	 */
 	public function setLayout($layout){
 		if(is_array($layout)){
@@ -160,7 +162,7 @@ class Webpage extends \Touchbase\Core\Object
 			$layoutFile = File::create([$path, $filename]);
 			if($layoutFile->exists()){
 				$this->layout = $layoutFile->path;
-				return;
+				return $this;
 			}
 		}
 		

@@ -99,7 +99,7 @@ abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate
 	 *	@return array
 	 */
 	public function getConstList(){
-		return $this->getConstantList();
+		return $this->getConstantsList();
 	}
 	public function getConstantsList(){
 

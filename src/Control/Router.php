@@ -120,8 +120,10 @@ class Router extends \Touchbase\Core\Object
 				
 					if(class_exists($dispatch)){
 						if(!static::$dispatch){
-							static::$dispatch = $dispatch::create()	->setConfig(static::config())
-																	->init();
+							static::$dispatch = $dispatch::create();
+							
+							static::$dispatch->setConfig(static::config())
+											 ->init();
 						}
 					} else {
 						$e = new HTTPResponseException("Could not load project", 404);
@@ -139,7 +141,7 @@ class Router extends \Touchbase\Core\Object
 			
 				static::$dispatch->handleRequest($request, $response);
 			} catch(HTTPResponseException $e){
-				$response = $e->response();
+				$response->setBody(static::$dispatch->handleException($e));
 			}
 		}
 		
