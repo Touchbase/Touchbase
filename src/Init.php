@@ -123,7 +123,7 @@ class Init
 					$baseURL = substr($_SERVER['SCRIPT_NAME'], 0, -strlen($urlSegmentToRemove));
 				}
 			}
-			define('WORKING_DIR', strtolower(rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/") ?: "/"));
+			define('WORKING_DIR', strtolower(rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/")) . "/");
 		}
 		
 		if(!defined('SITE_PROTOCOL')){
@@ -141,7 +141,7 @@ class Init
 		
 		if(!defined('SITE_URL')){
 			define("SITE_URL", Router::buildPath(SITE_PROTOCOL.htmlentities(
-				filter_var(strtolower($_SERVER['HTTP_HOST']), FILTER_SANITIZE_URL),
+				filter_var(strtolower(@$_SERVER['HTTP_X_FORWARDED_HOST'] ?: $_SERVER['HTTP_HOST']), FILTER_SANITIZE_URL),
 				ENT_QUOTES, 'UTF-8'
 			), WORKING_DIR), true);
 			define("SITE_ROOT", SITE_URL, true);
@@ -204,7 +204,7 @@ class Init
 						//We want to match a certain condition
 						} else {
 							if( ( //Do we match the conditions?
-									strpos($_SERVER['HTTP_HOST'], $condition) !== false || //Are we a different domain?
+									strpos(@$_SERVER['HTTP_X_FORWARDED_HOST'] ?: $_SERVER['HTTP_HOST'], $condition) !== false || //Are we a different domain?
 									strpos($_SERVER["REQUEST_URI"], $condition) === 0 || //Are we a different working dir?
 									strpos($_SERVER["SERVER_NAME"], $condition) === 0 || //Are we on a different server?
 									(strtoupper(substr(php_uname('s'), 0, 3)) === 'WIN' && $condition == "windows") || //Are we on a differnet os?

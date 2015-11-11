@@ -165,7 +165,7 @@ class Error extends \Touchbase\Core\Object
 	 *	@return VOID
 	 */
 	private function handler($errorType, $errorMessage, $errorFile = null, $errorLine = 0, $errorContext = array()){	
-		if(in_array($errorType, array(E_CORE_WARNING,E_CORE_ERROR)) && !$this->debugStrict) return;
+		if(in_array($errorType, array(E_CORE_WARNING,E_CORE_ERROR))/* && !$this->debugStrict*/) return;
 
 		//Lets add the real line and file number to errors that have been thrown via `trigger_error`
 		if(in_array($errorType, self::$userErrors)){

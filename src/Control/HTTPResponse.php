@@ -148,15 +148,13 @@ class HTTPResponse extends HTTPHeaders
 				setTimeout(\'window.location.href = "'.$url.'"\', 50);
 			</script>';
 		} else {
-
 			if(!headers_sent()){
 				header($_SERVER['SERVER_PROTOCOL']." ".$this->statusCode." ".$this->sanitize($this->statusDescription));
 				foreach($this->getAllHeaders() as $header) {
 					header($header, true, $this->statusCode);
 				}
 			}
-			
-			
+
 			if(Router::isLive() && $this->isError() && !$this->body){
 				print "ERROR: ".$this->statusCode." -> ".$this->sanitize($this->statusDescription);
 			} else {

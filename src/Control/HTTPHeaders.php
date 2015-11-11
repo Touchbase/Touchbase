@@ -128,4 +128,3 @@ class HTTPHeaders extends \Touchbase\Core\Object
 	}
 
 }
-?>

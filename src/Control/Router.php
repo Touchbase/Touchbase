@@ -136,12 +136,13 @@ class Router extends \Touchbase\Core\Object
 				}
 				
 				if($request->isMainRequest() && !$request->isAjax()){
-					self::setRouteHistory(static::buildParams($request->url() ?: "/", $_GET));
+					self::setRouteHistory(static::buildParams($request->url(), $_GET));
 				}
 			
 				static::$dispatch->handleRequest($request, $response);
 			} catch(HTTPResponseException $e){
-				$response->setBody(static::$dispatch->handleException($e));
+				$response->setStatusCode($e->getCode(), $e->getMessage());
+				$response->setBody(static::$dispatch ? static::$dispatch->handleException($e) : $e->getMessage());
 			}
 		}
 		
@@ -186,23 +187,23 @@ class Router extends \Touchbase\Core\Object
 		// Allow for the accidental inclusion of a // in the URL
 		$url = preg_replace('#([^:])//#', '\\1/', $url);
 		$url = trim($url);
-
+		
 		// Only bother comparing the URL to the absolute version if $url looks like a URL.
 		if(preg_match('/^https?[^:]*:\/\//i',$url)) {
-			$base1 = static::buildPath(strtolower(SITE_URL), "/");
-			// If we are already looking at baseURL, return '' (substr will return false)
-			if(strtolower($url) == $base1) return '';
+			$base1 = strtolower(SITE_URL);
+			// If we are already looking at baseURL, return '/' (substr will return false)
+			if(strtolower($url) == $base1) return '/';
 			else if(strtolower(substr($url,0,strlen($base1))) == $base1) return substr($url,strlen($base1));
-			// Convert http://www.mydomain.com/mysitedir to ''
-			else if(substr($base1,-1)=="/" && strtolower($url) == substr($base1,0,-1)) return "";
+			// Convert http://www.mydomain.com/mysitedir to '/'
+			else if(substr($base1,-1)=="/" && strtolower($url) == substr($base1,0,-1)) return "/";
 		}
 		
 		// test for base folder, e.g. /var/www
-		$base2 = static::buildPath(strtolower(BASE_PATH), "/");
+		$base2 = Folder::buildPath(strtolower(BASE_PATH), "/");
 		if(strtolower(substr($url,0,strlen($base2))) == $base2) return substr($url,strlen($base2));
 
 		// Test for relative base url, e.g. mywebsite/ if the full URL is http://localhost/mywebsite/
-		$base3 = static::buildPath(strtolower(WORKING_DIR), "/");
+		$base3 = WORKING_DIR;
 		if(strtolower(substr($url,0,strlen($base3))) == $base3) return substr($url,strlen($base3));
 		
 		// Nothing matched, fall back to returning the original URL
@@ -288,15 +289,15 @@ class Router extends \Touchbase\Core\Object
 		return call_user_func_array("self::buildPath", func_get_args());
 	}
 	public static function buildPath(){
-		$paths = func_get_args();
+		$paths = array_filter(func_get_args());
 		
 		$count = $totalArgs = func_num_args();
-		return implode("/", array_filter(array_map(function($component) use (&$count, $totalArgs){
+		return implode("/", array_map(function($component) use (&$count, $totalArgs){
 			$func = ($firstArg = $count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
 			$isProtocol = strlen($component) > ($needle="://") && substr_compare($component, $needle, -strlen($needle)) === 0;
 			$component = $func($component, " \t\n\r\0\x0B".($isProtocol?"":"/"));
 			return ($isProtocol && $firstArg && $totalArgs > 1)?substr($component, 0, -1):$component;
-		}, $paths))).($paths[$totalArgs - 1] === "/"?"/":"");
+		}, $paths));
 	}
 	
 	/**

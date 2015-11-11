@@ -517,5 +517,3 @@ class HTTPRequest extends HTTPHeaders
 	}
 	
 }
-
-?>

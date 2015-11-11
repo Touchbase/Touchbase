@@ -41,7 +41,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	/**
 	 *	@var array
 	 */
-	protected $rules;
+	protected $rules = [];
 	
 	/**
 	 *	@var array

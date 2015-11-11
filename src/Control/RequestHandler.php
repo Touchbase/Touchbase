@@ -266,5 +266,3 @@ class RequestHandler extends \Touchbase\Core\Object
 		throw $e;
 	}
 }
-
-?>

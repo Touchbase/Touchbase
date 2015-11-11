@@ -47,6 +47,7 @@ class HTTPResponseException extends \Exception
 	 */
 	public function __construct($body = null, $statusCode = null, $statusDescription = null) {
 		if($body instanceof HTTPResponse) {
+			$body->setStatusCode($statusCode, $statusDescription);
 			$this->setResponse($body);
 		} else {
 			$this->setResponse(new HTTPResponse($body, $statusCode, $statusDescription));
@@ -74,6 +75,3 @@ class HTTPResponseException extends \Exception
 	}
 	
 }
-
-
-?>

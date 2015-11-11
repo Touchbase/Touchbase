@@ -142,7 +142,7 @@ class Controller extends RequestHandler
 		if($body instanceof HTTPResponse){
 			$response = $body;
 		} else {
-			$response->setBody($body);
+			$body = $response->setBody($body)->body();
 		}
 		
 		return $body;
@@ -184,8 +184,11 @@ class Controller extends RequestHandler
 	 */
 	public function templateSearchPaths(){
 		//Search order
+		// - Application/Templates/Theme/Controller
 		// - Application/Templates/Theme
+		// - Base/Templates/Theme/Application/Controller
 		// - Base/Templates/Theme/Application
+		// - Application/Templates/Controller 
 		// - Application/Templates 
 		// - Application/
 		// - Base/Templates/Theme
@@ -195,8 +198,11 @@ class Controller extends RequestHandler
 		$templatesPath = $assetConfig->get("templates", "Templates/");
 		
 		$searchPaths[] = null; //This allows the use of an absolute path to be used when merging paths.
+		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme(), $this->_controllerName);
 		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme());
+		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath), $this->_controllerName);
 		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath));
+		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->_controllerName);
 		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath);
 		$searchPaths[] = Filesystem::buildPath($this->applicationPath);
 		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme());
@@ -281,17 +287,16 @@ class Controller extends RequestHandler
 	 *	@return string - The filepath to the current application directory
 	 */
 	public function applicationPath(){
+		
+		if(!$this->application()) return;
 
 		if(isset($this->_applicationPath)){
 			return $this->_applicationPath;
 		}
 		
-		$reflector = new \ReflectionClass($this);
-		$controllerNamespace = $reflector->getNamespaceName();
-		$controllerNamespace = ltrim(strstr($controllerNamespace, $needle = "\\") ?: $controllerNamespace, $needle);
-		
-		$applicationNamespace = str_replace("\\Controllers", "", $controllerNamespace);
-		return $this->_applicationPath = Filesystem::buildPath(PROJECT_PATH, str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace));
+		$segments = explode("\\", $this->application()->_applicationNamespace);
+		$segments[0] = PROJECT_PATH;
+		return $this->_applicationPath = call_user_func_array("\Touchbase\Filesystem\Filesystem::buildPath", $segments);
 	}
 	
 	/* Protected Methods */
@@ -330,5 +335,3 @@ class Controller extends RequestHandler
 		return $this->{$action}($request);
 	}
 }
-
-?>
