@@ -35,6 +35,7 @@ use Touchbase\View\Assets;
 use Touchbase\Data\StaticStore;
 use Touchbase\Data\SessionStore;
 use Touchbase\Filesystem\File;
+use Touchbase\Filesystem\Folder;
 use Touchbase\Security\Auth;
 use Touchbase\Security\Permission;
 use Touchbase\Control\Session;
