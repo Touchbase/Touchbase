@@ -195,7 +195,7 @@ class Controller extends RequestHandler
 		// - Base/Templates/
 		
 		$assetConfig = $this->config("assets");
-		$templatesPath = $assetConfig->get("templates", "Templates/");
+		$templatesPath = $assetConfig->get("templates", "Templates");
 		
 		$searchPaths[] = null; //This allows the use of an absolute path to be used when merging paths.
 		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme(), $this->_controllerName);

@@ -87,22 +87,31 @@ class Template extends \Touchbase\Core\Object
 		$this->assign("request", $this->controller->request());
 		$this->assign("errors", $this->controller->errors);
 		
+		//TODO: Sort this out!
+		if(isset($this->controller) && $this->controller instanceof \Touchbase\Control\WebpageController){
+			$this->assign("assets", $this->controller->response()->assets());
+		}
+		
 		if($template = $this->readTemplate($templateFilePath)){
 			/**
 			 *	Auto CSS / JS include
 			 */
 			 
-			//Find Filename
-			$fileParts = pathinfo($templateFilePath);
-			
-			if(isset($this->controller)){
-				$controllerName = strtolower($this->controller->controllerName);
+			if(isset($this->controller) && $this->controller instanceof \Touchbase\Control\WebpageController){
+				//Include Template Styles
+				$fileParts = pathinfo($templateFilePath);
+				$templateName = strtolower(basename($fileParts['filename'], ".tpl"));
 				
-				//CSS autoloader
-				Assets::shared()->includeStyle([APPLICATION_STYLES, $controllerName . ".css"]);
-				
-				//JS autoloader
-				Assets::shared()->includeScript([APPLICATION_SCRIPTS, $controllerName . ".js"]);
+				//Make sure to only add styles for our phtml templates
+				if($fileParts['extension'] === "php"){
+					$this->controller->response()->assets()->includeStyle($templateName . ".css");
+					$this->controller->response()->assets()->includeScript($templateName . ".js");
+					
+					//Include Controller Sytles
+					$controllerName = strtolower($this->controller->controllerName);
+					$this->controller->response()->assets()->includeStyle($controllerName . ".css");
+					$this->controller->response()->assets()->includeScript($controllerName . ".js");
+				}
 			}
 			
 			return $template;
@@ -127,6 +136,8 @@ class Template extends \Touchbase\Core\Object
 				$this->vars[$tplVar] = $value;
 			}
 		}
+		
+		return $this;
 	}
 	
 	/* Private Methods */
@@ -145,7 +156,6 @@ class Template extends \Touchbase\Core\Object
 			//This starts an output buffer that parses contents into a string
 			ob_start();
 				if(!class_exists("Auth")) class_alias("\Touchbase\Security\Auth", "Auth");
-				if(!class_exists("Assets")) class_alias("\Touchbase\View\Assets", "Assets");
 				include($templateFile);
 				$fileContents = ob_get_contents();
 			ob_end_clean();
@@ -187,7 +197,7 @@ class Template extends \Touchbase\Core\Object
 				//Template Finder
 				preg_match("/(.*)[\[]{1}(.*)[\]]{1}$/i", $var, $type);
 				if(is_array($type) && count($type) > 1) {
-					$replaceVar($templateVars[0][$k], $this->readTemplate(Filesystem::buildPath(dirname($templateFile), $type[2] . ".tpl.php"), false), $contents);
+					$replaceVar($templateVars[0][$k], $this->renderWith($type[2] . ".tpl.php"), $contents);
 					$importedTemplate = true;
 				}
 			}

@@ -31,9 +31,8 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\Data\Store;
 use Touchbase\Data\SessionStore;
-use Touchbase\View\Webpage;
+use Touchbase\View\WebpageResponse;
 use Touchbase\Filesystem\File;
 use Touchbase\Utils\Validation;
 use Touchbase\Control\Router;
@@ -41,12 +40,7 @@ use Touchbase\Control\Session;
 use Touchbase\Control\Exception\HTTPResponseException;
 
 class WebpageController extends Controller
-{
-	/**
-	 *	@var \Touchbase\View\Webpage
-	 */
-	private $_webpage;
-	
+{	
 	/**
 	 *	@var array
 	 */
@@ -55,20 +49,30 @@ class WebpageController extends Controller
 	/* Public Methods */
 	
 	/**
+	 *	Request
+	 *	@return \Touchbase\Control\HTTPRequest
+	 */
+	public function response(){
+		return $this->response;
+	}
+	
+	/**
 	 *	Handle Request
 	 *	@param HTTPRequest &$request
 	 *	@param HTTPResponse &$response
 	 *	@return string
 	 */
 	public function handleRequest(HTTPRequest &$request, HTTPResponse &$response){	
-		
-		if($request->isPost()){
-			$validation = Validation::create();
-			$this->validatePostRequest($request, $response, $validation);
-		}
-	
+			
 		//Pass through to Controller
 		try {
+			$response = new WebpageResponse($this);
+			
+			if($request->isPost()){
+				$validation = Validation::create();
+				$this->validatePostRequest($request, $response, $validation);
+			}
+			
 			$body = parent::handleRequest($request, $response);
 		} catch (\Exception $e){
 			if(!$e instanceof HTTPResponseException){
@@ -81,48 +85,34 @@ class WebpageController extends Controller
 			
 			//If handleException returns a redirect. Follow it.
 			if($body instanceof \Touchbase\Control\HTTPResponse){
+				//TODO: Should we always return the response?
 				if($body->hasFinished()){
-					$response = $body;
-					return $body;
+					return $response = $body;
 				}
 			}
 			
+			$response->setBody($body);	
+			$response->setStatusCode($e->getCode(), $e->getMessage());
 		}
 		
-		if($request->isAjax() || !$request->isMainRequest()){
-			return $body;
+		if($this->request()->isMainRequest()){			
+			$applicationTitles = [];
+			$application = $this->application;
+			while($application != null){
+				if(isset($application::$name)){
+					$applicationTitles[] = $application::$name;
+				}
+				$application = $application->application;
+			}
+			
+			$this->response()->assets()->pushTitle(array_reverse($applicationTitles));
+			
+			if(isset(static::$name)){
+				$this->response()->assets()->pushTitle(static::$name);
+			}
 		}
-		
-		if(isset(static::$name)){
-			$this->webpage()->assets->pushTitle(static::$name);
-		}
-		
-		if($body instanceof \Touchbase\Control\HTTPResponse){
-			$body = $body->body();
-		}
-	
-		//Set Webpage Response
-		$this->validateHtml($body);
-		$this->webpage()->setBody($body);
-		
-		//Set Response
-		$htmlDocument = $this->webpage()->render();
-		$response->setBody($htmlDocument);
 		
 		return $body;
-	}
-	
-	/**
-	 *	Webpage
-	 *	@return \Touchbase\View\Webpage
-	 */
-	public function webpage(){
-		if(!$this->_webpage){
-			//Create Webpage.
-			$this->_webpage = new Webpage($this);
-		}
-		
-		return $this->_webpage;
 	}
 	
 	/* Protected Methods */
@@ -276,74 +266,6 @@ class WebpageController extends Controller
 			if(!$validation->validate($data)){
 				$response->redirect(-1)->withErrors($validation->errors, $formName);
 			}
-		}
-	}
-	
-	/* Private Methods */
-	
-	/**
-	 *	Validate Html
-	 *	This method scans the outgoing HTML for any forms, if found it will save the form to the session in order to validate.
-	 *	If any errors previously existed in the session, this method will apply `bootstrap` style css error classes.
-	 *	@pararm string &$htmlDocument - The outgoing HTML string
-	 *	@return VOID
-	 */
-	private function validateHtml(&$htmlDocument){
-		
-		if(!empty($htmlDocument)){
-			
-			libxml_use_internal_errors(true);
-			$dom = new \DOMDocument;
-			$dom->recover = false;
-			$dom->loadHtml($htmlDocument, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOENT);
-			
-			foreach($dom->getElementsByTagName('form') as $form){
-				
-				if($formAction = $form->getAttribute("action")){
-					if(!Router::isSiteUrl($formAction)){
-						continue;
-					}
-				}
-				if($form->hasAttribute("novalidate")){
-					continue;
-				}
-				
-				$formName = $form->getAttribute("name");
-				
-				$savedom = new \DOMDocument;
-				foreach(["input", "textarea", "select"] as $tag){
-					foreach($form->getElementsByTagName($tag) as $input){ 
-						//Populate form with previous data
-						if($newValue = SessionStore::get("post", new Store())->get($input->getAttribute("name"), false)){
-							if(is_scalar($newValue)){
-								$input->setAttribute('value', $newValue);
-							}
-						}
-						
-						//Populate errors
-						if($errorMessage = $this->errors($formName)->get($input->getAttribute("name"), false)){
-							$currentClasses = explode(" ", $input->parentNode->getAttribute("class"));
-							foreach(["has-feedback", "has-error"] as $class){
-								if(!in_array($class, $currentClasses)){
-									$currentClasses[] = $class;
-								}
-							}
-							
-							$input->parentNode->setAttribute('class', implode(" ", $currentClasses));
-							$input->setAttribute("data-error", $errorMessage);
-						}
-						
-						$savenode = $savedom->importNode($input->cloneNode(false), true);
-						$savenode->removeAttribute("class");
-						$savenode->removeAttribute("data-error");
-						$savedom->appendChild($savenode);
-					}
-				}
-				
-				SessionStore::flash($formName, base64_encode(gzdeflate($savedom->saveHTML(), 9)));
-			}
-			
-			$htmlDocument = utf8_decode($dom->saveHTML($dom->documentElement));
 		}
 	}
 }

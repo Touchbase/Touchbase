@@ -31,6 +31,7 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
+use Touchbase\Control\Router;
 use Touchbase\Data\Store;
 use Touchbase\Data\SessionStore;
 

@@ -85,38 +85,21 @@ class Application extends Controller
 		if(!$this->baseInitCalled){
 			user_error("init() method on class '$this' doesn't call Application::init(). Make sure that you have parent::init() included.", E_USER_WARNING);
 		}
-				
-		if($request->isMainRequest() && isset(static::$name)){
-			Assets::shared()->pushTitle(static::$name);
-		}
-					
+							
 		if($application = $this->handleApplication()){
-			
-			$application ->setConfig($this->config())
-						 ->setApplication($this)
-						 ->init()
-						 ->handleRequest($this->request, $response);
+					
+			return $application->setConfig($this->config())
+						 	   ->setApplication($this)
+						 	   ->init()
+						 	   ->handleRequest($this->request, $response);
 			
 		} else {
 			
 			if($controller = $this->handleController()){
-				
-				//Define Application Assets Path
-				$applicationNamespace = ltrim(strstr($this->_applicationNamespace, $needle = "\\") ?: $this->_applicationNamespace, $needle);
-				if(!defined("APPLICATION_PATH")) define("APPLICATION_PATH", Filesystem::buildPath(PROJECT_PATH, str_replace("\\", DIRECTORY_SEPARATOR, $applicationNamespace)));
-					
-				$assetConfig = $this->config()->get("assets");
-				$assetPath = Assets::assetMapForPath(str_replace("\\", "/", $this->_applicationNamespace)."/".$assetConfig->get("assets","assets"));
-				
-				if(!defined("APPLICATION_ASSETS")) define("APPLICATION_ASSETS", Router::buildPath(SITE_URL, $assetPath));
-				if(!defined("APPLICATION_IMAGES")) define("APPLICATION_IMAGES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("images","images")));
-				if(!defined("APPLICATION_STYLES")) define("APPLICATION_STYLES", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("css","css")));
-				if(!defined("APPLICATION_SCRIPTS")) define("APPLICATION_SCRIPTS", Router::buildPath(SITE_URL, $assetPath, $assetConfig->get("js","js")));
-				if(!defined("APPLICATION_TEMPLATES")) define("APPLICATION_TEMPLATES", Filesystem::buildPath(APPLICATION_PATH, $assetConfig->get("templates","Templates")));
-
-				$controller	->setConfig($this->config())
-							->setApplication($this)
-							->handleRequest($this->request, $response);	
+			
+				return $controller->setConfig($this->config())
+								  ->setApplication($this)
+								  ->handleRequest($this->request, $response);	
 			}
 		}
 	}

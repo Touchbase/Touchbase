@@ -60,7 +60,7 @@ class Store extends \ArrayObject implements StoreInterface
 	}
 	
 	/**
-	 * __toString
+	 *	__toString
 	 *	TODO: This is a temp function to show the error messages.
 	 *	@return string
 	 */
@@ -82,9 +82,16 @@ class Store extends \ArrayObject implements StoreInterface
 	}
 	 
 	public function get($name, $default = self::CHAIN_STORE){
-		$default = ($default == self::CHAIN_STORE)?new Store():$default;
-		return $this->exists($name)?$this[$name]:$default;
-	}	
+	
+		if($this->exists($name)) return $this[$name];
+		
+		if($default == self::CHAIN_STORE){
+			$default = new Store();
+			$this->set($name, $default);
+		}
+			
+		return $default;
+	}		
 	
 	/**
 	 *	Set
@@ -140,20 +147,30 @@ class Store extends \ArrayObject implements StoreInterface
 	 *	Push
 	 *	Pushes arbitrary variables to the array
 	 *	@param string $name
+	 *	@param va_list | array $values
 	 *	@return array
 	 */
 	public function push($name /*, ...$values */){
+		$values = func_get_args(); array_shift($values);	
+		return $this->pushHelper($name, $values);
+	}
+	public function pushUnique($name /*, ...$values */){
+		$values = func_get_args(); array_shift($values);	
+		return $this->pushHelper($name, $values, true);
+	}
+	private function pushHelper($name, $values, $unique = false){
 		$array = $this->get($name, []);
 		
-		$values = func_get_args(); array_shift($values);
 		foreach($values as $value){
-			if(isset($value)){
+			if(is_array($value)){
+				$array = array_merge($array, $value);
+			} else if(isset($value)){
 				$array[] = $value;
 			}
 		}
 		
-		$this->set($name, $array);		
-		return $array;
+		$this->set($name, $unique ? array_unique($array) : $array);		
+		return $this;
 	}
 	
 	/**
@@ -204,7 +221,6 @@ class Store extends \ArrayObject implements StoreInterface
 				$this->set($group, $data);
 			}
 		}
-		
 		
 		return $this;
 	}

@@ -149,8 +149,10 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 								$message = "A file that was uploaded was greater than the allowed size";
 								return false;
 							case UPLOAD_ERR_PARTIAL:
-							case UPLOAD_ERR_NO_FILE:
 								$message = "A file failed to upload fully";
+								return false;
+							case UPLOAD_ERR_NO_FILE:
+								$message = "No file was selected for upload";
 								return false;
 							case UPLOAD_ERR_NO_TMP_DIR:
 							case UPLOAD_ERR_CANT_WRITE:

@@ -31,7 +31,6 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-use Touchbase\View\Assets;
 use Touchbase\Data\StaticStore;
 use Touchbase\Data\SessionStore;
 use Touchbase\Filesystem\File;
@@ -135,15 +134,18 @@ class Router extends \Touchbase\Core\Object
 						throw $e;
 					}
 				}
-				
-				if($request->isMainRequest() && !$request->isAjax()){
-					self::setRouteHistory(static::buildParams($request->url(), $_GET));
-				}
 			
 				static::$dispatch->handleRequest($request, $response);
 			} catch(HTTPResponseException $e){
 				$response->setStatusCode($e->getCode(), $e->getMessage());
 				$response->setBody(static::$dispatch ? static::$dispatch->handleException($e) : $e->getMessage());
+			}
+		}
+		
+		//TODO: It would be good for this to reside in $response->render() - But would need access to $request.
+		if(!$response->isError() && $request->isMainRequest() && !$request->isAjax()){
+			if(strpos($response->getHeader("Content-Type"), "text/html") === 0){
+				static::setRouteHistory(static::buildParams($request->url(), $_GET));
 			}
 		}
 		
@@ -254,13 +256,17 @@ class Router extends \Touchbase\Core\Object
 	 *	@return BOOL
 	 */
 	public static function isSiteUrl($url) {
-		$urlHost = parse_url($url, PHP_URL_HOST);
-		$actualHost = parse_url(SITE_URL, PHP_URL_HOST);
-		if($urlHost && $actualHost && strtolower($urlHost) == strtolower($actualHost)){
-			return true;
-		} else {
+		if($url){
+			$urlHost = parse_url($url, PHP_URL_HOST);
+			$actualHost = parse_url(SITE_URL, PHP_URL_HOST);
+			if($urlHost && $actualHost && strcasecmp($urlHost, $actualHost) === 0){
+				return true;
+			}
+			
 			return self::isRelativeUrl($url);
 		}
+		
+		return false;
 	}
 	
 	/**
@@ -294,6 +300,7 @@ class Router extends \Touchbase\Core\Object
 		
 		$count = $totalArgs = func_num_args();
 		return implode("/", array_map(function($component) use (&$count, $totalArgs){
+			$component = str_replace("\\", "/", $component);
 			$func = ($firstArg = $count--==$totalArgs)?"rtrim":(!$count?"ltrim":"trim");
 			$isProtocol = strlen($component) > ($needle="://") && substr_compare($component, $needle, -strlen($needle)) === 0;
 			$component = $func($component, " \t\n\r\0\x0B".($isProtocol?"":"/"));
@@ -422,7 +429,7 @@ class Router extends \Touchbase\Core\Object
 			}
 		//Asset Map
 		} else {
-			$assetFilePath = Assets::pathForAssetMap($request->urlSegment());
+			$assetFilePath = static::pathForAssetMap($request->urlSegment());
 			if($assetFilePath){	
 				$assetFile = File::create([
 					BASE_PATH,
@@ -468,6 +475,51 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		return false;
+	}
+	
+	/**
+	 *	Asset Map For Path
+	 *	@param string $path
+	 *	@return string
+	 */
+	public static function assetMapForPath($path){
+		if(strpos($path, BASE_PATH) === 0) $path = substr($path, strlen(BASE_PATH));
+		return substr(md5($path), 0, 6);
+	}
+	
+	/**
+	 *	Path For Asset Map
+	 *	@param string $assetMap
+	 *	@return string
+	 */
+	public static function pathForAssetMap($assetMap){
+		return static::config("assets")->get("asset_map")->get($assetMap, null);
+	}
+	
+	/**
+	 *	Path For Asset Url
+	 *	@param string assetUrl
+	 *	@return string
+	 */
+	public static function pathForAssetUrl($assetUrl, $assetType = null){
+		if(Router::isSiteUrl($assetUrl)){
+			list($assetMapFragment, $assetUrl) = array_pad(explode("/", Router::relativeUrl($assetUrl), 2), 2, null);
+			
+			$file = File::create([BASE_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
+			if($file->exists()){
+				return $file->path;	
+			}
+			
+			// //Is it a folder?
+			// $folder = Folder::create([BASE_PATH, static::pathForAssetMap($assetMapFragment), $assetUrl]);
+			// if($folder->exists()){
+			// 	return $folder->path;	
+			// }
+			
+			return null;
+		}
+		
+		return $assetUrl;
 	}
 
 }
