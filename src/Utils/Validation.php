@@ -123,17 +123,17 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 		switch($type){
 			case "email":
 				$this->addRule(function($value) {
-					return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+					return empty($value) || filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
 				}, $errorMessage ?: "Email address is invalid");
 			break;
 			case "url":
 				$this->addRule(function($value) {
-					return filter_var($value, FILTER_VALIDATE_URL) !== false;
+					return empty($value) || filter_var($value, FILTER_VALIDATE_URL) !== false;
 				}, $errorMessage ?: "Url is invalid");
 			break;
 			case "number":
 				$this->addRule(function($value) {
-					return filter_var($value, FILTER_VALIDATE_INT) !== false || filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
+					return empty($value) || filter_var($value, FILTER_VALIDATE_INT) !== false || filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
 				}, $errorMessage ?: "Number is invalid");
 			break;
 			case "file":			
@@ -164,7 +164,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 					
 					if(is_array($error)){
 						foreach($error as $err){
-							if(!$errorValidation($err)){
+							if(!empty($value) && !$errorValidation($err)){
 								return false;
 							}
 						}
@@ -172,7 +172,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 						return true;
 					}
 					
-					return $errorValidation($error);
+					return empty($value) || $errorValidation($error);
 				});
 				
 				//Check File Validity

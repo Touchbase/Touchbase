@@ -146,9 +146,8 @@ class WebpageController extends Controller
 			
 			$privateFields = [];
 			foreach($dom->getElementsByTagName('input') as $input){
-				if($input->hasAttributes()){
-					$inputName = $input->getAttribute("name");
-					$inputType = $input->getAttribute("type");
+				if($input->hasAttributes() && $inputName = $input->getAttribute("name")){
+					$inputType = $input->getAttribute("type");					
 					$inputValidation = Validation::create($inputName);
 					
 					if($inputType === "password"){
