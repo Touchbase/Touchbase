@@ -404,9 +404,11 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 			//Move body scripts to bottom
 			$bodies = $dom->getElementsByTagName('body');
 			$body = $bodies->item(0);
-			foreach($body->getElementsByTagName('script') as $script){
-				if($script->parentNode->nodeName === "body") break;
-				$body->appendChild($dom->importNode($script));
+			if($body){
+				foreach($body->getElementsByTagName('script') as $script){
+					if($script->parentNode->nodeName === "body") break;
+					$body->appendChild($dom->importNode($script));
+				}
 			}
 			
 			//Look for the special attribute that moves nodes. 
