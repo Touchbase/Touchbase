@@ -63,6 +63,15 @@ class Template extends \Touchbase\Core\Object
 	}
 	
 	/**
+	 *	Render With String
+	 *	@param string $htmlString
+	 *	@return string - Parsed template contents
+	 */
+	public function renderWithString($htmlString){
+		return $this->variableFinder($htmlString, NULL, false);
+	}
+	
+	/**
 	 *	Render With
 	 *	@param string $templateFile - Template file location
 	 *	@return string - Parsed template contents
@@ -175,7 +184,7 @@ class Template extends \Touchbase\Core\Object
 	 *	@param string $contents - contents of the template file
 	 *	@return string
 	 */
-	private function variableFinder($contents, $templateFile){
+	private function variableFinder($contents, $templateFile, $saveToGlobal = true){
 		preg_match_all("/\\$([A-Za-z0-9\_\-\]\[\.\:\/]+)\\$/i", $contents, $templateVars);
 
 		if(!empty($templateVars[1])){
@@ -287,9 +296,11 @@ class Template extends \Touchbase\Core\Object
 			}
 		}
 		
-		//Save Unused Vars - Might be used in a parent template.
-		$GLOBALS['TemplateVars'] = array_merge($GLOBALS['TemplateVars'], $this->vars);
-		
+		if($saveToGlobal){
+			//Save Unused Vars - Might be used in a parent template.
+			$GLOBALS['TemplateVars'] = array_merge($GLOBALS['TemplateVars'], $this->vars);
+		}
+				
 		//Return String
 	 	return $contents;
 	}
