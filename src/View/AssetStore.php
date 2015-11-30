@@ -46,7 +46,7 @@ class AssetStore extends \Touchbase\Data\Store
 	
 	const JS = 'js';
 	const CSS = 'css';
-	const IMGS = 'images';
+	const IMG = 'images';
 	const META = 'meta';
 	const OTHER = 'other';
 	
@@ -280,6 +280,30 @@ class AssetStore extends \Touchbase\Data\Store
 		return Router::absoluteUrl($path);
 	}
 	
+	/**
+	 *	Url For Asset
+	 *	@param string $path
+	 *	@return string
+	 */
+	public function urlForImage($image){
+		return $this->urlForAsset(AssetStore::IMG, $image);
+	}
+	public function urlForScript($script){
+		return $this->urlForAsset(AssetStore::JS, $script);
+	}
+	public function urlForStyle($stylesheet){
+		return $this->urlForAsset(AssetStore::CSS, $stylesheet);
+	}
+	public function urlForAsset($assetType, $image){
+		$asset = $this->assetIncludeSnipit($assetType, $image, []);
+		
+		if($assetType == AssetStore::CSS){
+			return $asset->attr("href");
+		}
+		
+		return $asset->attr("src");
+	}
+	
 	/* Private Methods */
 	
 	/**
@@ -359,13 +383,18 @@ class AssetStore extends \Touchbase\Data\Store
 							"rel" => "stylesheet",
 							"type" => "text/css",
 							"href" => $filePath
-						])->render();
+						]);
 					break;
 					case self::JS:
 						return HTML::script()->attr($options)->attr([
 							"type" => "text/javascript",
 							"src" => $filePath
-						])->render();
+						]);
+					break;
+					case self::IMG:
+						return HTML::img()->attr($options)->attr([
+							"src" => $filePath
+						]);
 					break;
 				}
 			}
