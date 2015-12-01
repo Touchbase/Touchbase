@@ -136,7 +136,7 @@ class WebpageController extends Controller
 				break;
 			}
 		}
-		
+						
 		if(isset($formName) && $form = SessionStore::get($formName, false)){
 			libxml_use_internal_errors(true);
 			$dom = new \DOMDocument;
@@ -238,6 +238,9 @@ class WebpageController extends Controller
 					}
 					if($input->hasAttribute("disabled")){
 						$inputValidation->disabled();
+					}
+					if($minLength = $input->getAttribute("minlength")){
+						$inputValidation->minLength($minLength);
 					}
 					if($maxLength = $input->getAttribute("maxlength")){
 						$inputValidation->maxLength($maxLength);

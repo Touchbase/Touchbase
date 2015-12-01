@@ -235,6 +235,20 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 
 		return $this;
 	}
+	
+	/**
+	 *	Min Length
+	 *	@param integer $minLength
+	 *	@param string $errorMessage
+	 *	@return \Touchbase\Utils\Validation
+	 */
+	public function minLength($minLength, $errorMessage = null) {
+		$this->addRule(function($value) use ($minLength) {
+			return empty($value) || strlen($value) > $minLength;
+		}, $errorMessage ?: "Value entered was too short");
+
+		return $this;
+	}
 
 	/**
 	 *	Max Length
@@ -243,7 +257,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@return \Touchbase\Utils\Validation
 	 */
 	public function maxLength($maxLength, $errorMessage = null) {
-		$this->addRule(function($value) {
+		$this->addRule(function($value) use ($maxLength) {
 			return strlen($value) <= $maxLength;
 		}, $errorMessage ?: "Value entered was too long");
 
@@ -257,7 +271,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@return \Touchbase\Utils\Validation
 	 */
 	public function min($min, $errorMessage = null) {
-		$this->addRule(function($value) {
+		$this->addRule(function($value) use ($min) {
 			switch ($this->type) {
 				case "date":
 				case "datetime-local":
@@ -283,7 +297,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@return \Touchbase\Utils\Validation
 	 */
 	public function max($max, $errorMessage = null) {
-		$this->addRule(function($value) {
+		$this->addRule(function($value) use ($max) {
 			switch ($this->type) {
 				case "date":
 				case "datetime-local":
@@ -309,7 +323,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@return \Touchbase\Utils\Validation
 	 */
 	public function pattern($pattern, $errorMessage = null) {
-		$this->addRule(function($value) {
+		$this->addRule(function($value) use ($pattern) {
 			return preg_match($pattern, $value);
 		}, $errorMessage ?: "Value did not meet the validation requirements");
 
