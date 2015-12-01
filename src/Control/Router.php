@@ -453,6 +453,7 @@ class Router extends \Touchbase\Core\Object
 				"eot" => "application/vnd.ms-fontobject",
 				"ttf" => "application/font-ttf",
 				"woff"=> "application/font-woff",
+				"woff2"=> "application/font-woff2",
 				"apk" => "application/vnd.android.package-archive",
 				"ipa" => "application/octet-stream"
 			];
