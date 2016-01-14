@@ -197,20 +197,16 @@ class Controller extends RequestHandler
 		$assetConfig = $this->config("assets");
 		$templatesPath = $assetConfig->get("templates", "Templates");
 		
-		$searchPaths[] = null; //This allows the use of an absolute path to be used when merging paths.
-		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme(), $this->_controllerName);
-		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme());
-		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath), $this->_controllerName);
-		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath));
-		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath, $this->_controllerName);
-		$searchPaths[] = Filesystem::buildPath($this->applicationPath, $templatesPath);
-		$searchPaths[] = Filesystem::buildPath($this->applicationPath);
-		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme());
-		$searchPaths[] = Filesystem::buildPath(PROJECT_PATH, $templatesPath);
-		
-		foreach($searchPaths as $searchPath){
-			yield $searchPath;
-		}
+		yield null; //This allows the use of an absolute path to be used when merging paths.
+		yield Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme(), $this->_controllerName);
+		yield Filesystem::buildPath($this->applicationPath, $templatesPath, $this->theme());
+		yield Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath), $this->_controllerName);
+		yield Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme(), basename($this->applicationPath));
+		yield Filesystem::buildPath($this->applicationPath, $templatesPath, $this->_controllerName);
+		yield Filesystem::buildPath($this->applicationPath, $templatesPath);
+		yield Filesystem::buildPath($this->applicationPath);
+		yield Filesystem::buildPath(PROJECT_PATH, $templatesPath, $this->theme());
+		yield Filesystem::buildPath(PROJECT_PATH, $templatesPath);
 	}
 	
 	/* Getters / Setter */

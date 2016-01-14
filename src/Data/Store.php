@@ -214,7 +214,7 @@ class Store extends \ArrayObject implements StoreInterface
 		}
 		
 		foreach($array as $group => $data){
-			if(is_array($data) && $data !== array_values($data)){
+			if(is_array($data) /* && $data !== array_values($data) */){
 				$dataObj = new \Touchbase\Data\Store();
 				$this->set($group, $dataObj->fromArray($data));
 			} else {

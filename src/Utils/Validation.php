@@ -244,7 +244,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 */
 	public function minLength($minLength, $errorMessage = null) {
 		$this->addRule(function($value) use ($minLength) {
-			return empty($value) || strlen($value) > $minLength;
+			return empty($value) || strlen($value) >= $minLength;
 		}, $errorMessage ?: "Value entered was too short");
 
 		return $this;

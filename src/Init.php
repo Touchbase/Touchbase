@@ -126,34 +126,35 @@ class Init
 			define('WORKING_DIR', strtolower(rtrim(isset($baseURL)?$baseURL:$this->config()->get("project")->get("working_dir", ""), "/")) . "/");
 		}
 		
-		if(!defined('SITE_PROTOCOL')){
-			$protocol = '';
-			if(isset($_SERVER['HTTP_X_FORWARDED_PROTOCOL']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTOCOL']) == 'https'){
-				$protocol = 'https://';
-			} else if(isset($_SERVER['SSL']) || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')){
-				$protocol = 'https://';
-			} else {
-				$protocol = 'http://';
+		if(!Router::isCLI()){	
+			if(!defined('SITE_PROTOCOL')){
+				$protocol = '';
+				if(isset($_SERVER['HTTP_X_FORWARDED_PROTOCOL']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTOCOL']) == 'https'){
+					$protocol = 'https://';
+				} else if(isset($_SERVER['SSL']) || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')){
+					$protocol = 'https://';
+				} else {
+					$protocol = 'http://';
+				}
+				
+				define('SITE_PROTOCOL', $protocol);
 			}
 			
-			define('SITE_PROTOCOL', $protocol);
+			if(!defined('SITE_URL')){
+				define("SITE_URL", Router::buildPath(SITE_PROTOCOL.htmlentities(
+					filter_var(strtolower(@$_SERVER['HTTP_X_FORWARDED_HOST'] ?: $_SERVER['HTTP_HOST']), FILTER_SANITIZE_URL),
+					ENT_QUOTES, 'UTF-8'
+				), WORKING_DIR), true);
+				define("SITE_ROOT", SITE_URL, true);
+			}
 		}
-		
-		if(!defined('SITE_URL')){
-			define("SITE_URL", Router::buildPath(SITE_PROTOCOL.htmlentities(
-				filter_var(strtolower(@$_SERVER['HTTP_X_FORWARDED_HOST'] ?: $_SERVER['HTTP_HOST']), FILTER_SANITIZE_URL),
-				ENT_QUOTES, 'UTF-8'
-			), WORKING_DIR), true);
-			define("SITE_ROOT", SITE_URL, true);
-		}
-		
-/*
-		\pre_r(BASE_PATH);
-		\pre_r(TOUCHBASE_PATH);
-		\pre_r(PROJECT_PATH);
-		\pre_r(SITE_URL);
-		\pre_r(TOUCHBASE_ENV);
-*/
+
+		// \pre_r(BASE_PATH);
+		// \pre_r(TOUCHBASE_PATH);
+		// \pre_r(PROJECT_PATH);
+		// \pre_r(SITE_URL);
+		// \pre_r(TOUCHBASE_ENV);
+
 	}
 	
 	/**
@@ -204,9 +205,9 @@ class Init
 						//We want to match a certain condition
 						} else {
 							if( ( //Do we match the conditions?
-									strpos(@$_SERVER['HTTP_X_FORWARDED_HOST'] ?: $_SERVER['HTTP_HOST'], $condition) !== false || //Are we a different domain?
-									strpos($_SERVER["REQUEST_URI"], $condition) === 0 || //Are we a different working dir?
-									strpos($_SERVER["SERVER_NAME"], $condition) === 0 || //Are we on a different server?
+									(!Router::isCLI() && strpos(@$_SERVER['HTTP_X_FORWARDED_HOST'] ?: $_SERVER['HTTP_HOST'], $condition) !== false) || //Are we a different domain?
+									(!Router::isCLI() && strpos($_SERVER["REQUEST_URI"], $condition) === 0) || //Are we a different working dir?
+									(!Router::isCLI() && strpos($_SERVER["SERVER_NAME"], $condition) === 0) || //Are we on a different server?
 									(strtoupper(substr(php_uname('s'), 0, 3)) === 'WIN' && $condition == "windows") || //Are we on a differnet os?
 									(defined("TOUCHBASE_ENV") && TOUCHBASE_ENV == $condition) // Are we on a different environment (dev/live)
 								) && $extraConfigFile->exists()
