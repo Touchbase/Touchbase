@@ -145,127 +145,129 @@ class WebpageController extends Controller
 			$formValidation = Validation::create($formName);
 			
 			$privateFields = [];
-			foreach($dom->getElementsByTagName('input') as $input){
-				if($input->hasAttributes() && $inputName = $input->getAttribute("name")){
-					$inputType = $input->getAttribute("type");					
-					$inputValidation = Validation::create($inputName);
-					
-					if($inputType === "password"){
-						$privateFields[] = $inputName;
-					}
-					
-					$inputValidation->type($inputType);
-					if($inputType === "file" && $input->hasAttribute("accept")){
-						$validTypes = explode(",", $input->getAttribute("accept"));
-						
-						//File Extentions
-						$fileExt = array_filter($validTypes, function($value){
-							return strpos($value, ".") === 0;
-						});
-						if(!empty($fileExt)){
-							$inputValidation->addRule(function($value) use ($fileExt){
-								$name = $value['name'];
-								if(is_array($name)){
-	
-									foreach($name as $nme){
-										if(!in_array(pathinfo($nme, PATHINFO_EXTENSION), $fileExt)){
-											return false;
-										}
-									}
-									return true;
-								}
-								
-								return in_array(pathinfo($name, PATHINFO_EXTENSION), $fileExt);
-							}, "A file uploaded did not have the correct extension");
-						}
-						
-						//Mime Types
-						$validTypes = array_diff($validTypes, $fileExt);
-						$implicitFileMime = array_filter($validTypes, function($value){
-							return strpos($value, "/*") !== false;
-						});
-						if(!empty($implicitFileMime)){
-							$inputValidation->addRule(function($value) use ($implicitFileMime){
-								$tmpName = $value['tmp_name'];
-								
-								if(is_array($tmpName)){
-									foreach($tmpName as $tmp){
-										$mime = strstr(File::create($tmp)->mime(), "/", true)."/*";
-										if(!in_array($mime, $implicitFileMime)){
-											return false;	
-										}
-									}
-									return true;
-								}
-								
-								$mime = strstr(File::create($tmpName)->mime(), "/", true)."/*";
-								return in_array($mime, $implicitFileMime);
-							}, "A file uploaded did not have the correct mime type");
-						}
-						
-						$validTypes = array_diff($validTypes, $implicitFileMime);
-						$fileMime = array_filter($validTypes, function($value){
-							return strpos($value, "/") !== false;
-						});
-						if(!empty($fileMime)){
-							$inputValidation->addRule(function($value) use ($fileMime){
-								$tmpName = $value['tmp_name'];
-								
-								if(is_array($tmpName)){
-									foreach($tmpName as $tmp){
-										if(!in_array(File::create($tmp)->mime(), $fileMime)){
-											return false;
-										}
-									}
-									return true;
-								}
-								return in_array(File::create($tmpName)->mime(), $fileMime);
-							}, "A file uploaded did not have the correct mime type");
-						}
-					}
-					
-					if($input->hasAttribute("required")){
-						
-						$errorMessage = null;
-						if($placeholder = $input->getAttribute("placeholder")){
-							$errorMessage = sprintf("Please complete the `%s` field", $placeholder);
-						}
-						
-						$inputValidation->required($errorMessage);
-					}
-					if($input->hasAttribute("readonly")){
-						$inputValidation->readonly($input->getAttribute("value"));
-					}
-					if($input->hasAttribute("disabled")){
-						$inputValidation->disabled();
-					}
-					if($minLength = $input->getAttribute("minlength")){
-						$inputValidation->minLength($minLength);
-					}
-					if($maxLength = $input->getAttribute("maxlength")){
-						$inputValidation->maxLength($maxLength);
-					}
-					if(in_array($inputType, ["number", "range", "date", "datetime", "datetime-local", "month", "time", "week"])){
-						if($min = $input->getAttribute("min")){
-							$inputValidation->min($min);
-						}
-						
-						if($min = $input->getAttribute("max")){
-							$inputValidation->min($max);
-						}
-					}
-					if($pattern = $input->getAttribute("pattern")){
-						$inputValidation->pattern($pattern);
-					}
-					
-					if(count($inputValidation)){
-						$validation->addRule($formValidation->addRule($inputValidation));
-					}
-				}
-			}	
+            foreach(["input", "textarea", "select"] as $tag){
+                foreach($dom->getElementsByTagName($tag) as $input){
+                    if($input->hasAttributes() && $inputName = $input->getAttribute("name")){
+                        $inputType = $input->getAttribute("type");					
+                        $inputValidation = Validation::create($inputName);
+                        
+                        if($inputType === "password"){
+                            $privateFields[] = $inputName;
+                        }
+                        
+                        $inputValidation->type($inputType);
+                        if($inputType === "file" && $input->hasAttribute("accept")){
+                            $validTypes = explode(",", $input->getAttribute("accept"));
+                            
+                            //File Extentions
+                            $fileExt = array_filter($validTypes, function($value){
+                                return strpos($value, ".") === 0;
+                            });
+                            if(!empty($fileExt)){
+                                $inputValidation->addRule(function($value) use ($fileExt){
+                                    $name = $value['name'];
+                                    if(is_array($name)){
+        
+                                        foreach($name as $nme){
+                                            if(!in_array(pathinfo($nme, PATHINFO_EXTENSION), $fileExt)){
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    }
+                                    
+                                    return in_array(pathinfo($name, PATHINFO_EXTENSION), $fileExt);
+                                }, "A file uploaded did not have the correct extension");
+                            }
+                            
+                            //Mime Types
+                            $validTypes = array_diff($validTypes, $fileExt);
+                            $implicitFileMime = array_filter($validTypes, function($value){
+                                return strpos($value, "/*") !== false;
+                            });
+                            if(!empty($implicitFileMime)){
+                                $inputValidation->addRule(function($value) use ($implicitFileMime){
+                                    $tmpName = $value['tmp_name'];
+                                    
+                                    if(is_array($tmpName)){
+                                        foreach($tmpName as $tmp){
+                                            $mime = strstr(File::create($tmp)->mime(), "/", true)."/*";
+                                            if(!in_array($mime, $implicitFileMime)){
+                                                return false;	
+                                            }
+                                        }
+                                        return true;
+                                    }
+                                    
+                                    $mime = strstr(File::create($tmpName)->mime(), "/", true)."/*";
+                                    return in_array($mime, $implicitFileMime);
+                                }, "A file uploaded did not have the correct mime type");
+                            }
+                            
+                            $validTypes = array_diff($validTypes, $implicitFileMime);
+                            $fileMime = array_filter($validTypes, function($value){
+                                return strpos($value, "/") !== false;
+                            });
+                            if(!empty($fileMime)){
+                                $inputValidation->addRule(function($value) use ($fileMime){
+                                    $tmpName = $value['tmp_name'];
+                                    
+                                    if(is_array($tmpName)){
+                                        foreach($tmpName as $tmp){
+                                            if(!in_array(File::create($tmp)->mime(), $fileMime)){
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    }
+                                    return in_array(File::create($tmpName)->mime(), $fileMime);
+                                }, "A file uploaded did not have the correct mime type");
+                            }
+                        }
+                        
+                        if($input->hasAttribute("required")){
+                            
+                            $errorMessage = null;
+                            if($placeholder = $input->getAttribute("placeholder")){
+                                $errorMessage = sprintf("Please complete the `%s` field", $placeholder);
+                            }
+                            
+                            $inputValidation->required($errorMessage);
+                        }
+                        if($input->hasAttribute("readonly")){
+                            $inputValidation->readonly($input->getAttribute("value"));
+                        }
+                        if($input->hasAttribute("disabled")){
+                            $inputValidation->disabled();
+                        }
+                        if($minLength = $input->getAttribute("minlength")){
+                            $inputValidation->minLength($minLength);
+                        }
+                        if($maxLength = $input->getAttribute("maxlength")){
+                            $inputValidation->maxLength($maxLength);
+                        }
+                        if(in_array($inputType, ["number", "range", "date", "datetime", "datetime-local", "month", "time", "week"])){
+                            if($min = $input->getAttribute("min")){
+                                $inputValidation->min($min);
+                            }
+                            
+                            if($min = $input->getAttribute("max")){
+                                $inputValidation->min($max);
+                            }
+                        }
+                        if($pattern = $input->getAttribute("pattern")){
+                            $inputValidation->pattern($pattern);
+                        }
+                        
+                        if(count($inputValidation)){
+                            $validation->addRule($formValidation->addRule($inputValidation));
+                        }
+                    }
+                }
+            }	
 			
-			$response->withData(array_diff_key($data, array_flip($privateFields)));
 			if(!$validation->validate($data)){
+                $response->withData(array_diff_key($data, array_flip($privateFields)));
 				$response->redirect(-1)->withErrors($validation->errors, $formName);
 			}
 		}

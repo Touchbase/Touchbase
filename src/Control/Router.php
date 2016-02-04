@@ -465,7 +465,7 @@ class Router extends \Touchbase\Core\Object
 				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
 				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
 
-				if(static::config("assets")->get("x_sendfile", false) || (function_exists("apache_get_modules") && in_array('mod_xsendfile', apache_get_modules()))){
+				if(php_sapi_name() != 'cli-server' && static::config("assets")->get("x_sendfile", false)){
 					$response->addHeader("X-Sendfile", $assetFile->path);
 				} else {
 					$response->setBody($assetFile->read());
