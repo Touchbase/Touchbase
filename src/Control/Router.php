@@ -145,7 +145,7 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		//TODO: It would be good for this to reside in $response->render() - But would need access to $request.
-		if((!$response->isError() || $response->statusCode() === 401) && !$response->hasFinished() && $request->isMainRequest() && !$request->isAjax()){
+		if(((!$response->isError() && !$response->hasFinished()) || $response->statusCode() === 401) && $request->isMainRequest() && !$request->isAjax()){
 			if(strpos($response->getHeader("Content-Type"), "text/html") === 0){
 				static::setRouteHistory(static::buildParams($request->url(), $_GET));
 			}
