@@ -360,25 +360,35 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 					$link->setAttribute('class', implode(" ", $currentClasses));
 				}
 			}
-			
+            
 			//Save the outgoing form elements for future validation.
 			foreach($dom->getElementsByTagName('form') as $form){
 				$savedom = new \DOMDocument;
-				
-				if(($formAction = $form->getAttribute("action") && !Router::isSiteUrl($formAction)) 
-				|| $form->hasAttribute("novalidate")){
+							
+				if($formAction = $form->getAttribute("action") && !Router::isSiteUrl($formAction)){
 					continue;
 				}
 				
+				//Add CSRF
+				$rand = function_exists('random_bytes') ? random_bytes(32) : null;
+				$rand = !$rand && function_exists('mcrypt_create_iv') ? mcrypt_create_iv(32, MCRYPT_DEV_URANDOM) : $rand;
+				$rand = $rand ? $rand : openssl_random_pseudo_bytes(32);
+
+				$csrfToken = bin2hex($rand);
 				$formName = $form->getAttribute("name");
+                $formNameToken = $formName . "_" . $csrfToken;
+				
+				$csrf = $dom->createDocumentFragment();
+				$csrf->appendXML(HTML::input()->attr("type", "hidden")->attr("name", "tb_form_token")->attr("value", $formNameToken)->attr("readonly", true));	
+				$form->insertBefore($csrf, $form->firstChild); //TODO: Should we assume the form will allways have content
 				
 				foreach(["input", "textarea", "select"] as $tag){
 					foreach($form->getElementsByTagName($tag) as $input){
 						$savedom->appendChild($savedom->importNode($input->cloneNode()));
 						
 						//Populate form with previous data
-						if($newValue = SessionStore::get("post")->get($input->getAttribute("name"), false)){
-							if(is_scalar($newValue)){
+						if($newValue = SessionStore::get("touchbase.key.session.post")->get($input->getAttribute("name"), false)){
+							if(is_scalar($newValue) && $input->getAttribute("type") !== "hidden" && !$input->hasAttribute("readonly")){
 								$input->setAttribute('value', $newValue);
 							}
 						}
@@ -398,7 +408,7 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 					}
 				}
 				
-				SessionStore::flash($formName, base64_encode(gzdeflate($savedom->saveHTML(), 9)));
+                SessionStore::recycle($formName, $formNameToken, base64_encode(gzdeflate($savedom->saveHTML(), 9)));
 			}
 				
 			//Move body scripts to bottom

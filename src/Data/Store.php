@@ -122,24 +122,60 @@ class Store extends \ArrayObject implements StoreInterface
 		
 		return $this;
 	}
-	
-	/**
-	 *	Pop
-	 *	Removes an element from the array and returns it
-	 *	@param string $property
+    
+    /**
+	 *	Shift
+	 *	Removes an element from the beginning of the array and returns it
+	 *	@param string $name
 	 *	@param mixed $default
 	 *	@throws \InvalidArgumentException if the value of the key `$property` is not an array
 	 *	@return mixed
 	 */
-	public function pop($property, $default = null){
-		$array = $this->get($property, []);
+	public function shift($name, $default = null){
+		$array = $this->get($name, []);
+		
+		if(!is_array($array)){
+			throw new \InvalidArgumentException("Property is not an array.");
+		}
+		
+		$result = array_shift($array);
+		$this->set($name, $array);
+		return $result ?: $default;
+	}
+    
+    /**
+	 *	Unshift
+	 *	Pushes arbitrary variables to the array
+	 *	@param string $name
+	 *	@param va_list | array $values
+	 *	@return integer
+	 */
+	public function unshift($name /*, ...$values */){
+		$values = func_get_args(); array_shift($values);	
+		return $this->pushHelper($name, $values, true);
+	}
+	public function unshiftUnique($name /*, ...$values */){
+		$values = func_get_args(); array_shift($values);	
+		return $this->pushHelper($name, $values, true, true);
+	}
+	
+	/**
+	 *	Pop
+	 *	Removes an element from the array and returns it
+	 *	@param string $name
+	 *	@param mixed $default
+	 *	@throws \InvalidArgumentException if the value of the key `$property` is not an array
+	 *	@return mixed
+	 */
+	public function pop($name, $default = null){
+		$array = $this->get($name, []);
 		
 		if(!is_array($array)){
 			throw new \InvalidArgumentException("Property is not an array.");
 		}
 		
 		$result = array_pop($array);
-		$this->set($property, $array);
+		$this->set($name, $array);
 		return $result ?: $default;
 	}
 	
@@ -148,7 +184,7 @@ class Store extends \ArrayObject implements StoreInterface
 	 *	Pushes arbitrary variables to the array
 	 *	@param string $name
 	 *	@param va_list | array $values
-	 *	@return array
+	 *	@return integer
 	 */
 	public function push($name /*, ...$values */){
 		$values = func_get_args(); array_shift($values);	
@@ -156,21 +192,25 @@ class Store extends \ArrayObject implements StoreInterface
 	}
 	public function pushUnique($name /*, ...$values */){
 		$values = func_get_args(); array_shift($values);	
-		return $this->pushHelper($name, $values, true);
+		return $this->pushHelper($name, $values, false, true);
 	}
-	private function pushHelper($name, $values, $unique = false){
+	private function pushHelper($name, $values, $unshift = false, $unique = false){
 		$array = $this->get($name, []);
 		
 		foreach($values as $value){
 			if(is_array($value)){
-				$array = array_merge($array, $value);
+				$array = $unshift ? array_merge($value, $array) : array_merge($array, $value);
 			} else if(isset($value)){
-				$array[] = $value;
+                if($unshift){
+                    array_unshift($array, $value);
+                } else {
+                    $array[] = $value;
+                }
 			}
 		}
 		
-		$this->set($name, $unique ? array_unique($array) : $array);		
-		return $this;
+		$this->set($name, $array = ($unique ? array_unique($array) : $array));		
+		return count($array);
 	}
 	
 	/**

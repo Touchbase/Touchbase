@@ -71,6 +71,11 @@ class Controller extends RequestHandler
 	 *	@var string
 	 */
 	protected $_applicationPath;
+    
+    /**
+	 *	@var array
+	 */
+	protected $_messages;
 	
 	/**
 	 *	@var array
@@ -156,13 +161,25 @@ class Controller extends RequestHandler
 	public function handleException(HTTPResponseException $exception){
 		return $this->application()->handleException($exception);
 	}
+    
+    /**
+	 *	Messages
+	 *	@return \Touchbase\Data\Store
+	 */
+	public function messages($key = null){
+		$messages = SessionStore::get("touchbase.key.session.messages", new Store());
+		if(isset($key)){
+			return $messages->get($key);
+		}
+		return $messages;
+	}
 	
 	/**
 	 *	Errors
 	 *	@return \Touchbase\Data\Store
 	 */
 	public function errors($key = null){
-		$errors = SessionStore::get("errors", new Store());
+		$errors = SessionStore::get("touchbase.key.session.errors", new Store());
 		if(isset($key)){
 			return $errors->get($key);
 		}

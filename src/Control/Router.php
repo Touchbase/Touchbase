@@ -108,6 +108,8 @@ class Router extends \Touchbase\Core\Object
 			$request = HTTPRequest::create($requestMethod, $url)->setMainRequest(true);
 		}
 		
+        SessionStore::ageFlash();
+        
 		if(!static::handleRequest($request, $response)){
 			try {			
 				//Get Dispatchable
@@ -143,12 +145,16 @@ class Router extends \Touchbase\Core\Object
 		}
 		
 		//TODO: It would be good for this to reside in $response->render() - But would need access to $request.
-		if(!$response->isError() && $request->isMainRequest() && !$request->isAjax()){
+		if((!$response->isError() || $response->statusCode() === 401) && !$response->hasFinished() && $request->isMainRequest() && !$request->isAjax()){
 			if(strpos($response->getHeader("Content-Type"), "text/html") === 0){
 				static::setRouteHistory(static::buildParams($request->url(), $_GET));
 			}
 		}
 		
+        if(static::isDev()){
+            error_log(sprintf("%s [%d]: %s - %s", $requestMethod, $response->statusCode(), $url, $response->statusDescription()), 4);
+        }
+        
 		return $response;
 	}
 		

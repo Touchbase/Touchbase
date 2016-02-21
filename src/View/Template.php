@@ -95,6 +95,7 @@ class Template extends \Touchbase\Core\Object
 		$this->assign("controller", $this->controller);
 		$this->assign("request", $this->controller->request());
 		$this->assign("errors", $this->controller->errors);
+        $this->assign("messages", $this->controller->messages);
 		
 		//TODO: Sort this out!
 		if(isset($this->controller) && $this->controller instanceof \Touchbase\Control\WebpageController){

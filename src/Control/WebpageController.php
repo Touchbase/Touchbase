@@ -127,20 +127,23 @@ class WebpageController extends Controller
 	 *	@return VOID
 	 */
 	protected function validatePostRequest($request, &$response, &$validation){
+        if(!$request->isMainRequest()) return;
 		
-		$data = $request->_VARS();
-		//Reverse Loop - Submit buttons are usually at the bottom.
-		for(end($data); ($haystack=key($data)) !==null; prev($data)){
-			if(stripos($haystack, $needle = "submit_") !== false){
-				$formName = substr($haystack, strlen($needle));
-				break;
-			}
-		}
-						
-		if(isset($formName) && $form = SessionStore::get($formName, false)){
+		$formNameToken = $request->_VAR("tb_form_token");
+        $formName = substr($formNameToken, 0, strrpos($formNameToken, "_"));
+        
+		if(isset($formNameToken) && $form = SessionStore::get($formNameToken, false)){
+            SessionStore::consume($formName, $formNameToken);
+
+			$data = $request->_VARS();
+			
 			libxml_use_internal_errors(true);
 			$dom = new \DOMDocument;
 			$dom->loadHtml(gzinflate(base64_decode($form)), LIBXML_NOWARNING | LIBXML_NOERROR);
+			
+			if($dom->documentElement->getAttribute("novalidate")){
+				return;
+			}
 			
 			$formValidation = Validation::create($formName);
 			
@@ -224,7 +227,6 @@ class WebpageController extends Controller
                                 }, "A file uploaded did not have the correct mime type");
                             }
                         }
-                        
                         if($input->hasAttribute("required")){
                             
                             $errorMessage = null;
@@ -248,11 +250,11 @@ class WebpageController extends Controller
                         }
                         if(in_array($inputType, ["number", "range", "date", "datetime", "datetime-local", "month", "time", "week"])){
                             if($min = $input->getAttribute("min")){
-                                $inputValidation->min($min);
+                                $inputValidation->min($min, $inputType);
                             }
                             
-                            if($min = $input->getAttribute("max")){
-                                $inputValidation->min($max);
+                            if($max = $input->getAttribute("max")){
+                                $inputValidation->max($max, $inputType);
                             }
                         }
                         if($pattern = $input->getAttribute("pattern")){
@@ -263,13 +265,15 @@ class WebpageController extends Controller
                             $validation->addRule($formValidation->addRule($inputValidation));
                         }
                     }
-                }
-            }	
+                }	
+            }
 			
 			if(!$validation->validate($data)){
                 $response->withData(array_diff_key($data, array_flip($privateFields)));
 				$response->redirect(-1)->withErrors($validation->errors, $formName);
 			}
+		} else {
+			$response->redirect(-1)->withErrors(["Session timed out, please try again."], $formName);
 		}
 	}
 }

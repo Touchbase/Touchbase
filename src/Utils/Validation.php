@@ -69,9 +69,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@return \Touchbase\Utils\Validation
 	 */
 	public function addRule($rule, $errorMessage = null) {
-		if ($rule instanceof \Closure) {
-			$this->rules[] = [$rule, $errorMessage];
-		} else if ($rule instanceof $this) {
+		if ($rule instanceof \Closure || $rule instanceof $this) {
 			$this->rules[] = [$rule, $errorMessage];
 		} else {
 			trigger_error(sprintf("Argument %d passed to %s must be an instance of %s, %s given", 1, __METHOD__, "Closure", is_object($rule)?get_class($rule):gettype($rule)), E_USER_WARNING);
@@ -270,13 +268,13 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@param string $errorMessage
 	 *	@return \Touchbase\Utils\Validation
 	 */
-	public function min($min, $errorMessage = null) {
-		$this->addRule(function($value) use ($min) {
-			switch ($this->type) {
+	public function min($min, $inputType = "number", $errorMessage = null) {
+		$this->addRule(function($value) use ($min, $inputType) {
+			switch ($inputType) {
 				case "date":
 				case "datetime-local":
 				case "time":
-					return new \DateTime($value) >= \DateTime($min);
+					return new \DateTime($value) >= new \DateTime($min);
 				case "month":
 					return (new \DateTime($value))->format("m") >= (new \DateTime($min))->format("m");
 				case "number":
@@ -296,13 +294,13 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@param string $errorMessage
 	 *	@return \Touchbase\Utils\Validation
 	 */
-	public function max($max, $errorMessage = null) {
-		$this->addRule(function($value) use ($max) {
-			switch ($this->type) {
+	public function max($max, $inputType = "number", $errorMessage = null) {
+		$this->addRule(function($value) use ($max, $inputType) {
+			switch ($inputType) {
 				case "date":
 				case "datetime-local":
 				case "time":
-					return new \DateTime($value) <= \DateTime($max);
+					return new \DateTime($value) <= new \DateTime($max);
 				case "month":
 					return (new \DateTime($value))->format("m") <= (new \DateTime($max))->format("m");
 				case "number":

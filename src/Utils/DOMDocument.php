@@ -59,10 +59,12 @@ class DOMDocument extends \DOMDocument
 	public function loadHTML($source, $options = 0){
 		$this->recover = false;
 		
-		if($options & LIBXML_HTML_NOIMPLIED && version_compare(LIBXML_DOTTED_VERSION, "2.7.7", "<")){
-			if(strpos($source, "<!DOCTYPE") !== 0){
-				$source = '<wrapper id="TB_LIBXML_NOIMPLIED_WRAPPER">' . $source . '</wrapper>';
-				$this->appliedPreXML277Wrapper = true;
+		if(!empty($source)){
+			if(ltrim($source)[0] !== "<" || $options & LIBXML_HTML_NOIMPLIED && version_compare(LIBXML_DOTTED_VERSION, "2.7.7", "<")){
+				if(strpos($source, "<!DOCTYPE") !== 0){
+					$source = '<wrapper id="TB_LIBXML_NOIMPLIED_WRAPPER">' . $source . '</wrapper>';
+					$this->appliedPreXML277Wrapper = true;
+				}
 			}
 		}
 		
@@ -78,7 +80,7 @@ class DOMDocument extends \DOMDocument
 	public function saveHTML(\DOMNode $node = NULL){
 		
 		if($this->appliedPreXML277Wrapper){
-			if(!$node || $node->nodeName === "html"){
+			if(!$node || $node->nodeName === "html" || $node->nodeName === "wrapper"){
 				$xpath = new \DOMXPath($this);
 				$wrapper = $xpath->query("//*[@id='TB_LIBXML_NOIMPLIED_WRAPPER']")->item(0);
 				$wrapper = $wrapper->parentNode->removeChild($wrapper);

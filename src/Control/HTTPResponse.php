@@ -137,7 +137,7 @@ class HTTPResponse extends HTTPHeaders
 	 *	@return VOID
 	 */
 	public function render(){
-		if(in_array($this->statusCode, $this->redirectCodes) && headers_sent($file, $line)) {
+		if(in_array($this->statusCode, $this->redirectCodes) && headers_sent($file, $line)) {			
 			//We want to redirect, Unfortunatly the headers have already been sent.	
 			$url = $this->getHeader("Location");
 			print '
@@ -206,17 +206,31 @@ class HTTPResponse extends HTTPHeaders
 		
 		return $this;
 	}
+    
+    /**
+	 *	With Message
+	 *	Attach an array of messages to the response
+	 *	@param array $messages
+	 *	@param string $formName
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
+	public function withMessages(array $messages, $formName = 'global'){
+		$messages = Store::create()->set($formName, Store::create($messages));
+		SessionStore::flash($key = "touchbase.key.session.messages", SessionStore::get($key)->set($messages));
+		
+		return $this;
+	}
 	
 	/**
 	 *	With Errors
-	 *	Attach an error of errors to the response
+	 *	Attach an array of errors to the response
 	 *	@param array $errors
 	 *	@param string $formName
 	 *	@return \Touchbase\Control\HTTPResponse
 	 */
 	public function withErrors(array $errors, $formName = 'global'){
 		$errors = Store::create()->set($formName, Store::create($errors));
-		SessionStore::flash("errors", SessionStore::get("errors")->set($errors));
+		SessionStore::flash($key = "touchbase.key.session.errors", SessionStore::get($key)->set($errors));
 		
 		return $this;
 	}
@@ -228,7 +242,7 @@ class HTTPResponse extends HTTPHeaders
 	 *	@return \Touchbase\Control\HTTPResponse
 	 */
 	public function withData(array $data){
-		SessionStore::flash("post", SessionStore::get("post")->set($data));
+		SessionStore::flash($key = "touchbase.key.session.post", SessionStore::get($key)->set($data));
 		
 		return $this;
 	}
@@ -285,6 +299,14 @@ class HTTPResponse extends HTTPHeaders
 	 */
 	public function statusCode(){
 		return $this->statusCode;
+	}
+    
+    /**
+	 *	Status Description
+	 *	@return string
+	 */
+	public function statusDescription(){
+		return $this->statusDescription;
 	}
 		
 	/* Private Methods */

@@ -36,6 +36,7 @@ use Touchbase\Control\Session;
 final class SessionStore
 {
 	const FLASH_KEY = 'touchbase.key.store.flash';
+    const RECYCLE_KEY = 'touchbase.key.store.recycle.';
 	const STORE_SESSION_KEY = 'touchbase.key.store.session';
 	
 	/**
@@ -57,11 +58,6 @@ final class SessionStore
 			Session::set(self::STORE_SESSION_KEY, $store);
 		}
 		
-		if(static::$flushFlash){
-			static::$flushFlash = false;
-			static::ageFlashedData($store);
-		}
-		
 		return $store;
 	}
 	
@@ -77,6 +73,38 @@ final class SessionStore
 		}
 	}
 	
+    /**
+	 *	Recycle
+	 *	@param string $bin
+     *	@param string $key
+	 *	@param mixed $value
+	 *	@return VOID
+	 */
+    public static function recycle($bin, $key, $value){
+        SessionStore::set($key, $value);
+        $count = SessionStore::unshift(self::RECYCLE_KEY . $bin, $key);
+        
+        if($count > 5){
+            SessionStore::delete(SessionStore::pop(self::RECYCLE_KEY . $bin));
+        }
+    }
+    
+    /**
+	 *	Consume
+	 *	@param string $bin
+     *	@param string $key
+	 *	@return VOID
+	 */
+    public static function consume($bin, $key){
+        $array = SessionStore::get(self::RECYCLE_KEY . $bin);
+        foreach(array_keys($array, $key, true) as $removeKey){
+            unset($array[$removeKey]);
+        }
+        
+        SessionStore::set(self::RECYCLE_KEY . $bin, $array);
+        SessionStore::delete($key);
+    }
+    
 	/**
 	 *	Flash
 	 *	@param string $key
@@ -84,10 +112,10 @@ final class SessionStore
 	 *	@return VOID
 	 */
 	public static function flash($key, $value){
-		static::shared()->set($key, $value);
-		static::shared()->push(self::FLASH_KEY, $key);
+		SessionStore::set($key, $value);
+		SessionStore::push(self::FLASH_KEY, $key);
 		
-		static::shared()->set(self::FLASH_KEY.".aged", array_diff(static::shared()->get(self::FLASH_KEY.".aged", []), [$key]));
+		SessionStore::set(self::FLASH_KEY.".aged", array_diff(SessionStore::get(self::FLASH_KEY.".aged", []), [$key]));
 	}
 	
 	/**
@@ -96,7 +124,9 @@ final class SessionStore
 	 *	@return VOID
 	 */
 	public static function reflash(){
-		//TODO: reflash sounds like a good idea.	
+		$aged = SessionStore::get(self::FLASH_KEY.".aged", []);
+		$values = array_unique(array_merge(SessionStore::get(self::FLASH_KEY, []), $aged));
+		SessionStore::set(self::FLASH_KEY, $values);
 	}
 	
 	/**
@@ -104,9 +134,20 @@ final class SessionStore
 	 *	@return VOID
 	 */
 	public static function flush(){
-		static::shared()->delete(self::STORE_SESSION_KEY);
+		SessionStore::delete(self::STORE_SESSION_KEY);
 	}
 	
+    /**
+	 *	Flush
+	 *	@return VOID
+	 */
+    public static function ageFlash(){
+        if(static::$flushFlash){
+            static::$flushFlash = false;
+            static::ageFlashedData(static::shared());
+        }
+    }
+    
 	/* Private Methods */
 	
 	/**
@@ -115,7 +156,6 @@ final class SessionStore
 	 *	@return VOID
 	 */
 	private static function ageFlashedData(Store $store){
-		
 		foreach($store->get(self::FLASH_KEY.".aged") as $flashKey){
 			$store->delete($flashKey);
 		}
