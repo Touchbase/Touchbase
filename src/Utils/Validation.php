@@ -84,6 +84,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@return BOOL
 	 */
 	public function validate($input) {
+        $input = static::array_flattern($input);
 		
 		foreach ($this->rules as $rule) {
 			
@@ -131,7 +132,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 			break;
 			case "number":
 				$this->addRule(function($value) {
-					return empty($value) || filter_var($value, FILTER_VALIDATE_INT) !== false || filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
+					return is_numeric($value);
 				}, $errorMessage ?: "Number is invalid");
 			break;
 			case "file":			
@@ -201,7 +202,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 */
 	public function required($errorMessage = null) {
 		$this->addRule(function($value) {
-			return !empty($value);
+			return strlen($value) !== 0;
 		}, $errorMessage ?: "Required value was not submitted");
 
 		return $this;
@@ -375,4 +376,26 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	public function count() {
 		return count($this->rules);
 	}
+    
+    /* Private Methods */
+    
+    /**
+	 *	array_flattern
+     *  @param array $array
+	 *	@return array
+	 */
+    private static function array_flattern($array, $prepend = '', $idx = 0){
+        if(!$idx && count($array) == count($array, COUNT_RECURSIVE)) return $array;
+        
+        $results = [];
+        foreach ($array as $key => $value) {
+            $key = $idx ? $prepend."[$key]" : $key;
+            if (is_array($value)) {
+                $results = array_merge($results, static::array_flattern($value, $key, $idx + 1));
+            } else {
+                $results[$key] = $value;
+            }
+        }
+        return $results;
+    }
 }
