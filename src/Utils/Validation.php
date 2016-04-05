@@ -390,12 +390,13 @@ class Validation extends \Touchbase\Core\Object implements \Countable
         $results = [];
         foreach ($array as $key => $value) {
             $key = $idx ? $prepend."[$key]" : $key;
-            if (is_array($value)) {
+            if (is_array($value) && !isset($_FILES[$key])) {
                 $results = array_merge($results, static::array_flattern($value, $key, $idx + 1));
             } else {
                 $results[$key] = $value;
             }
         }
+
         return $results;
     }
 }
