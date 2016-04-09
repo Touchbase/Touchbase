@@ -83,7 +83,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 	 *	@param array $input - The post array
 	 *	@return BOOL
 	 */
-	public function validate($input) {
+	public function validate(&$input) {
         $input = static::array_flattern($input);
 		
 		foreach ($this->rules as $rule) {

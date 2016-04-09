@@ -387,7 +387,7 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 						$savedom->appendChild($savedom->importNode($input->cloneNode()));
 						
 						//Populate form with previous data
-						if($newValue = SessionStore::get("touchbase.key.session.post")->get($input->getAttribute("name"), false)){
+						if(($newValue = SessionStore::get("touchbase.key.session.post")->get($input->getAttribute("name"), false)) !== false){
 							if(is_scalar($newValue) && $input->getAttribute("type") !== "hidden" && !$input->hasAttribute("readonly")){
 								$input->setAttribute('value', $newValue);
 							}
