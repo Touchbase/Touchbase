@@ -132,7 +132,7 @@ class Validation extends \Touchbase\Core\Object implements \Countable
 			break;
 			case "number":
 				$this->addRule(function($value) {
-					return is_numeric($value);
+					return empty($value) || is_numeric($value);
 				}, $errorMessage ?: "Number is invalid");
 			break;
 			case "file":			
