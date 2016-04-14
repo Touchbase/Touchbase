@@ -122,6 +122,14 @@ class Controller extends RequestHandler
 	public function request(){
 		return $this->request;
 	}
+    
+    /**
+	 *	Response
+	 *	@return \Touchbase\Control\HTTPResponse
+	 */
+	public function response(){
+		return $this->response;
+	}
 	
 	/**
 	 *	Handle Request

@@ -33,7 +33,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Data\SessionStore;
 use Touchbase\Control\Router;
-use Touchbase\Control\WebpageController;
+use Touchbase\Control\Controller;
 use Touchbase\Filesystem\File;
 use Touchbase\Utils\SystemDetection;
 use Touchbase\Utils\DOMDocument;
@@ -46,7 +46,7 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 	protected $layout = "layout.tpl.php";
 	
 	/**
-	 *	@var \Touchbase\Control\WebpageController
+	 *	@var \Touchbase\Control\Controller
 	 */
 	protected $controller = null;
 	
@@ -69,11 +69,14 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 
 	/**
 	 *	__construct
-	 *	@param \Touchbase\Control\WebpageController $controller
+	 *	@param \Touchbase\Control\Controller $controller
+     *	@param array $assets
 	 */
-	public function __construct(WebpageController $controller){
+	public function __construct(Controller $controller, $assets = null){
 		
 		$this->controller = $controller;
+        
+        $this->_assets = AssetStore::create($this->controller->config(), $assets)->setController($this->controller);
 		
 		//Set Default Title, if available...
 		$this->assets()->pushTitle($controller->config("project")->get("name", null));
@@ -211,10 +214,6 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 	 *	@return \Touchbase\View\Assets
 	 */
 	public function assets(){
-		if(!$this->_assets){
-			$this->_assets = AssetStore::create($this->controller->config())->setController($this->controller);
-		}
-
 		return $this->_assets;
 	}
 	

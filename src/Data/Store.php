@@ -132,7 +132,7 @@ class Store extends \ArrayObject implements StoreInterface
 	 *	@return mixed
 	 */
 	public function shift($name, $default = null){
-		$array = $this->get($name, []);
+		$array = (array)$this->get($name, []);
 		
 		if(!is_array($array)){
 			throw new \InvalidArgumentException("Property is not an array.");
@@ -168,7 +168,7 @@ class Store extends \ArrayObject implements StoreInterface
 	 *	@return mixed
 	 */
 	public function pop($name, $default = null){
-		$array = $this->get($name, []);
+		$array = (array)$this->get($name, []);
 		
 		if(!is_array($array)){
 			throw new \InvalidArgumentException("Property is not an array.");
@@ -195,7 +195,7 @@ class Store extends \ArrayObject implements StoreInterface
 		return $this->pushHelper($name, $values, false, true);
 	}
 	private function pushHelper($name, $values, $unshift = false, $unique = false){
-		$array = $this->get($name, []);
+		$array = (array)$this->get($name, []);
 		
 		foreach($values as $value){
 			if(is_array($value)){
