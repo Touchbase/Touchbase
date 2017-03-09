@@ -106,7 +106,7 @@ class RequestHandler extends \Touchbase\Core\Object
 						}
 						
 						if(!$this->hasMethod($action) || !$this->isEnabled() || !$this->application()->isEnabled()){
-                            return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
+							return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
 						}
 						
 						if(!$this->isAllowed() || !$this->application()->isAllowed() || !$this->checkAccessAction($action)){
@@ -194,7 +194,7 @@ class RequestHandler extends \Touchbase\Core\Object
 		if(is_array($allowedActions)){
 			$isKey = !is_numeric($action) && array_key_exists($action, $allowedActions);
 			$isValue = in_array($action, $allowedActions);
-            
+			
 			if($isKey || $isValue){
 				return $this->hasMethod($action);
 			}
@@ -214,21 +214,21 @@ class RequestHandler extends \Touchbase\Core\Object
 		if(is_null($mergedAllowedActions)){		
 			$parent = "$this";
 			
-            $allowedActions = (array)$this->allowedActions;
+			$allowedActions = (array)$this->allowedActions;
 			while($parent != __CLASS__){
 				$parent = get_parent_class($parent);
 				$allowedActions = array_merge($allowedActions, (array)get_class_vars($parent)['allowedActions']);
 			}
-            
-            //Normalize allowed action case.
+			
+			//Normalize allowed action case.
 			$allowedActions = array_change_key_case($allowedActions, CASE_LOWER);
 			foreach($allowedActions as $key => $value){
 				if(is_int($key)){
 					$allowedActions[$key] = strtolower($value);
 				}
 			}	
-            
-            $this->allowedActions = $allowedActions;
+			
+			$this->allowedActions = $allowedActions;
 			$mergedAllowedActions = true;
 		}
 		

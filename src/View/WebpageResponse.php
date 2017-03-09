@@ -438,6 +438,23 @@ class WebpageResponse extends \Touchbase\Control\HTTPResponse
 					}
 				}
 			}
+
+			//Look for the special attribute that deletes nodes. 
+			$xpath = new \DOMXPath($dom); $appendToBodyRef = NULL;
+			foreach($xpath->query("//*[@tb-if]") as $element){
+				$tbif = $element->getAttribute("tb-if");
+				$element->removeAttribute("tb-if");
+				
+				$not = $tbif[0] === "!";
+
+				// Remove element if not true
+				if($not && filter_var(substr($tbif, 1), FILTER_VALIDATE_BOOLEAN)){
+					$element->parentNode->removeChild($element);
+				} 
+				if(!$not && !filter_var($tbif, FILTER_VALIDATE_BOOLEAN)){
+					$element->parentNode->removeChild($element);
+				}
+			}
 			
 			//Save the HTML with the updates.
 			if($this->controller->request()->isAjax() || !$this->controller->request()->isMainRequest()){
