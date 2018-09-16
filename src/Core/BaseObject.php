@@ -31,7 +31,7 @@ namespace Touchbase\Core;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-abstract class Object
+abstract class BaseObject
 {
 	use SynthesizeTrait;
 	
@@ -45,14 +45,12 @@ abstract class Object
 	 *	@return class
 	 */
 	public static function create(){
-		user_error("\Touchbase\Core\Object is a deprecated class, please use Touchbase\Core\BaseObject instead.", E_USER_DEPRECATED);
-
 		$args = func_get_args();
 
-		// Class to create should be the calling class if not Object,
+		// Class to create should be the calling class if not BaseObject,
 		// otherwise the first parameter
 		$class = get_called_class();
-		if($class == 'Object') $class = array_shift($args);
+		if($class == 'BaseObject') $class = array_shift($args);
 		
 		$newClass = new \ReflectionClass($class);
 		return $newClass->newInstanceArgs($args);

@@ -31,7 +31,7 @@ namespace Touchbase\Utils;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Cookie extends \Touchbase\Core\Object {
+class Cookie extends \Touchbase\Core\BaseObject {
 
 	const ONE_DAY = 86400;
 	const SEVEN_DAYS = 604800;

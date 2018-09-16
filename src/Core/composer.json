@@ -1,7 +1,7 @@
 {
 	"name": "touchbase/touchbase-core",
 	"description": "Touchbase Core",
-	"version": "0.0.1-dev",
+	"version": "1.0.0",
 	"keywords": ["component", "core"],
 	"homepage": "http://touchbase.io",
 	"license": "MIT",

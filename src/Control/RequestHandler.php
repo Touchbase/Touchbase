@@ -34,7 +34,7 @@ use Touchbase\Security\Auth;
 use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Control\Exception\HTTPResponseException;
 
-class RequestHandler extends \Touchbase\Core\Object 
+class RequestHandler extends \Touchbase\Core\BaseObject 
 {
 	use ConfigTrait;
 
@@ -106,7 +106,7 @@ class RequestHandler extends \Touchbase\Core\Object
 						}
 						
 						if(!$this->hasMethod($action) || !$this->isEnabled() || !$this->application()->isEnabled()){
-                            return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
+							return $this->throwHTTPError(404, "Action '$action' isn't available on class $this");
 						}
 						
 						if(!$this->isAllowed() || !$this->application()->isAllowed() || !$this->checkAccessAction($action)){

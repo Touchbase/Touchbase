@@ -35,7 +35,7 @@ use \Touchbase\Data\Store;
 use \Touchbase\Security\PermissionInterface;
 use \Touchbase\Security\PermissionTrait;
 
-class StdAuthedUser extends \Touchbase\Core\Object implements AuthedUserInterface, PermissionInterface
+class StdAuthedUser extends \Touchbase\Core\BaseObject implements AuthedUserInterface, PermissionInterface
 {
 	use PermissionTrait;
 	

@@ -39,7 +39,7 @@ use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Core\Config\Store as ConfigStore;
 use Touchbase\Core\Config\Provider\IniConfigProvider;
 
-class Client extends \Touchbase\Core\Object
+class Client extends \Touchbase\Core\BaseObject
 {
 	use ConfigTrait;
 
