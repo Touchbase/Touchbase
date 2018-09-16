@@ -465,8 +465,6 @@ class Router extends \Touchbase\Core\BaseObject
 			];
 			
 			if($assetFile->exists() && array_key_exists($assetFile->ext(), $supportedAssets)){
-				session_cache_limiter(false);
-				
 				$response->addHeader("Content-Type", $supportedAssets[$assetFile->ext()]);
 				$response->addHeader("Content-Disposition", "attachment; filename=".$assetFile->name);
 				$response->addHeader('Content-Length', $assetFile->size()); //TODO: Should be done in response setBody!
