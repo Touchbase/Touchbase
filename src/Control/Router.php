@@ -43,7 +43,7 @@ use Touchbase\Control\Exception\HTTPResponseException;
 use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Core\Config\Store as ConfigStore;
 
-class Router extends \Touchbase\Core\Object
+class Router extends \Touchbase\Core\BaseObject
 {
 	const ROUTE_HISTORY_KEY = "touchbase.key.route_history";
 	

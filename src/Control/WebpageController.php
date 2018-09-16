@@ -48,15 +48,7 @@ class WebpageController extends Controller
 	
 	/* Public Methods */
 	
-	/**
-	 *	Request
-	 *	@return \Touchbase\Control\HTTPRequest
-	 */
-	public function response(){
-		return $this->response;
-	}
-	
-	/**
+   	/**
 	 *	Handle Request
 	 *	@param HTTPRequest &$request
 	 *	@param HTTPResponse &$response
@@ -66,7 +58,8 @@ class WebpageController extends Controller
 			
 		//Pass through to Controller
 		try {
-			$response = new WebpageResponse($this);
+            $assets = ($response instanceof WebpageResponse)?$response->assets():[];
+			$response = new WebpageResponse($this, $assets);
 			
 			if($request->isPost()){
 				$validation = Validation::create();

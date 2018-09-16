@@ -34,7 +34,7 @@ use Touchbase\Security\Auth;
 use Touchbase\Core\Config\ConfigTrait;
 use Touchbase\Control\Exception\HTTPResponseException;
 
-class RequestHandler extends \Touchbase\Core\Object 
+class RequestHandler extends \Touchbase\Core\BaseObject 
 {
 	use ConfigTrait;
 

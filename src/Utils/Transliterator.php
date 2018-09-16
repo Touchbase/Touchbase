@@ -31,7 +31,7 @@ namespace Touchbase\Utils;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Transliterator extends \Touchbase\Core\Object
+class Transliterator extends \Touchbase\Core\BaseObject
 {
 	/**
 	 *	@var BOOL

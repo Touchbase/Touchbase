@@ -31,7 +31,7 @@ namespace Touchbase\Filesystem;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-abstract class Filesystem extends \Touchbase\Core\Object {
+abstract class Filesystem extends \Touchbase\Core\BaseObject {
 	
 	/**
 	 *	@var integer

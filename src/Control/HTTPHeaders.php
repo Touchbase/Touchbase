@@ -31,7 +31,7 @@ namespace Touchbase\Control;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class HTTPHeaders extends \Touchbase\Core\Object
+class HTTPHeaders extends \Touchbase\Core\BaseObject
 {
 	/**
 	 *	@var array

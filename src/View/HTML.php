@@ -31,7 +31,7 @@ namespace Touchbase\View;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class HTML extends \Touchbase\Core\Object
+class HTML extends \Touchbase\Core\BaseObject
 {
 	/**
 	 *	@var BOOL

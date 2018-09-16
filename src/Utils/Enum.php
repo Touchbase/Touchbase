@@ -31,7 +31,7 @@ namespace Touchbase\Utils;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-abstract class Enum extends \Touchbase\Core\Object implements \IteratorAggregate, \JsonSerializable
+abstract class Enum extends \Touchbase\Core\BaseObject implements \IteratorAggregate, \JsonSerializable
 {
 	/**
 	 *	@var mixed

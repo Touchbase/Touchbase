@@ -68,11 +68,12 @@ class AssetStore extends \Touchbase\Data\Store
 	/**
 	 *	__construct
 	 *	@param \Touchbase\Core\Config\Store $config
+     *	@param array $assets
 	 */
-	public function __construct(ConfigStore $config = null){
+	public function __construct(ConfigStore $config = null, $assets = null){
 		
 		$this->setConfig($config);
-
+        parent::__construct($assets);
 	}
 		
 	/**
@@ -98,7 +99,7 @@ class AssetStore extends \Touchbase\Data\Store
 	 *	@return string
 	 */
 	public function meta(){
-		return $this->get(self::META, []);
+		return (array)$this->get(self::META, []);
 	}
 	
 	/**
@@ -131,7 +132,7 @@ class AssetStore extends \Touchbase\Data\Store
 	 *	@return string
 	 */
 	public function styles(){
-		return $this->get(self::CSS, []);
+		return (array)$this->get(self::CSS, []);
 	}
 	
 	/**
@@ -165,7 +166,7 @@ class AssetStore extends \Touchbase\Data\Store
 	 *	@return string
 	 */
 	public function scripts($head = false){
-		return $this->get(self::JS)->get($head?'head':'body', []);
+		return (array)$this->get(self::JS)->get($head?'head':'body', []);
 	}
 	
 	/**
@@ -203,7 +204,7 @@ class AssetStore extends \Touchbase\Data\Store
 	 *	@return string
 	 */
 	public function extra(){
-		return $this->get(self::OTHER, []);
+		return (array)$this->get(self::OTHER, []);
 	}
 	
 	/**
@@ -251,7 +252,7 @@ class AssetStore extends \Touchbase\Data\Store
 	 *	@return string 
 	 */
 	public function contsructTitle($reverse = false){
-		$title = $this->get("title");
+		$title = (array)$this->get("title");
 		$titleData = (!$reverse)?array_reverse($title):$title;
 		
 		return implode(" ".$this->config()->get("web")->get("title_separator", "|")." ", array_map('ucfirst', array_unique($titleData))); 

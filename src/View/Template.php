@@ -34,7 +34,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 use Touchbase\Filesystem\File;
 use Touchbase\Filesystem\Filesystem;
 
-class Template extends \Touchbase\Core\Object
+class Template extends \Touchbase\Core\BaseObject
 {	
 	/**
 	 *	@var \Touchbase\Control\Controller

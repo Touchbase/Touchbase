@@ -31,7 +31,7 @@ namespace Touchbase\Utils;
 
 defined('TOUCHBASE') or die("Access Denied.");
 
-class Validation extends \Touchbase\Core\Object implements \Countable
+class Validation extends \Touchbase\Core\BaseObject implements \Countable
 {
 	/**
 	 *	@var string

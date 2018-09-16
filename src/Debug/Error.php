@@ -33,7 +33,7 @@ defined('TOUCHBASE') or die("Access Denied.");
 
 use Touchbase\Control\Router;
 
-class Error extends \Touchbase\Core\Object
+class Error extends \Touchbase\Core\BaseObject
 {
 	/**
 	 *	Error Codes to Text
